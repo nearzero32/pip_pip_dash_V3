@@ -1,0 +1,48 @@
+/* Select Filter Styles matched to Date Filter */
+.select-container {
+    position: relative;
+    width: 100%;
+    min-width: 200px;
+}
+
+.select-input {
+    width: 100%;
+    padding: 0.875rem 2.5rem 0.875rem 1rem;
+    /* Right padding for icon if RTL, adjust accordingly */
+    border-radius: 16px;
+    border: 2px solid #E5E7EB;
+    background-color: #F9FAFB;
+    outline: none;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    color: #1F2937;
+    font-family: inherit;
+    font-weight: 500;
+    appearance: none;
+    cursor: pointer;
+}
+
+.select-input:focus {
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(254, 81, 4, 0.1);
+    border-color: var(--primary-color);
+}
+
+.select-icon {
+    position: absolute;
+    left: 1rem;
+    /* Position on left for RTL text flow usually puts arrow on left or right? Standard HTML select arrow is usually end-aligned.
+  For RTL, 'end' is left. Let's put it on the left to match the icon style of date picker if that's the desired aesthetic,
+  or check if we want standard Chevron. */
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9CA3AF;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.select-input:focus~.select-icon {
+    color: var(--primary-color);
+}

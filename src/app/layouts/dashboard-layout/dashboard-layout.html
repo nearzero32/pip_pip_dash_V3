@@ -1,0 +1,27 @@
+<div class="dashboard-wrapper">
+  <app-sidebar></app-sidebar>
+
+  <main class="dashboard-content"
+    [class.collapsed]="!layoutService.isSidebarExpanded() && !layoutService.isMobile()">
+    <header class="dashboard-header">
+      <div class="header-left">
+        @if (layoutService.isMobile()) {
+          <button class="mobile-menu-btn" (click)="layoutService.toggleSidebar()" [attr.aria-label]="'openMenu' | t">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+        }
+        <h1 class="page-title">{{ titleKey() | t }}</h1>
+      </div>
+
+      <div class="header-right">
+        <button class="lang-btn" (click)="language.toggle()" [attr.aria-label]="'language' | t">
+          {{ language.lang() === 'en' ? 'AR' : 'EN' }}
+        </button>
+      </div>
+    </header>
+
+    <div class="content-scrollable">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

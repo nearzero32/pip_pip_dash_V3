@@ -1,0 +1,426 @@
+/* Sidebar Base - Light Fix (v4.1) */
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background: #FFFFFF; /* FORCE WHITE BACKGROUND */
+  border-inline-end: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  inset-inline-start: 0;
+  top: 0;
+  z-index: 1000;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-x: hidden;
+  color: var(--text-main);
+  box-shadow: 0 0 20px rgba(0,0,0,0.03);
+}
+
+/* Mobile Backdrop */
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease-out;
+  cursor: pointer;
+}
+
+/* Mobile State */
+.sidebar.mobile {
+  transform: translateX(-100%);
+  width: 85%;
+  max-width: 320px;
+  z-index: 1001;
+  border-inline-end: none;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+}
+
+html[dir="rtl"] .sidebar.mobile {
+  transform: translateX(100%);
+}
+
+.sidebar.mobile.mobile-open {
+  transform: translateX(0);
+  box-shadow: 8px 0 48px rgba(0, 0, 0, 0.2);
+}
+
+/* Collapsed State */
+.sidebar.collapsed {
+  width: 72px;
+}
+
+/* Header */
+.sidebar-header {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  position: relative;
+  background: transparent;
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.sidebar.mobile .sidebar-header {
+  background: linear-gradient(135deg, #FFFFFF 0%, #FFF6E0 100%);
+  border-bottom: 2px solid var(--primary-color);
+  box-shadow: 0 2px 8px rgba(254, 81, 4, 0.1);
+}
+
+.sidebar.collapsed .sidebar-header {
+  padding: 0;
+  justify-content: center;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-logo {
+  height: 38px;
+  width: 38px;
+  border-radius: 12px;
+  padding: 2px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+/* Toggle Button (Pin & Close) */
+.toggle-btn {
+  background: rgba(0,0,0,0.03);
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.toggle-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+  transform: rotate(90deg);
+}
+
+.toggle-btn:active {
+  transform: rotate(90deg) scale(0.9);
+}
+
+/* Pin Button */
+.pin-btn {
+  opacity: 1;
+}
+
+.pin-btn:hover, .pin-btn.active {
+  color: var(--primary-color);
+  background-color: rgba(254, 81, 4, 0.1);
+  transform: none;
+}
+
+.pin-btn:hover {
+  transform: rotate(0deg);
+}
+
+.sidebar.collapsed .pin-btn {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+}
+
+/* Nav Items */
+.sidebar-nav {
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: padding 0.9s;
+}
+
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 1.25rem;
+  color: #4A5568; /* DARK GRAY INACTIVE TEXT */
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  background: transparent;
+}
+
+.sidebar.collapsed .nav-item {
+  padding: 0.875rem;
+  justify-content: center;
+}
+
+/* Hover State */
+.nav-item:hover {
+  background: #F8FAFC;
+  color: var(--primary-color);
+  transform: translateX(2px);
+}
+
+/* Active State - FIXED CONTRAST */
+.nav-item.active {
+  background: #FFF6E0;
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+/* Active Icon */
+.nav-item.active .nav-icon {
+  color: var(--primary-color);
+  stroke-width: 2.5;
+}
+
+/* Icon Container */
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-icon {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  color: currentColor;
+  display: block;
+  stroke-width: 2;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-label {
+  margin-inline-start: 1rem;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.sidebar.collapsed .nav-label {
+  opacity: 0;
+  display: none;
+}
+
+/* Tooltip for collapsed state */
+.tooltip {
+  position: absolute;
+  inset-inline-start: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 1001;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.nav-item:hover .tooltip {
+  opacity: 1;
+}
+
+/* Dropdown Styles */
+.nav-item-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-trigger {
+  cursor: pointer;
+  position: relative;
+}
+
+.dropdown-arrow {
+  margin-right: auto;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: inherit;
+  min-width: 16px;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.dropdown-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  padding-inline-start: 1rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+.submenu-item {
+  font-size: 0.9rem;
+  padding: 0.75rem 1rem;
+  margin-inline-start: 0.5rem;
+  border-inline-start: 2px solid transparent;
+}
+
+.submenu-item:hover {
+  border-inline-start-color: rgba(254, 81, 4, 0.3);
+  background: #F8FAFC;
+}
+
+.submenu-item.active {
+  border-inline-start-color: var(--primary-color);
+  background: #FFF6E0;
+  color: var(--primary-color);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Footer & Logout */
+.sidebar-footer {
+  margin-top: auto;
+  padding: 1.5rem;
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.875rem;
+  border: none;
+  background: transparent;
+  color: #E53E3E;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  gap: 0.75rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  transform: translateY(-2px);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+}
+
+.sidebar.mobile .logout-btn {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+  border: 2px solid rgba(239, 68, 68, 0.2);
+  padding: 1rem;
+}
+
+.logout-label {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: inherit;
+}
+
+.sidebar.collapsed .logout-btn .nav-label {
+  display: none;
+}
+
+/* Utils */
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile Specific Improvements */
+@media (max-width: 1024px) {
+  .sidebar.mobile {
+    width: 85%;
+    max-width: 320px;
+  }
+
+  .sidebar-nav {
+    padding: 1rem 0.75rem;
+  }
+
+  .nav-item {
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+  }
+
+  .nav-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .sidebar-logo {
+    height: 40px;
+    width: 40px;
+  }
+
+  .sidebar-title {
+    font-size: 1.25rem;
+  }
+
+  .logout-btn {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
+  .sidebar-footer {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .sidebar.mobile {
+    width: 90%;
+    max-width: 280px;
+  }
+}

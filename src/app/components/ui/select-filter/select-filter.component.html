@@ -1,0 +1,21 @@
+<div class="select-container">
+  <select
+    [required]="required"
+    class="select-input"
+    [ngModel]="value"
+    (change)="onSelectChange($event)">
+    @if (placeholder) {
+      <option [ngValue]="null" disabled selected>{{ placeholder }}</option>
+    }
+    @for (option of options; track $index) {
+        @if (isObj(option)) {
+            <option [value]="option[optionValue]">{{ option[optionLabel] }}</option>
+        } @else {
+             <option [value]="option">{{ option }}</option>
+        }
+    }
+  </select>
+  <div class="select-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+  </div>
+</div>

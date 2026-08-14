@@ -1,0 +1,116 @@
+/* Date Filter Styles from Salaries Page */
+.date-container {
+    position: relative;
+    width: 100%;
+    min-width: 200px;
+}
+
+.date-input {
+    width: 100%;
+    padding: 0.875rem 2.5rem 0.875rem 3rem;
+    border-radius: 16px;
+    border: 2px solid #E5E7EB;
+    background-color: #F9FAFB;
+    outline: none;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    color: #1F2937;
+    /* var(--text-main) */
+    font-family: inherit;
+    font-weight: 500;
+    appearance: none;
+    box-sizing: border-box;
+}
+
+.date-input:focus {
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(254, 81, 4, 0.1);
+    border-color: var(--primary-color);
+}
+
+.date-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9CA3AF;
+    /* var(--text-placeholder) */
+    transition: color 0.2s;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.date-input:focus~.date-icon {
+    color: var(--primary-color);
+}
+
+.clear-date-btn {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: #9CA3AF;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.clear-date-btn:hover {
+    background-color: #F3F4F6;
+    color: #EF4444;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.date-custom-placeholder {
+    position: absolute;
+    top: 50%;
+    right: 2.5rem;
+    /* Align with input padding */
+    transform: translateY(-50%);
+    color: #9CA3AF;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Hide mask when empty */
+.date-input:required:invalid::-webkit-datetime-edit {
+    color: transparent;
+}
+
+/* Hide placeholder when value is present (valid) or focused */
+.date-input:required:valid~.date-custom-placeholder,
+.date-input:focus~.date-custom-placeholder,
+.date-input:not(:placeholder-shown)~.date-custom-placeholder {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Fallback logic for when value is present via input value binding */
+.date-input[value=""]~.date-custom-placeholder {
+    opacity: 1;
+    visibility: visible;
+}
+
+.date-input:not([value=""])~.date-custom-placeholder {
+    opacity: 0;
+    visibility: hidden;
+}

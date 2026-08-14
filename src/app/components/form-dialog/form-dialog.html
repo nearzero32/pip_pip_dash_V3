@@ -1,0 +1,206 @@
+<div class="modal-overlay" (click)="close()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="modal-header">
+      <h2 class="modal-title">{{ title }}</h2>
+      <button class="close-btn" (click)="close()" type="button" aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <form [formGroup]="form" (ngSubmit)="handleSubmit()" class="modal-body">
+      <div class="form-grid">
+        @for (field of fields; track $index) {
+          @if (shouldShowField(field)) {
+            <div class="form-group" [ngClass]="getFieldWidth(field)">
+              <!-- Label -->
+              <label class="form-label" [for]="field.name">
+                @if (field.icon) {
+                  <svg class="label-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [innerHTML]="field.icon"></svg>
+                }
+                {{ field.label }}
+                @if (!field.required) {
+                  <span class="optional-label">{{ 'common.optional' | t }}</span>
+                }
+              </label>
+
+              <!-- Text Input -->
+              @if (field.type === 'text') {
+                <input
+                  type="text"
+                  [id]="field.name"
+                  class="form-input"
+                  [formControlName]="field.name"
+                  [placeholder]="field.placeholder || ''"
+                  (input)="formatValue($event, field)"
+                  [class.error]="form.get(field.name)?.invalid && form.get(field.name)?.touched"
+                />
+              }
+
+              <!-- Password Input -->
+              @if (field.type === 'password') {
+                <input
+                  type="password"
+                  [id]="field.name"
+                  class="form-input"
+                  [formControlName]="field.name"
+                  [placeholder]="field.placeholder || ''"
+                  [class.error]="form.get(field.name)?.invalid && form.get(field.name)?.touched"
+                  autocomplete="new-password"
+                />
+              }
+
+              <!-- Number Input -->
+              @if (field.type === 'number') {
+                <input
+                  type="text"
+                  [id]="field.name"
+                  class="form-input"
+                  [formControlName]="field.name"
+                  [placeholder]="field.placeholder || '0'"
+                  (input)="formatValue($event, field)"
+                  [class.error]="form.get(field.name)?.invalid && form.get(field.name)?.touched"
+                />
+              }
+
+              <!-- Date Input -->
+              @if (field.type === 'date') {
+                <input
+                  type="date"
+                  [id]="field.name"
+                  class="form-input"
+                  [formControlName]="field.name"
+                  [class.error]="form.get(field.name)?.invalid && form.get(field.name)?.touched"
+                />
+              }
+
+              <!-- Textarea -->
+              @if (field.type === 'textarea') {
+                <textarea
+                  [id]="field.name"
+                  class="form-input"
+                  [formControlName]="field.name"
+                  [placeholder]="field.placeholder || ''"
+                  rows="3"
+                  [class.error]="form.get(field.name)?.invalid && form.get(field.name)?.touched"
+                ></textarea>
+              }
+
+              <!-- Select Dropdown -->
+              @if (field.type === 'select') {
+                <div class="select-wrapper">
+                  <select
+                    [id]="field.name"
+                    class="form-input form-select"
+                    [formControlName]="field.name"
+                    [class.error]="form.get(field.name)?.invalid && form.get(field.name)?.touched"
+                    (change)="onFieldValueChange(field.name, $any($event.target).value)"
+                  >
+                    <option value="">{{ field.placeholder || ('common.select' | t) }}</option>
+                    @for (option of field.options; track $index) {
+                      <option [value]="option[field.optionValue || 'value']">
+                        {{ option[field.optionLabel || 'label'] }}
+                      </option>
+                    }
+                  </select>
+                  <svg class="select-arrow" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
+              }
+
+              <!-- Checkbox / Toggle Switch -->
+              @if (field.type === 'checkbox') {
+                <div class="toggle-switch-group">
+                  <label class="toggle-switch-container">
+                    <input
+                      type="checkbox"
+                      [formControlName]="field.name"
+                      class="toggle-checkbox"
+                      (change)="onFieldValueChange(field.name, $any($event.target).checked)">
+                    <span class="toggle-slider">
+                      <span class="currency-indicator currency-iqd">IQD</span>
+                      <span class="currency-indicator currency-usd">USD</span>
+                    </span>
+                  </label>
+                  <span class="toggle-label">
+                    <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="12" y1="1" x2="12" y2="23"></line>
+                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    {{ field.placeholder }}
+                  </span>
+                </div>
+              }
+
+              <!-- Toggle Switch -->
+              @if (field.type === 'toggle') {
+                <div class="form-label-with-toggle">
+                  <label class="form-label">{{ field.label }}</label>
+                  <div class="currency-toggle">
+                    <span class="currency-toggle-label" [class.active]="!form.get(field.name)?.value">IQD</span>
+                    <label class="toggle-switch">
+                      <input type="checkbox" [formControlName]="field.name" class="toggle-input">
+                      <span class="toggle-slider"></span>
+                    </label>
+                    <span class="currency-toggle-label" [class.active]="form.get(field.name)?.value">USD</span>
+                  </div>
+                </div>
+              }
+
+              <!-- Image Upload -->
+              @if (field.type === 'image-upload') {
+                <app-image-upload
+                  [label]="field.label"
+                  [placeholder]="field.placeholder || ''"
+                  [currentImage]="form.get(field.name)?.value"
+                  [error]="!!(form.get(field.name)?.invalid && form.get(field.name)?.touched)"
+                  (imageSelected)="onFieldValueChange(field.name, $event)">
+                </app-image-upload>
+              }
+
+              <!-- Error Message -->
+              @if (form.get(field.name)?.invalid && form.get(field.name)?.touched) {
+                <span class="error-message">{{ getErrorMessage(field.name) }}</span>
+              }
+
+              <!-- Hint -->
+              @if (field.hint) {
+                <span class="hint-text">{{ field.hint }}</span>
+              }
+            </div>
+          }
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-cancel" (click)="close()" [disabled]="isSubmitting">
+          {{ cancelButtonText }}
+        </button>
+        <button type="submit" class="btn btn-submit" [disabled]="isSubmitting || form.invalid">
+          @if (isSubmitting) {
+            <svg class="spinner" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="2" x2="12" y2="6"></line>
+              <line x1="12" y1="18" x2="12" y2="22"></line>
+              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+              <line x1="2" y1="12" x2="6" y2="12"></line>
+              <line x1="18" y1="12" x2="22" y2="12"></line>
+              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+            </svg>
+            {{ 'common.saving' | t }}
+          } @else {
+            {{ submitButtonText }}
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
