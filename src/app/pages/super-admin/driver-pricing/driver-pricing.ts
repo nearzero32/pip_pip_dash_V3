@@ -10,6 +10,7 @@ import { LanguageService } from '../../../services/language.service';
 import { NotificationService } from '../../../services/notification.service';
 import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { apiErrorMessage } from '../../../core/api-error';
+import { ApiErrorBody } from '../../../interfaces/auth.interface';
 
 @Component({
   selector: 'app-driver-pricing',
@@ -68,6 +69,7 @@ export class DriverPricingComponent implements OnInit {
 
   onCityChange(id: string) {
     this.cityId.set(id);
+    this.current.set(null);
     this.load();
   }
 
@@ -82,9 +84,19 @@ export class DriverPricingComponent implements OnInit {
         this.current.set(data);
       }
     } catch (err) {
-      if (this.cityId() === currentCityId) {
+      if (this.cityId() !== currentCityId) {
+        return;
+      }
+      const axiosErr = err as { response?: { status?: number; data?: ApiErrorBody } };
+      if (
+        axiosErr.response?.status === 404 &&
+        axiosErr.response?.data?.error?.code === 'CITY_DRIVER_PRICING_NOT_FOUND'
+      ) {
         this.current.set(null);
         this.missing.set(true);
+      } else {
+        this.missing.set(false);
+        this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
       }
     } finally {
       if (this.cityId() === currentCityId) {

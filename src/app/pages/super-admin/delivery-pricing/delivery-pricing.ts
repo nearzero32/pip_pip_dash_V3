@@ -89,6 +89,7 @@ export class DeliveryPricingComponent implements OnInit {
 
   onCityChange(id: string) {
     this.cityId.set(id);
+    this.data.set([]);
     this.load();
   }
 
@@ -102,9 +103,10 @@ export class DeliveryPricingComponent implements OnInit {
         this.data.set(rows.map((row) => ({ ...row, _id: row.id })));
       }
     } catch (err) {
-      if (this.cityId() === currentCityId) {
-        this.data.set([]);
+      if (this.cityId() !== currentCityId) {
+        return;
       }
+      this.data.set([]);
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {
       if (this.cityId() === currentCityId) {
