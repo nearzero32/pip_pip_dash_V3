@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableComponent } from '../../../components/table/table';
 import { ExportButtonComponent } from '../../../components/buttons/export-button/export-button';
@@ -16,6 +16,7 @@ import { ApiErrorBody } from '../../../interfaces/auth.interface';
   standalone: true,
   imports: [CommonModule, TableComponent, ExportButtonComponent, TranslatePipe],
   templateUrl: './drivers.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './drivers.css',
 })
 export class DriversComponent implements OnInit {

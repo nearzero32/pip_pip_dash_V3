@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../../i18n/translate.pipe';
 
@@ -75,6 +75,7 @@ import { TranslatePipe } from '../../../i18n/translate.pipe';
       }
     }
   `],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button class="filter-btn" (click)="onClick()" [disabled]="isLoading">
       @if (isLoading) {

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableColumn } from '../../interfaces/table-column.interface';
 import { PaginationConfig } from '../../interfaces/pagination.interface';
@@ -10,6 +10,7 @@ import { LanguageService } from '../../services/language.service';
   standalone: true,
   imports: [CommonModule, TranslatePipe],
   templateUrl: './table.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './table.css'
 })
 export class TableComponent {

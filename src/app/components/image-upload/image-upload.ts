@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, signal, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LanguageService } from '../../services/language.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
@@ -8,6 +8,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
     standalone: true,
     imports: [CommonModule, TranslatePipe],
     templateUrl: './image-upload.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrl: './image-upload.css'
 })
 export class ImageUploadComponent {

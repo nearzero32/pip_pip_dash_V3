@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NotificationToastComponent } from './components/notification-toast/notification-toast';
 import { LanguageService } from './services/language.service';
@@ -8,6 +8,7 @@ import { LanguageService } from './services/language.service';
   standalone: true,
   imports: [RouterOutlet, NotificationToastComponent],
   templateUrl: './app.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './app.css'
 })
 export class App {

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -12,6 +12,7 @@ import { ApiErrorBody } from '../../../interfaces/auth.interface';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './sign-in.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './sign-in.css',
 })
 export class SignInComponent {

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
@@ -9,6 +9,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
   standalone: true,
   imports: [TranslatePipe],
   templateUrl: './placeholder.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './placeholder.css',
 })
 export class PlaceholderComponent {

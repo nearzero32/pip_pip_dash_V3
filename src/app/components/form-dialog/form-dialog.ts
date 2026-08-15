@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, ValidatorFn } from '@angular/forms';
 import { NotificationService } from '../../services/notification.service';
@@ -30,6 +30,7 @@ export interface FormField {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, ImageUploadComponent, TranslatePipe],
   templateUrl: './form-dialog.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './form-dialog.css'
 })
 export class FormDialogComponent implements OnInit {

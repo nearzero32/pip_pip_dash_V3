@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NotificationService } from '../../services/notification.service';
 
@@ -9,6 +9,7 @@ import { TranslatePipe } from '../../i18n/translate.pipe';
   standalone: true,
   imports: [CommonModule, TranslatePipe],
   templateUrl: './notification-toast.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './notification-toast.css'
 })
 export class NotificationToastComponent {

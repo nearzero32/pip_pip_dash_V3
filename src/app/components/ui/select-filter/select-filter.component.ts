@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -12,6 +12,7 @@ export interface SelectOption {
     standalone: true,
     imports: [CommonModule, FormsModule],
     templateUrl: './select-filter.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./select-filter.component.css']
 })
 export class SelectFilterComponent {

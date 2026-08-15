@@ -157,7 +157,7 @@
                 <app-image-upload
                   [label]="field.label"
                   [placeholder]="field.placeholder || ''"
-                  [currentImage]="form.get(field.name)?.value"
+                  [currentImage]="$safeNavigationMigration(form.get(field.name)?.value)"
                   [error]="!!(form.get(field.name)?.invalid && form.get(field.name)?.touched)"
                   (imageSelected)="onFieldValueChange(field.name, $event)">
                 </app-image-upload>

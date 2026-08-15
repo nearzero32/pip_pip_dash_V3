@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { SidebarComponent } from '../../components/sidebar/sidebar';
@@ -13,6 +13,7 @@ import { filter } from 'rxjs/operators';
   standalone: true,
   imports: [RouterOutlet, SidebarComponent, TranslatePipe],
   templateUrl: './dashboard-layout.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './dashboard-layout.css',
 })
 export class DashboardLayoutComponent {

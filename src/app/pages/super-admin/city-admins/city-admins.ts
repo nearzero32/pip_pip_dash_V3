@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableComponent } from '../../../components/table/table';
 import { FormDialogComponent, FormField } from '../../../components/form-dialog/form-dialog';
@@ -18,6 +18,7 @@ import { downloadBlob } from '../../../core/download';
   selector: 'app-city-admins',
   standalone: true,
   imports: [CommonModule, TableComponent, FormDialogComponent, ExportButtonComponent, TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './city-admins.html',
 })
 export class CityAdminsComponent implements OnInit {

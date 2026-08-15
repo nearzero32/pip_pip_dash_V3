@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { TranslatePipe } from '../../../i18n/translate.pipe';
@@ -7,6 +7,7 @@ import { TranslatePipe } from '../../../i18n/translate.pipe';
   selector: 'app-home',
   standalone: true,
   imports: [RouterLink, TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './home.html',
 })
 export class HomeComponent {

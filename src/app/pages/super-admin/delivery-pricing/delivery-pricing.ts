@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableComponent } from '../../../components/table/table';
@@ -25,6 +25,7 @@ import { apiErrorMessage } from '../../../core/api-error';
     ConfirmationDialogComponent,
     TranslatePipe,
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './delivery-pricing.html',
 })
 export class DeliveryPricingComponent implements OnInit {

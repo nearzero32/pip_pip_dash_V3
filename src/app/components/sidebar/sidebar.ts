@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { LayoutService } from '../../services/layout.service';
 import { AuthService } from '../../services/auth.service';
@@ -20,6 +20,7 @@ export interface MenuItem {
   standalone: true,
   imports: [RouterLink, RouterLinkActive, CommonModule, TranslatePipe],
   templateUrl: './sidebar.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './sidebar.css',
 })
 export class SidebarComponent {

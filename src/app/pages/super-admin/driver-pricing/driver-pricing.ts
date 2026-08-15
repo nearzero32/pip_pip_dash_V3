@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormDialogComponent, FormField } from '../../../components/form-dialog/form-dialog';
@@ -15,6 +15,7 @@ import { apiErrorMessage } from '../../../core/api-error';
   selector: 'app-driver-pricing',
   standalone: true,
   imports: [CommonModule, FormsModule, FormDialogComponent, TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './driver-pricing.html',
 })
 export class DriverPricingComponent implements OnInit {

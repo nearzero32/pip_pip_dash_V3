@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, Input, inject } from '@angular/core';
+import { Component, EventEmitter, Output, Input, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LanguageService } from '../../services/language.service';
 
@@ -7,6 +7,7 @@ import { LanguageService } from '../../services/language.service';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './confirmation-dialog.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './confirmation-dialog.css'
 })
 export class ConfirmationDialogComponent {
