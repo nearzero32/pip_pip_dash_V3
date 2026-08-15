@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableComponent } from '../../../components/table/table';
 import { FormDialogComponent, FormField } from '../../../components/form-dialog/form-dialog';
@@ -18,7 +18,7 @@ import { downloadBlob } from '../../../core/download';
   selector: 'app-city-admins',
   standalone: true,
   imports: [CommonModule, TableComponent, FormDialogComponent, ExportButtonComponent, TranslatePipe],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './city-admins.html',
 })
 export class CityAdminsComponent implements OnInit {
@@ -27,15 +27,18 @@ export class CityAdminsComponent implements OnInit {
   private language = inject(LanguageService);
   private notify = inject(NotificationService);
 
-  data: CityAdmin[] = [];
-  cities: City[] = [];
-  isLoading = true;
-  exporting = false;
-  submitting = false;
-  showForm = false;
-  editing: CityAdmin | null = null;
+  data = signal<CityAdmin[]>([]);
+  isLoading = signal<boolean>(true);
+  isLoadingCities = signal<boolean>(false);
+  exporting = signal<boolean>(false);
+  submitting = signal<boolean>(false);
+  showForm = signal<boolean>(false);
+  editing = signal<CityAdmin | null>(null);
   columns: TableColumn[] = [];
-  fields: FormField[] = [];
+  fields = signal<FormField[]>([]);
+
+  private cities: City[] = [];
+  private citiesPromise: Promise<void> | null = null;
 
   ngOnInit() {
     this.columns = [
@@ -50,15 +53,33 @@ export class CityAdminsComponent implements OnInit {
       { key: 'cityId', label: this.language.t('staff.cityId') },
     ];
     this.load();
-    this.loadCities();
   }
 
-  async loadCities() {
+  private async ensureCitiesLoaded(): Promise<void> {
+    if (this.cities.length > 0) {
+      return;
+    }
+    if (this.citiesPromise) {
+      await this.citiesPromise;
+      return;
+    }
+    this.isLoadingCities.set(true);
+    try {
+      this.citiesPromise = this.fetchCities();
+      await this.citiesPromise;
+    } finally {
+      this.isLoadingCities.set(false);
+    }
+  }
+
+  private async fetchCities(): Promise<void> {
     try {
       const cityPage = await this.geography.listCities(1, 100);
       this.cities = cityPage.data;
     } catch (err) {
-      // Non-blocking
+      this.citiesPromise = null;
+      this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
+      throw err;
     }
   }
 
@@ -105,37 +126,56 @@ export class CityAdminsComponent implements OnInit {
   }
 
   async load() {
-    this.isLoading = true;
+    this.isLoading.set(true);
     try {
-      this.data = await this.staff.listAdmins();
+      const admins = await this.staff.listAdmins();
+      this.data.set(admins);
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
+      this.data.set([]);
     } finally {
-      this.isLoading = false;
+      this.isLoading.set(false);
     }
   }
 
-  openCreate() {
-    this.editing = null;
-    this.fields = this.buildFields(false);
-    this.showForm = true;
+  async openCreate() {
+    if (this.isLoadingCities()) return;
+    this.editing.set(null);
+    try {
+      await this.ensureCitiesLoaded();
+      this.fields.set(this.buildFields(false));
+      this.showForm.set(true);
+    } catch (err) {
+      // Non-blocking error handled in fetchCities
+    }
   }
 
-  onEdit(row: CityAdmin) {
-    this.editing = row;
-    this.fields = this.buildFields(true);
-    this.showForm = true;
+  async onEdit(row: CityAdmin) {
+    if (this.isLoadingCities()) return;
+    this.editing.set(row);
+    try {
+      await this.ensureCitiesLoaded();
+      this.fields.set(this.buildFields(true));
+      this.showForm.set(true);
+    } catch (err) {
+      // Non-blocking error handled in fetchCities
+    }
+  }
+
+  closeForm() {
+    this.showForm.set(false);
   }
 
   async save(value: Record<string, string>) {
-    this.submitting = true;
+    this.submitting.set(true);
     try {
-      if (this.editing) {
+      const currentEditing = this.editing();
+      if (currentEditing) {
         const body: { displayName?: string; cityId?: string; status?: 'ACTIVE' | 'DISABLED' } = {};
         if (value['displayName']) body.displayName = value['displayName'];
         if (value['cityId']) body.cityId = value['cityId'];
         if (value['status'] === 'ACTIVE' || value['status'] === 'DISABLED') body.status = value['status'];
-        await this.staff.updateAdmin(this.editing.accountId, body);
+        await this.staff.updateAdmin(currentEditing.accountId, body);
       } else {
         await this.staff.createAdmin({
           email: value['email'],
@@ -145,23 +185,24 @@ export class CityAdminsComponent implements OnInit {
         });
       }
       this.notify.success(this.language.t('common.success'));
-      this.showForm = false;
+      this.showForm.set(false);
       await this.load();
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {
-      this.submitting = false;
+      this.submitting.set(false);
     }
   }
 
   async exportList() {
-    this.exporting = true;
+    this.exporting.set(true);
     try {
-      downloadBlob(await this.staff.exportAdmins(), 'city-admins.xlsx');
+      const blob = await this.staff.exportAdmins();
+      downloadBlob(blob, 'city-admins.xlsx');
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {
-      this.exporting = false;
+      this.exporting.set(false);
     }
   }
 }

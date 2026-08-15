@@ -1,24 +1,24 @@
 <div class="page-toolbar">
   <p class="hint">{{ 'staff.adminHint' | t }}</p>
   <div style="display:flex;gap:.75rem;flex-wrap:wrap">
-    <app-export-button [isLoading]="exporting" (action)="exportList()"></app-export-button>
-    <button class="add-btn" type="button" (click)="openCreate()">{{ 'staff.addAdmin' | t }}</button>
+    <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
+    <button class="add-btn" type="button" [disabled]="isLoadingCities()" (click)="openCreate()">{{ 'staff.addAdmin' | t }}</button>
   </div>
 </div>
 <app-table
-  [data]="data"
+  [data]="data()"
   [columns]="columns"
-  [isLoading]="isLoading"
+  [isLoading]="isLoading()"
   [allowDelete]="false"
   (onEdit)="onEdit($event)"
 ></app-table>
-@if (showForm) {
+@if (showForm()) {
   <app-form-dialog
-    [title]="(editing ? 'staff.editAdmin' : 'staff.addAdmin') | t"
-    [fields]="fields"
-    [initialData]="editing"
-    [isSubmitting]="submitting"
-    (onClose)="showForm = false"
+    [title]="(editing() ? 'staff.editAdmin' : 'staff.addAdmin') | t"
+    [fields]="fields()"
+    [initialData]="editing()"
+    [isSubmitting]="submitting()"
+    (onClose)="closeForm()"
     (onSubmit)="save($event)"
   ></app-form-dialog>
 }
