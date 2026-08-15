@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormDialogComponent, FormField } from '../../../components/form-dialog/form-dialog';
@@ -15,7 +15,7 @@ import { apiErrorMessage } from '../../../core/api-error';
   selector: 'app-driver-pricing',
   standalone: true,
   imports: [CommonModule, FormsModule, FormDialogComponent, TranslatePipe],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './driver-pricing.html',
 })
 export class DriverPricingComponent implements OnInit {
@@ -24,13 +24,13 @@ export class DriverPricingComponent implements OnInit {
   private language = inject(LanguageService);
   private notify = inject(NotificationService);
 
-  cities: City[] = [];
-  cityId = '';
-  current: DriverPricing | null = null;
-  missing = false;
-  loading = true;
-  showForm = false;
-  submitting = false;
+  cities = signal<City[]>([]);
+  cityId = signal('');
+  current = signal<DriverPricing | null>(null);
+  missing = signal(false);
+  loading = signal(true);
+  showForm = signal(false);
+  submitting = signal(false);
   fields: FormField[] = [];
 
   ngOnInit() {
@@ -52,62 +52,81 @@ export class DriverPricingComponent implements OnInit {
   async loadCities() {
     try {
       const page = await this.geography.listCities(1, 100);
-      this.cities = page.data;
-      if (this.cities[0]) {
-        this.cityId = this.cities[0].id;
+      this.cities.set(page.data);
+      const activeCities = this.cities();
+      if (activeCities[0]) {
+        this.cityId.set(activeCities[0].id);
         await this.load();
       } else {
-        this.loading = false;
+        this.loading.set(false);
       }
     } catch (err) {
-      this.loading = false;
+      this.loading.set(false);
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     }
   }
 
+  onCityChange(id: string) {
+    this.cityId.set(id);
+    this.load();
+  }
+
   async load() {
-    if (!this.cityId) return;
-    this.loading = true;
-    this.missing = false;
+    const currentCityId = this.cityId();
+    if (!currentCityId) return;
+    this.loading.set(true);
+    this.missing.set(false);
     try {
-      this.current = await this.pricing.getDriverPricing(this.cityId);
-    } catch {
-      this.current = null;
-      this.missing = true;
+      const data = await this.pricing.getDriverPricing(currentCityId);
+      if (this.cityId() === currentCityId) {
+        this.current.set(data);
+      }
+    } catch (err) {
+      if (this.cityId() === currentCityId) {
+        this.current.set(null);
+        this.missing.set(true);
+      }
     } finally {
-      this.loading = false;
+      if (this.cityId() === currentCityId) {
+        this.loading.set(false);
+      }
     }
   }
 
   openForm() {
-    this.showForm = true;
+    this.showForm.set(true);
   }
 
   initialData() {
-    if (!this.current) return { pricingStages: '[{"afterSeconds":0,"increasePercentage":0}]' };
+    const currentVal = this.current();
+    if (!currentVal) return { pricingStages: '[{"afterSeconds":0,"increasePercentage":0}]' };
     return {
-      pricingBase: this.current.pricingBase,
-      roundingUnit: this.current.roundingUnit,
-      pricingStages: JSON.stringify(this.current.pricingStages),
+      pricingBase: currentVal.pricingBase,
+      roundingUnit: currentVal.roundingUnit,
+      pricingStages: JSON.stringify(currentVal.pricingStages),
     };
   }
 
   async save(value: Record<string, string>) {
-    this.submitting = true;
+    this.submitting.set(true);
+    const activeCityId = this.cityId();
     try {
       const stages = JSON.parse(value['pricingStages']);
-      this.current = await this.pricing.putDriverPricing(this.cityId, {
+      const updated = await this.pricing.putDriverPricing(activeCityId, {
         pricingBase: Number(value['pricingBase']),
         roundingUnit: Number(value['roundingUnit']),
         pricingStages: stages,
       });
-      this.missing = false;
-      this.showForm = false;
+      if (this.cityId() === activeCityId) {
+        this.current.set(updated);
+        this.missing.set(false);
+      }
+      this.showForm.set(false);
       this.notify.success(this.language.t('common.success'));
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {
-      this.submitting = false;
+      this.submitting.set(false);
     }
   }
 }

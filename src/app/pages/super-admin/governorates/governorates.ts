@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableComponent } from '../../../components/table/table';
 import { FormDialogComponent, FormField } from '../../../components/form-dialog/form-dialog';
@@ -17,7 +17,7 @@ import { downloadBlob } from '../../../core/download';
   selector: 'app-governorates',
   standalone: true,
   imports: [CommonModule, TableComponent, FormDialogComponent, ExportButtonComponent, TranslatePipe],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './governorates.html',
 })
 export class GovernoratesComponent implements OnInit {
@@ -25,14 +25,14 @@ export class GovernoratesComponent implements OnInit {
   private language = inject(LanguageService);
   private notify = inject(NotificationService);
 
-  data: Governorate[] = [];
-  isLoading = true;
-  exporting = false;
-  submitting = false;
-  showForm = false;
-  editing: Governorate | null = null;
-  pagination: PaginationConfig | null = null;
-  page = 1;
+  data = signal<Governorate[]>([]);
+  isLoading = signal(true);
+  exporting = signal(false);
+  submitting = signal(false);
+  showForm = signal(false);
+  editing = signal<Governorate | null>(null);
+  pagination = signal<PaginationConfig | null>(null);
+  page = signal(1);
   columns: TableColumn[] = [];
   fields: FormField[] = [];
 
@@ -70,58 +70,64 @@ export class GovernoratesComponent implements OnInit {
   }
 
   async load(page = 1) {
-    this.isLoading = true;
+    this.isLoading.set(true);
     try {
       const result = await this.api.listGovernorates(page, 50);
-      this.data = result.data;
-      this.page = result.page;
+      this.data.set(result.data);
+      this.page.set(result.page);
       const pages = Math.max(1, Math.ceil(result.total / result.limit));
-      this.pagination = {
+      this.pagination.set({
         page: result.page,
         limit: result.limit,
         total: result.total,
         pages,
         hasNext: result.page < pages,
         hasPrev: result.page > 1,
-      };
+      });
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {
-      this.isLoading = false;
+      this.isLoading.set(false);
     }
   }
 
   onEdit(row: Governorate) {
-    this.editing = row;
-    this.showForm = true;
+    this.editing.set(row);
+    this.showForm.set(true);
+  }
+
+  closeForm() {
+    this.showForm.set(false);
+    this.editing.set(null);
   }
 
   async save(value: { status: 'ACTIVE' | 'INACTIVE'; displayOrder: string | number }) {
-    if (!this.editing) return;
-    this.submitting = true;
+    const activeEditing = this.editing();
+    if (!activeEditing) return;
+    this.submitting.set(true);
     try {
-      await this.api.updateGovernorate(this.editing.id, {
+      await this.api.updateGovernorate(activeEditing.id, {
         status: value.status,
         displayOrder: Number(value.displayOrder),
       });
       this.notify.success(this.language.t('common.success'));
-      this.showForm = false;
-      await this.load(this.page);
+      this.closeForm();
+      await this.load(this.page());
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {
-      this.submitting = false;
+      this.submitting.set(false);
     }
   }
 
   async exportList() {
-    this.exporting = true;
+    this.exporting.set(true);
     try {
       downloadBlob(await this.api.exportGovernorates(), 'governorates.xlsx');
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {
-      this.exporting = false;
+      this.exporting.set(false);
     }
   }
 }

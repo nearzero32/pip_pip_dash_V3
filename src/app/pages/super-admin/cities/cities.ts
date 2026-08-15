@@ -25,7 +25,7 @@ import { downloadBlob } from '../../../core/download';
     ExportButtonComponent,
     TranslatePipe,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './cities.html',
 })
 export class CitiesComponent implements OnInit {
@@ -33,19 +33,22 @@ export class CitiesComponent implements OnInit {
   private language = inject(LanguageService);
   private notify = inject(NotificationService);
 
-  data: City[] = [];
-  governorates: Governorate[] = [];
-  isLoading = true;
-  exporting = false;
-  submitting = false;
-  showForm = false;
-  editing: City | null = null;
+  data = signal<City[]>([]);
+  private governorates: Governorate[] = [];
+  private governoratesPromise: Promise<void> | null = null;
+  isLoadingGovernorates = signal<boolean>(false);
+
+  isLoading = signal(true);
+  exporting = signal(false);
+  submitting = signal(false);
+  showForm = signal(false);
+  editing = signal<City | null>(null);
   selected = signal<City | null>(null);
   confirmAction = signal<'activate' | 'suspend' | 'archive' | null>(null);
-  pagination: PaginationConfig | null = null;
-  page = 1;
+  pagination = signal<PaginationConfig | null>(null);
+  page = signal(1);
   columns: TableColumn[] = [];
-  fields: FormField[] = [];
+  fields = signal<FormField[]>([]);
 
   ngOnInit() {
     this.columns = [
@@ -65,17 +68,27 @@ export class CitiesComponent implements OnInit {
       },
     ];
     this.load();
-    this.loadGovernorates();
   }
 
-  async loadGovernorates() {
-    try {
-      const govs = await this.api.listGovernorates(1, 100);
-      this.governorates = govs.data;
-      this.fields = this.buildFields();
-    } catch (err) {
-      // Non-blocking error
-    }
+  async ensureGovernoratesLoaded(): Promise<void> {
+    if (this.governorates.length > 0) return;
+    if (this.governoratesPromise) return this.governoratesPromise;
+
+    this.isLoadingGovernorates.set(true);
+    this.governoratesPromise = (async () => {
+      try {
+        const govs = await this.api.listGovernorates(1, 100);
+        this.governorates = govs.data;
+      } catch (err) {
+        this.governoratesPromise = null; // Let retry succeed on next click
+        this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
+        throw err;
+      } finally {
+        this.isLoadingGovernorates.set(false);
+      }
+    })();
+
+    return this.governoratesPromise;
   }
 
   private buildFields(): FormField[] {
@@ -96,45 +109,60 @@ export class CitiesComponent implements OnInit {
   }
 
   async load(page = 1) {
-    this.isLoading = true;
+    this.isLoading.set(true);
     try {
       const result = await this.api.listCities(page, 20);
-      this.data = result.data;
-      this.page = result.page;
+      this.data.set(result.data);
+      this.page.set(result.page);
       const pages = Math.max(1, Math.ceil(result.total / result.limit));
-      this.pagination = {
+      this.pagination.set({
         page: result.page,
         limit: result.limit,
         total: result.total,
         pages,
         hasNext: result.page < pages,
         hasPrev: result.page > 1,
-      };
+      });
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {
-      this.isLoading = false;
+      this.isLoading.set(false);
     }
   }
 
-  openCreate() {
-    this.editing = null;
-    this.fields = this.buildFields();
-    this.showForm = true;
+  async openCreate() {
+    this.editing.set(null);
+    try {
+      await this.ensureGovernoratesLoaded();
+      this.fields.set(this.buildFields());
+      this.showForm.set(true);
+    } catch (err) {
+      // Handled inside ensureGovernoratesLoaded()
+    }
   }
 
-  onEdit(row: City) {
-    this.editing = row;
-    this.fields = this.buildFields();
-    this.showForm = true;
+  async onEdit(row: City) {
+    this.editing.set(row);
+    try {
+      await this.ensureGovernoratesLoaded();
+      this.fields.set(this.buildFields());
+      this.showForm.set(true);
+    } catch (err) {
+      // Handled inside ensureGovernoratesLoaded()
+    }
   }
 
   onView(row: City) {
     this.selected.set(row);
   }
 
+  closeForm() {
+    this.showForm.set(false);
+    this.editing.set(null);
+  }
+
   async save(value: Record<string, string>) {
-    this.submitting = true;
+    this.submitting.set(true);
     const body = {
       governorateId: value['governorateId'],
       nameAr: value['nameAr'],
@@ -144,15 +172,19 @@ export class CitiesComponent implements OnInit {
       displayOrder: Number(value['displayOrder']),
     };
     try {
-      if (this.editing) await this.api.updateCity(this.editing.id, body);
-      else await this.api.createCity(body);
+      const activeEditing = this.editing();
+      if (activeEditing) {
+        await this.api.updateCity(activeEditing.id, body);
+      } else {
+        await this.api.createCity(body);
+      }
       this.notify.success(this.language.t('common.success'));
-      this.showForm = false;
-      await this.load(this.page);
+      this.closeForm();
+      await this.load(this.page());
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {
-      this.submitting = false;
+      this.submitting.set(false);
     }
   }
 
@@ -165,20 +197,20 @@ export class CitiesComponent implements OnInit {
       this.selected.set(updated);
       this.confirmAction.set(null);
       this.notify.success(this.language.t('common.success'));
-      await this.load(this.page);
+      await this.load(this.page());
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     }
   }
 
   async exportList() {
-    this.exporting = true;
+    this.exporting.set(true);
     try {
       downloadBlob(await this.api.exportCities(), 'cities.xlsx');
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {
-      this.exporting = false;
+      this.exporting.set(false);
     }
   }
 }

@@ -1,17 +1,17 @@
 <section class="page">
   <div class="toolbar">
     <p class="hint">{{ 'drivers.hint' | t }}</p>
-    <app-export-button [isLoading]="exporting" (action)="exportList()"></app-export-button>
+    <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
   </div>
 
   @if (blocked()) {
     <div class="blocked">{{ blockedMessage() }}</div>
   } @else {
     <app-table
-      [data]="data"
+      [data]="data()"
       [columns]="columns"
-      [pagination]="pagination"
-      [isLoading]="isLoading"
+      [pagination]="pagination()"
+      [isLoading]="isLoading()"
       [allowDelete]="false"
       [allowEdit]="false"
       [allowView]="true"

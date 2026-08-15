@@ -1,28 +1,28 @@
 <div class="page-toolbar">
   <p class="hint">{{ 'geo.cityHint' | t }}</p>
   <div style="display:flex;gap:.75rem;flex-wrap:wrap">
-    <app-export-button [isLoading]="exporting" (action)="exportList()"></app-export-button>
-    <button class="add-btn" type="button" (click)="openCreate()">{{ 'geo.addCity' | t }}</button>
+    <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
+    <button class="add-btn" type="button" [disabled]="isLoadingGovernorates()" (click)="openCreate()">{{ 'geo.addCity' | t }}</button>
   </div>
 </div>
 <app-table
-  [data]="data"
+  [data]="data()"
   [columns]="columns"
-  [pagination]="pagination"
-  [isLoading]="isLoading"
+  [pagination]="pagination()"
+  [isLoading]="isLoading()"
   [allowDelete]="false"
   [allowView]="true"
   (pageChange)="load($event)"
   (onEdit)="onEdit($event)"
   (onView)="onView($event)"
 ></app-table>
-@if (showForm) {
+@if (showForm()) {
   <app-form-dialog
-    [title]="(editing ? 'geo.editCity' : 'geo.addCity') | t"
-    [fields]="fields"
-    [initialData]="editing"
-    [isSubmitting]="submitting"
-    (onClose)="showForm = false"
+    [title]="(editing() ? 'geo.editCity' : 'geo.addCity') | t"
+    [fields]="fields()"
+    [initialData]="editing()"
+    [isSubmitting]="submitting()"
+    (onClose)="closeForm()"
     (onSubmit)="save($event)"
   ></app-form-dialog>
 }

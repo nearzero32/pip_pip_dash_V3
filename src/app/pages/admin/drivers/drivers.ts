@@ -16,7 +16,7 @@ import { ApiErrorBody } from '../../../interfaces/auth.interface';
   standalone: true,
   imports: [CommonModule, TableComponent, ExportButtonComponent, TranslatePipe],
   templateUrl: './drivers.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './drivers.css',
 })
 export class DriversComponent implements OnInit {
@@ -24,12 +24,12 @@ export class DriversComponent implements OnInit {
   private language = inject(LanguageService);
   private notify = inject(NotificationService);
 
-  data: DriverCandidate[] = [];
-  isLoading = true;
-  exporting = false;
-  page = 1;
+  data = signal<DriverCandidate[]>([]);
+  isLoading = signal(true);
+  exporting = signal(false);
+  page = signal(1);
   limit = 20;
-  pagination: PaginationConfig | null = null;
+  pagination = signal<PaginationConfig | null>(null);
   blocked = signal(false);
   blockedMessage = signal('');
   selected = signal<DriverCandidate | null>(null);
@@ -87,26 +87,26 @@ export class DriversComponent implements OnInit {
     this.load();
   }
 
-  async load(page = this.page) {
-    this.isLoading = true;
+  async load(page = this.page()) {
+    this.isLoading.set(true);
     this.blocked.set(false);
     try {
       const result = await this.driversApi.list(page, this.limit);
-      this.data = result.data;
-      this.page = result.page;
+      this.data.set(result.data);
+      this.page.set(result.page);
       const pages = Math.max(1, Math.ceil(result.total / result.limit));
-      this.pagination = {
+      this.pagination.set({
         page: result.page,
         limit: result.limit,
         total: result.total,
         pages,
         hasNext: result.page < pages,
         hasPrev: result.page > 1,
-      };
+      });
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: ApiErrorBody; status?: number } };
-      this.data = [];
-      this.pagination = null;
+      this.data.set([]);
+      this.pagination.set(null);
       if (axiosErr.response?.status === 403) {
         this.blocked.set(true);
         this.blockedMessage.set(
@@ -118,7 +118,7 @@ export class DriversComponent implements OnInit {
         );
       }
     } finally {
-      this.isLoading = false;
+      this.isLoading.set(false);
     }
   }
 
@@ -135,7 +135,7 @@ export class DriversComponent implements OnInit {
   }
 
   async exportList() {
-    this.exporting = true;
+    this.exporting.set(true);
     try {
       const blob = await this.driversApi.exportExcel();
       const url = URL.createObjectURL(blob);
@@ -150,7 +150,7 @@ export class DriversComponent implements OnInit {
         axiosErr.response?.data?.error?.message || this.language.t('common.unexpectedError')
       );
     } finally {
-      this.exporting = false;
+      this.exporting.set(false);
     }
   }
 }

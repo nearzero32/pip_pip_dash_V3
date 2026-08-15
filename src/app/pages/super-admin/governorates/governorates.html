@@ -1,23 +1,23 @@
 <div class="page-toolbar">
   <p class="hint">{{ 'geo.govHint' | t }}</p>
-  <app-export-button [isLoading]="exporting" (action)="exportList()"></app-export-button>
+  <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
 </div>
 <app-table
-  [data]="data"
+  [data]="data()"
   [columns]="columns"
-  [pagination]="pagination"
-  [isLoading]="isLoading"
+  [pagination]="pagination()"
+  [isLoading]="isLoading()"
   [allowDelete]="false"
   (pageChange)="load($event)"
   (onEdit)="onEdit($event)"
 ></app-table>
-@if (showForm) {
+@if (showForm()) {
   <app-form-dialog
     [title]="'geo.editGovernorate' | t"
     [fields]="fields"
-    [initialData]="editing"
-    [isSubmitting]="submitting"
-    (onClose)="showForm = false"
+    [initialData]="editing()"
+    [isSubmitting]="submitting()"
+    (onClose)="closeForm()"
     (onSubmit)="save($event)"
   ></app-form-dialog>
 }

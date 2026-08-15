@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableComponent } from '../../../components/table/table';
@@ -25,7 +25,7 @@ import { apiErrorMessage } from '../../../core/api-error';
     ConfirmationDialogComponent,
     TranslatePipe,
   ],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './delivery-pricing.html',
 })
 export class DeliveryPricingComponent implements OnInit {
@@ -34,13 +34,13 @@ export class DeliveryPricingComponent implements OnInit {
   private language = inject(LanguageService);
   private notify = inject(NotificationService);
 
-  cities: City[] = [];
-  cityId = '';
-  data: (DeliveryPricingVersion & { _id: string })[] = [];
-  isLoading = true;
-  showForm = false;
-  submitting = false;
-  activateId: string | null = null;
+  cities = signal<City[]>([]);
+  cityId = signal('');
+  data = signal<(DeliveryPricingVersion & { _id: string })[]>([]);
+  isLoading = signal(true);
+  showForm = signal(false);
+  submitting = signal(false);
+  activateId = signal<string | null>(null);
   columns: TableColumn[] = [];
   fields: FormField[] = [];
 
@@ -73,38 +73,52 @@ export class DeliveryPricingComponent implements OnInit {
   async loadCities() {
     try {
       const page = await this.geography.listCities(1, 100);
-      this.cities = page.data;
-      if (this.cities[0]) {
-        this.cityId = this.cities[0].id;
+      this.cities.set(page.data);
+      const activeCities = this.cities();
+      if (activeCities[0]) {
+        this.cityId.set(activeCities[0].id);
         await this.load();
       } else {
-        this.isLoading = false;
+        this.isLoading.set(false);
       }
     } catch (err) {
-      this.isLoading = false;
+      this.isLoading.set(false);
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     }
   }
 
+  onCityChange(id: string) {
+    this.cityId.set(id);
+    this.load();
+  }
+
   async load() {
-    if (!this.cityId) return;
-    this.isLoading = true;
+    const currentCityId = this.cityId();
+    if (!currentCityId) return;
+    this.isLoading.set(true);
     try {
-      const rows = await this.pricing.listDeliveryVersions(this.cityId);
-      this.data = rows.map((row) => ({ ...row, _id: row.id }));
+      const rows = await this.pricing.listDeliveryVersions(currentCityId);
+      if (this.cityId() === currentCityId) {
+        this.data.set(rows.map((row) => ({ ...row, _id: row.id })));
+      }
     } catch (err) {
-      this.data = [];
+      if (this.cityId() === currentCityId) {
+        this.data.set([]);
+      }
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {
-      this.isLoading = false;
+      if (this.cityId() === currentCityId) {
+        this.isLoading.set(false);
+      }
     }
   }
 
   async save(value: Record<string, string>) {
-    this.submitting = true;
+    this.submitting.set(true);
+    const activeCityId = this.cityId();
     try {
       const max = value['maximumDeliveryDistanceMeters'];
-      await this.pricing.createDeliveryVersion(this.cityId, {
+      await this.pricing.createDeliveryVersion(activeCityId, {
         baseFee: Number(value['baseFee']),
         includedDistanceMeters: Number(value['includedDistanceMeters']),
         pricePerKm: Number(value['pricePerKm']),
@@ -116,12 +130,12 @@ export class DeliveryPricingComponent implements OnInit {
         fallbackExtraDistanceMeters: Number(value['fallbackExtraDistanceMeters']),
       });
       this.notify.success(this.language.t('common.success'));
-      this.showForm = false;
+      this.showForm.set(false);
       await this.load();
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {
-      this.submitting = false;
+      this.submitting.set(false);
     }
   }
 
@@ -130,15 +144,17 @@ export class DeliveryPricingComponent implements OnInit {
       this.notify.info(this.language.t('pricing.immutable'));
       return;
     }
-    this.activateId = row.id;
+    this.activateId.set(row.id);
   }
 
   async confirmActivate() {
-    if (!this.activateId) return;
+    const activeId = this.activateId();
+    const activeCityId = this.cityId();
+    if (!activeId) return;
     try {
-      await this.pricing.activateDeliveryVersion(this.cityId, this.activateId);
+      await this.pricing.activateDeliveryVersion(activeCityId, activeId);
       this.notify.success(this.language.t('common.success'));
-      this.activateId = null;
+      this.activateId.set(null);
       await this.load();
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));

@@ -1,36 +1,36 @@
 <div class="page-toolbar">
   <p class="hint">{{ 'pricing.deliveryHint' | t }}</p>
   <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
-    <select class="city-picker" [(ngModel)]="cityId" (ngModelChange)="load()">
-      @for (city of cities; track city.id) {
+    <select class="city-picker" [ngModel]="cityId()" (ngModelChange)="onCityChange($event)">
+      @for (city of cities(); track city.id) {
         <option [value]="city.id">{{ city.nameEn }}</option>
       }
     </select>
-    <button class="add-btn" type="button" (click)="showForm = true">{{ 'pricing.newDraft' | t }}</button>
+    <button class="add-btn" type="button" (click)="showForm.set(true)">{{ 'pricing.newDraft' | t }}</button>
   </div>
 </div>
 <app-table
-  [data]="data"
+  [data]="data()"
   [columns]="columns"
-  [isLoading]="isLoading"
+  [isLoading]="isLoading()"
   [allowDelete]="false"
   (onEdit)="onEdit($event)"
 ></app-table>
 <p class="hint">{{ 'pricing.activateHint' | t }}</p>
-@if (showForm) {
+@if (showForm()) {
   <app-form-dialog
     [title]="'pricing.newDraft' | t"
     [fields]="fields"
-    [isSubmitting]="submitting"
-    (onClose)="showForm = false"
+    [isSubmitting]="submitting()"
+    (onClose)="showForm.set(false)"
     (onSubmit)="save($event)"
   ></app-form-dialog>
 }
-@if (activateId) {
+@if (activateId()) {
   <app-confirmation-dialog
     [type]="'warning'"
     [title]="'pricing.activate' | t"
     (confirm)="confirmActivate()"
-    (cancel)="activateId = null"
+    (cancel)="activateId.set(null)"
   ></app-confirmation-dialog>
 }
