@@ -1,0 +1,134 @@
+.sign-in-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at top right, rgba(254, 81, 4, 0.12), transparent 40%),
+    radial-gradient(circle at bottom left, rgba(51, 33, 95, 0.18), transparent 45%),
+    var(--bg-page);
+  position: relative;
+}
+
+.lang-chip {
+  position: absolute;
+  top: 1.25rem;
+  inset-inline-end: 1.25rem;
+  min-width: 44px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--brand-dark);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sign-in-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: var(--shadow-lg);
+}
+
+.brand {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  object-fit: contain;
+  margin-bottom: 1rem;
+}
+
+.brand h1 {
+  font-size: 1.6rem;
+  color: var(--brand-dark);
+  margin-bottom: 0.35rem;
+}
+
+.brand p {
+  color: var(--text-secondary);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.field input {
+  width: 100%;
+  height: 48px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0 0.9rem;
+  font-size: 0.95rem;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.field small {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.password-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.password-row input {
+  flex: 1;
+}
+
+.eye {
+  border: 1px solid var(--border-color);
+  background: var(--bg-page);
+  border-radius: 12px;
+  padding: 0 0.75rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.submit {
+  width: 100%;
+  height: 48px;
+  margin-top: 0.5rem;
+  border: none;
+  border-radius: 12px;
+  background: var(--primary-color);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.error-box {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}

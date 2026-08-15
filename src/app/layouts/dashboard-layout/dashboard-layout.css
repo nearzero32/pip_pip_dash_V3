@@ -131,7 +131,7 @@
 .profile-dropdown {
   position: absolute;
   top: 120%;
-  left: 0; 
+  inset-inline-end: 0;
   width: 200px;
   background: var(--bg-card); /* White */
   border: 1px solid var(--border-color);

@@ -76,3 +76,76 @@ button,
 input {
   font-family: inherit;
 }
+
+.page-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.page-toolbar .hint {
+  color: var(--text-secondary);
+}
+
+.add-btn {
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: 0.875rem 1.5rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.add-btn:hover {
+  background: var(--primary-hover);
+}
+
+.ghost-btn {
+  background: #f3f4f6;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 0.5rem 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.city-picker {
+  min-width: 240px;
+  height: 48px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0 0.75rem;
+  background: #fff;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.dash-card {
+  display: block;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.25rem;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow-sm);
+}
+
+.dash-card h3 {
+  color: var(--brand-dark);
+  margin-bottom: 0.35rem;
+}
+
+.dash-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}

@@ -91,7 +91,8 @@ html[dir="rtl"] .sidebar.mobile {
   height: 38px;
   width: 38px;
   border-radius: 12px;
-  padding: 2px;
+  object-fit: contain;
+  background: #fff;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

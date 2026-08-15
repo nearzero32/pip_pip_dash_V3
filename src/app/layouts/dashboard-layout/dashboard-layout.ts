@@ -4,6 +4,7 @@ import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/ro
 import { SidebarComponent } from '../../components/sidebar/sidebar';
 import { LayoutService } from '../../services/layout.service';
 import { LanguageService } from '../../services/language.service';
+import { AuthService } from '../../services/auth.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { filter } from 'rxjs/operators';
 
@@ -17,10 +18,12 @@ import { filter } from 'rxjs/operators';
 export class DashboardLayoutComponent {
   public layoutService = inject(LayoutService);
   public language = inject(LanguageService);
+  public auth = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
   titleKey = signal(this.readTitleKey());
+  menuOpen = signal(false);
 
   constructor() {
     this.router.events

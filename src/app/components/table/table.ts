@@ -21,6 +21,8 @@ export class TableComponent {
   @Input() isLoading: boolean = false;
   @Input() showRestore: boolean = false;
   @Input() allowDelete: boolean = true;
+  @Input() allowEdit: boolean = true;
+  @Input() showActions: boolean = true;
   @Input() allowPrint: boolean = false;
   @Input() printingId: string | null = null;
   @Input() allowPayments: boolean = false;

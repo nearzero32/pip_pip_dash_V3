@@ -1,0 +1,24 @@
+<div class="page-toolbar">
+  <p class="hint">{{ 'staff.adminHint' | t }}</p>
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+    <app-export-button [isLoading]="exporting" (action)="exportList()"></app-export-button>
+    <button class="add-btn" type="button" (click)="openCreate()">{{ 'staff.addAdmin' | t }}</button>
+  </div>
+</div>
+<app-table
+  [data]="data"
+  [columns]="columns"
+  [isLoading]="isLoading"
+  [allowDelete]="false"
+  (onEdit)="onEdit($event)"
+></app-table>
+@if (showForm) {
+  <app-form-dialog
+    [title]="(editing ? 'staff.editAdmin' : 'staff.addAdmin') | t"
+    [fields]="fields"
+    [initialData]="editing"
+    [isSubmitting]="submitting"
+    (onClose)="showForm = false"
+    (onSubmit)="save($event)"
+  ></app-form-dialog>
+}

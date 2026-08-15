@@ -17,6 +17,19 @@
         <button class="lang-btn" (click)="language.toggle()" [attr.aria-label]="'language' | t">
           {{ language.lang() === 'en' ? 'AR' : 'EN' }}
         </button>
+        <div class="profile-menu-container">
+          <button class="profile-btn" type="button" (click)="menuOpen.set(!menuOpen())">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </button>
+          @if (menuOpen()) {
+            <div class="menu-backdrop" (click)="menuOpen.set(false)"></div>
+            <div class="profile-dropdown">
+              <button class="dropdown-item danger" type="button" (click)="auth.logout()">
+                {{ 'logout' | t }}
+              </button>
+            </div>
+          }
+        </div>
       </div>
     </header>
 

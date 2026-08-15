@@ -1,0 +1,76 @@
+<section class="page">
+  <div class="toolbar">
+    <p class="hint">{{ 'drivers.hint' | t }}</p>
+    <app-export-button [isLoading]="exporting" (action)="exportList()"></app-export-button>
+  </div>
+
+  @if (blocked()) {
+    <div class="blocked">{{ blockedMessage() }}</div>
+  } @else {
+    <app-table
+      [data]="data"
+      [columns]="columns"
+      [pagination]="pagination"
+      [isLoading]="isLoading"
+      [allowDelete]="false"
+      [allowEdit]="false"
+      [allowView]="true"
+      (pageChange)="onPageChange($event)"
+      (onView)="onView($event)"
+    ></app-table>
+  }
+</section>
+
+@if (selected(); as driver) {
+  <div class="backdrop" (click)="closeDetails()"></div>
+  <aside class="details">
+    <header>
+      <h2>{{ driver.driverName }}</h2>
+      <button type="button" (click)="closeDetails()">{{ 'common.close' | t }}</button>
+    </header>
+    <dl>
+      <div>
+        <dt>{{ 'drivers.workStatus' | t }}</dt>
+        <dd>{{ driver.workStatus }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'drivers.eligibility' | t }}</dt>
+        <dd>{{ driver.eligibilityStatus }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'drivers.activeOrders' | t }}</dt>
+        <dd>{{ driver.activeOrderCount }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'drivers.currentOrder' | t }}</dt>
+        <dd>
+          @if (driver.currentOrderSummary) {
+            {{ driver.currentOrderSummary.storeName }} · {{ driver.currentOrderSummary.status }}
+          } @else {
+            —
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>{{ 'drivers.nextOrder' | t }}</dt>
+        <dd>
+          @if (driver.nextOrderSummary) {
+            {{ driver.nextOrderSummary.storeName }} · {{ driver.nextOrderSummary.status }}
+          } @else {
+            —
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>{{ 'drivers.gps' | t }}</dt>
+        <dd>
+          @if (driver.lastLocation) {
+            {{ driver.lastLocation.latitude }}, {{ driver.lastLocation.longitude }}
+          } @else {
+            —
+          }
+        </dd>
+      </div>
+    </dl>
+  </aside>
+}

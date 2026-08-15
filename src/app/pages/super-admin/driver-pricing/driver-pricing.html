@@ -1,0 +1,33 @@
+<div class="page-toolbar">
+  <p class="hint">{{ 'pricing.driverHint' | t }}</p>
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
+    <select class="city-picker" [(ngModel)]="cityId" (ngModelChange)="load()">
+      @for (city of cities; track city.id) {
+        <option [value]="city.id">{{ city.nameEn }}</option>
+      }
+    </select>
+    <button class="add-btn" type="button" (click)="openForm()">{{ 'pricing.savePricing' | t }}</button>
+  </div>
+</div>
+@if (loading) {
+  <p>{{ 'common.saving' | t }}</p>
+} @else if (current) {
+  <div class="dash-card">
+    <p>{{ 'pricing.version' | t }}: {{ current.version }}</p>
+    <p>{{ 'pricing.driverBase' | t }}: {{ current.pricingBase }}</p>
+    <p>{{ 'pricing.roundingUnit' | t }}: {{ current.roundingUnit }}</p>
+    <pre>{{ current.pricingStages | json }}</pre>
+  </div>
+} @else if (missing) {
+  <p class="hint">{{ 'pricing.noDriverPricing' | t }}</p>
+}
+@if (showForm) {
+  <app-form-dialog
+    [title]="'pricing.savePricing' | t"
+    [fields]="fields"
+    [initialData]="initialData()"
+    [isSubmitting]="submitting"
+    (onClose)="showForm = false"
+    (onSubmit)="save($event)"
+  ></app-form-dialog>
+}

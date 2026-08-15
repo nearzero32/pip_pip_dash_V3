@@ -1,0 +1,53 @@
+<div class="page-toolbar">
+  <p class="hint">{{ 'geo.cityHint' | t }}</p>
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+    <app-export-button [isLoading]="exporting" (action)="exportList()"></app-export-button>
+    <button class="add-btn" type="button" (click)="openCreate()">{{ 'geo.addCity' | t }}</button>
+  </div>
+</div>
+<app-table
+  [data]="data"
+  [columns]="columns"
+  [pagination]="pagination"
+  [isLoading]="isLoading"
+  [allowDelete]="false"
+  [allowView]="true"
+  (pageChange)="load($event)"
+  (onEdit)="onEdit($event)"
+  (onView)="onView($event)"
+></app-table>
+@if (showForm) {
+  <app-form-dialog
+    [title]="(editing ? 'geo.editCity' : 'geo.addCity') | t"
+    [fields]="fields"
+    [initialData]="editing"
+    [isSubmitting]="submitting"
+    (onClose)="showForm = false"
+    (onSubmit)="save($event)"
+  ></app-form-dialog>
+}
+@if (selected(); as city) {
+  <div class="backdrop" (click)="selected.set(null)" style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:80"></div>
+  <aside class="details" style="position:fixed;inset-block:0;inset-inline-end:0;width:min(420px,100%);background:#fff;z-index:90;padding:1.5rem">
+    <h2>{{ city.nameEn }}</h2>
+    <p>{{ city.nameAr }} · {{ city.status }}</p>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem">
+      @if (city.status === 'DRAFT' || city.status === 'SUSPENDED') {
+        <button class="add-btn" type="button" (click)="confirmAction.set('activate')">{{ 'geo.activate' | t }}</button>
+      }
+      @if (city.status === 'ACTIVE') {
+        <button class="ghost-btn" type="button" (click)="confirmAction.set('suspend')">{{ 'geo.suspend' | t }}</button>
+      }
+      @if (city.status !== 'ARCHIVED') {
+        <button class="ghost-btn" type="button" (click)="confirmAction.set('archive')">{{ 'geo.archive' | t }}</button>
+      }
+    </div>
+  </aside>
+}
+@if (confirmAction()) {
+  <app-confirmation-dialog
+    [type]="'warning'"
+    (confirm)="runTransition()"
+    (cancel)="confirmAction.set(null)"
+  ></app-confirmation-dialog>
+}

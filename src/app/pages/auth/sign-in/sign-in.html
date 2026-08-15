@@ -1,0 +1,58 @@
+<div class="sign-in-page">
+  <button class="lang-chip" type="button" (click)="language.toggle()">
+    {{ language.lang() === 'en' ? 'AR' : 'EN' }}
+  </button>
+
+  <div class="sign-in-card">
+    <div class="brand">
+      <img src="/logo.png" alt="Pip Pip" class="logo" />
+      <h1>{{ 'auth.welcome' | t }}</h1>
+      <p>{{ 'auth.subtitle' | t }}</p>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="error-box">{{ errorMessage() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <label class="field">
+        <span>{{ 'auth.email' | t }}</span>
+        <input
+          type="email"
+          formControlName="email"
+          autocomplete="username"
+          dir="ltr"
+          [placeholder]="'auth.emailPlaceholder' | t"
+        />
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <small>{{ 'common.invalidEmail' | t }}</small>
+        }
+      </label>
+
+      <label class="field">
+        <span>{{ 'auth.password' | t }}</span>
+        <div class="password-row">
+          <input
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="current-password"
+            dir="ltr"
+            [placeholder]="'auth.passwordPlaceholder' | t"
+          />
+          <button type="button" class="eye" (click)="showPassword.set(!showPassword())">
+            {{ showPassword() ? ('auth.hide' | t) : ('auth.show' | t) }}
+          </button>
+        </div>
+        @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+          <small>{{ 'common.required' | t }}</small>
+        } @else if (form.controls.password.touched && form.controls.password.hasError('minlength')) {
+          <small>{{ 'auth.passwordHint' | t }}</small>
+        }
+      </label>
+
+      <button class="submit" type="submit" [disabled]="submitting()">
+        {{ submitting() ? ('auth.signingIn' | t) : ('auth.signIn' | t) }}
+      </button>
+    </form>
+  </div>
+</div>
