@@ -18,6 +18,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     closeSidebar: 'Close sidebar',
     openMenu: 'Open menu',
     skipToContent: 'Skip to content',
+    mainNavigation: 'Main navigation',
     roleSuperAdmin: 'Super admin',
     roleCityStaff: 'City staff',
 
@@ -233,6 +234,7 @@ export const translations: Record<Lang, Record<string, string>> = {
     closeSidebar: 'إغلاق القائمة',
     openMenu: 'فتح القائمة',
     skipToContent: 'تخطي إلى المحتوى',
+    mainNavigation: 'التنقل الرئيسي',
     roleSuperAdmin: 'مدير عام',
     roleCityStaff: 'طاقم المدينة',
 

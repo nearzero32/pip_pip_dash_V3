@@ -39,7 +39,6 @@
             type="button"
             (click)="toggleProfileMenu()"
             [attr.aria-expanded]="menuOpen()"
-            aria-haspopup="menu"
             aria-controls="profile-menu"
             [attr.aria-label]="'profile' | t"
           >
@@ -47,13 +46,13 @@
           </button>
           @if (menuOpen()) {
             <div class="menu-backdrop" (click)="closeProfileMenu()" aria-hidden="true"></div>
-            <div class="profile-dropdown" id="profile-menu" role="menu">
+            <div class="profile-dropdown" id="profile-menu">
               <div class="profile-meta">
                 <span class="profile-role">
                   {{ auth.isSuperAdmin() ? ('roleSuperAdmin' | t) : ('roleCityStaff' | t) }}
                 </span>
               </div>
-              <button class="dropdown-item danger" type="button" role="menuitem" (click)="auth.logout()">
+              <button class="dropdown-item danger" type="button" (click)="auth.logout()">
                 {{ 'logout' | t }}
               </button>
             </div>

@@ -35,6 +35,7 @@
   z-index: 1001;
   transform: translateX(-100%);
   box-shadow: var(--shadow-lg);
+  pointer-events: none;
 }
 
 html[dir="rtl"] .sidebar.mobile {
@@ -43,6 +44,7 @@ html[dir="rtl"] .sidebar.mobile {
 
 .sidebar.mobile.mobile-open {
   transform: translateX(0);
+  pointer-events: auto;
 }
 
 .sidebar.collapsed {

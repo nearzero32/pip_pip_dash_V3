@@ -13,6 +13,7 @@
   [class.collapsed]="layoutService.isSidebarCollapsed() && !layoutService.isMobile()"
   [class.pinned]="layoutService.isSidebarPinned()"
   [attr.aria-hidden]="layoutService.isMobile() && !layoutService.isMobileDrawerOpen() ? true : null"
+  [inert]="layoutService.isMobile() && !layoutService.isMobileDrawerOpen()"
   (mouseenter)="onMouseEnter()"
   (mouseleave)="onMouseLeave()"
 >
@@ -47,7 +48,7 @@
     }
   </div>
 
-  <nav class="sidebar-nav" aria-label="Main">
+  <nav class="sidebar-nav" [attr.aria-label]="'mainNavigation' | t">
     @for (item of menuItems(); track item.id) {
       @if (item.children && item.children.length > 0) {
         <div class="nav-item-wrapper">
