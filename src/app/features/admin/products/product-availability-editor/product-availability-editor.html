@@ -1,0 +1,43 @@
+<div class="avail-editor">
+  <p class="hint">{{ 'products.availHint' | t }}</p>
+  <p class="hint">{{ 'products.overnightHint' | t }}</p>
+  @if (windows().length === 0) {
+    <p class="hint">{{ 'products.noAvailabilityWindows' | t }}</p>
+  }
+  @for (group of groups(); track group.day) {
+    <div class="avail-day">
+      <header>
+        <strong>{{ weekdayLabel(group.day) }}</strong>
+        <button class="ghost-btn" type="button" [disabled]="disabled()" (click)="addWindow(group.day)">
+          {{ 'stores.addPeriod' | t }}
+        </button>
+      </header>
+      @for (item of group.items; track item.index) {
+        <div class="avail-row">
+          <label>
+            <span class="visually-hidden">{{ 'products.opensAt' | t }}</span>
+            <input
+              type="time"
+              [disabled]="disabled()"
+              [ngModel]="item.window.opensAt"
+              (ngModelChange)="setTime(item.index, 'opensAt', $event)"
+            />
+          </label>
+          <span>→</span>
+          <label>
+            <span class="visually-hidden">{{ 'products.closesAt' | t }}</span>
+            <input
+              type="time"
+              [disabled]="disabled()"
+              [ngModel]="item.window.closesAt"
+              (ngModelChange)="setTime(item.index, 'closesAt', $event)"
+            />
+          </label>
+          <button class="ghost-btn" type="button" [disabled]="disabled()" (click)="removeWindow(item.index)">
+            {{ 'stores.removePeriod' | t }}
+          </button>
+        </div>
+      }
+    </div>
+  }
+</div>

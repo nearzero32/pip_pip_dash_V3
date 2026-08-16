@@ -3,8 +3,15 @@ import { ApiService } from '../../../core/http/api.service';
 import {
   CatalogListPage,
   Product,
-  ProductAvailabilityPatch,
+  ProductAvailabilityFlagPatch,
+  ProductAvailabilityInput,
+  ProductCorePatch,
+  ProductCreateBody,
+  ProductImageInput,
   ProductListQuery,
+  ProductSizeArchiveBody,
+  ProductSizeCreateInput,
+  ProductSizePatch,
   ProductStatusPatch,
   StoreCategory,
   StoreCategoryCreateBody,
@@ -110,14 +117,96 @@ export class ProductCatalogService {
     return response.data;
   }
 
-  async updateProduct(
+  async createProduct(storeId: string, body: ProductCreateBody): Promise<Product> {
+    const response = await this.api.client.post<Product>(
+      `/api/v1/dashboard/stores/${storeId}/products`,
+      body
+    );
+    return response.data;
+  }
+
+  async updateProductCore(
     storeId: string,
     productId: string,
-    patch: ProductStatusPatch | ProductAvailabilityPatch
+    patch: ProductCorePatch
+  ): Promise<Product> {
+    return this.patchProduct(storeId, productId, patch);
+  }
+
+  async updateProductStatus(
+    storeId: string,
+    productId: string,
+    patch: ProductStatusPatch
+  ): Promise<Product> {
+    return this.patchProduct(storeId, productId, patch);
+  }
+
+  async updateProductAvailabilityFlag(
+    storeId: string,
+    productId: string,
+    patch: ProductAvailabilityFlagPatch
+  ): Promise<Product> {
+    return this.patchProduct(storeId, productId, patch);
+  }
+
+  async replaceProductImages(
+    storeId: string,
+    productId: string,
+    images: ProductImageInput[]
+  ): Promise<Product> {
+    const response = await this.api.client.put<Product>(
+      `/api/v1/dashboard/stores/${storeId}/products/${productId}/images`,
+      { images }
+    );
+    return response.data;
+  }
+
+  async addProductSize(
+    storeId: string,
+    productId: string,
+    body: ProductSizeCreateInput
+  ): Promise<Product> {
+    const response = await this.api.client.post<Product>(
+      `/api/v1/dashboard/stores/${storeId}/products/${productId}/sizes`,
+      body
+    );
+    return response.data;
+  }
+
+  async updateProductSize(
+    storeId: string,
+    productId: string,
+    sizeId: string,
+    patch: ProductSizePatch
   ): Promise<Product> {
     const response = await this.api.client.patch<Product>(
-      `/api/v1/dashboard/stores/${storeId}/products/${productId}`,
+      `/api/v1/dashboard/stores/${storeId}/products/${productId}/sizes/${sizeId}`,
       patch
+    );
+    return response.data;
+  }
+
+  async archiveProductSize(
+    storeId: string,
+    productId: string,
+    sizeId: string,
+    body?: ProductSizeArchiveBody
+  ): Promise<Product> {
+    const response = await this.api.client.delete<Product>(
+      `/api/v1/dashboard/stores/${storeId}/products/${productId}/sizes/${sizeId}`,
+      body ? { data: body } : undefined
+    );
+    return response.data;
+  }
+
+  async replaceProductAvailability(
+    storeId: string,
+    productId: string,
+    windows: ProductAvailabilityInput[]
+  ): Promise<Product> {
+    const response = await this.api.client.put<Product>(
+      `/api/v1/dashboard/stores/${storeId}/products/${productId}/availability`,
+      { windows }
     );
     return response.data;
   }
@@ -125,6 +214,18 @@ export class ProductCatalogService {
   async archiveProduct(storeId: string, productId: string): Promise<Product> {
     const response = await this.api.client.delete<Product>(
       `/api/v1/dashboard/stores/${storeId}/products/${productId}`
+    );
+    return response.data;
+  }
+
+  private async patchProduct(
+    storeId: string,
+    productId: string,
+    patch: ProductCorePatch | ProductStatusPatch | ProductAvailabilityFlagPatch
+  ): Promise<Product> {
+    const response = await this.api.client.patch<Product>(
+      `/api/v1/dashboard/stores/${storeId}/products/${productId}`,
+      patch
     );
     return response.data;
   }

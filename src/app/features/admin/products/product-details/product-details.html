@@ -136,6 +136,9 @@
 
   @if (product().status !== 'ARCHIVED' && !mutationsDisabled()) {
     <div class="details-actions">
+      <button class="add-btn" type="button" [disabled]="mutating()" (click)="edit.emit()">
+        {{ 'products.editProduct' | t }}
+      </button>
       @if (product().status === 'ACTIVE') {
         <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="statusChange.emit('INACTIVE')">
           {{ 'catalog.deactivate' | t }}

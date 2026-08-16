@@ -50,7 +50,7 @@ export class MediaApiService {
    */
   async uploadImage(
     file: File,
-    purpose: Extract<MediaPurpose, 'STORE_LOGO' | 'STORE_IMAGE' | 'CATEGORY_IMAGE'>
+    purpose: Extract<MediaPurpose, 'STORE_LOGO' | 'STORE_IMAGE' | 'CATEGORY_IMAGE' | 'PRODUCT_IMAGE'>
   ): Promise<MediaAsset> {
     if (!isAllowedImageType(file.type)) {
       throw new MediaClientError(

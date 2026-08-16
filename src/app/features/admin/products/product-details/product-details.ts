@@ -39,6 +39,7 @@ export class ProductDetailsComponent {
   readonly statusChange = output<'ACTIVE' | 'INACTIVE'>();
   readonly availabilityChange = output<boolean>();
   readonly archive = output<void>();
+  readonly edit = output<void>();
 
   readonly selectedImageId = signal<string | null>(null);
 

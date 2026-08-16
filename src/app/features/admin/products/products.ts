@@ -33,6 +33,7 @@ import {
 } from './product-catalog.models';
 import { StoreCategoriesComponent } from './store-categories/store-categories';
 import { ProductDetailsComponent } from './product-details/product-details';
+import { ProductEditorComponent } from './product-editor/product-editor';
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -50,6 +51,7 @@ export type CatalogTab = 'products' | 'categories';
     TranslatePipe,
     StoreCategoriesComponent,
     ProductDetailsComponent,
+    ProductEditorComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './products.html',
@@ -91,6 +93,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
   readonly selectedProduct = signal<Product | null>(null);
   readonly mutating = signal(false);
   readonly confirmArchive = signal(false);
+  readonly editorOpen = signal(false);
+  readonly editingProduct = signal<Product | null>(null);
 
   columns: TableColumn[] = [];
   private listSeq = 0;
@@ -180,6 +184,37 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.selectedProduct.set(null);
   }
 
+  openCreate() {
+    if (this.productsBlocked() || this.storeArchived() || !this.selectedStoreId()) return;
+    this.editingProduct.set(null);
+    this.editorOpen.set(true);
+  }
+
+  openEdit() {
+    const product = this.selectedProduct();
+    if (!product || product.status === 'ARCHIVED' || this.storeArchived()) return;
+    this.editingProduct.set(product);
+    this.editorOpen.set(true);
+  }
+
+  async onEditorSaved(product: Product) {
+    this.editorOpen.set(false);
+    this.editingProduct.set(null);
+    this.selectedProduct.set(product);
+    await this.loadProducts(this.page());
+  }
+
+  async onProductPatched(product: Product) {
+    this.selectedProduct.set(product);
+    this.editingProduct.set(product);
+    await this.loadProducts(this.page());
+  }
+
+  closeEditor() {
+    this.editorOpen.set(false);
+    this.editingProduct.set(null);
+  }
+
   onCategoryContext(categories: StoreCategory[]) {
     this.categoryContext.set(categories);
     this.products.set(this.products().map((row) => this.toRow(row, categories)));
@@ -204,7 +239,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     if (!product || product.status === 'ARCHIVED') return;
     this.mutating.set(true);
     try {
-      const updated = await this.catalog.updateProduct(storeId, product.id, { status });
+      const updated = await this.catalog.updateProductStatus(storeId, product.id, { status });
       this.selectedProduct.set(updated);
       this.notify.success(this.language.t('products.productUpdated'));
       await this.loadProducts(this.page());
@@ -221,7 +256,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     if (!product || product.status === 'ARCHIVED') return;
     this.mutating.set(true);
     try {
-      const updated = await this.catalog.updateProduct(storeId, product.id, { isAvailable });
+      const updated = await this.catalog.updateProductAvailabilityFlag(storeId, product.id, { isAvailable });
       this.selectedProduct.set(updated);
       this.notify.success(this.language.t('products.productUpdated'));
       await this.loadProducts(this.page());
@@ -253,6 +288,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
   private applyStoreId(storeId: string, syncQuery: boolean) {
     this.selectedStoreId.set(storeId);
     this.selectedProduct.set(null);
+    this.editorOpen.set(false);
+    this.editingProduct.set(null);
     this.page.set(1);
     this.search.set('');
     this.statusFilter.set('');

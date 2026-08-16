@@ -1,0 +1,66 @@
+<div class="img-editor">
+  <p class="hint">{{ 'products.imagesHint' | t }}</p>
+  <div class="img-editor__grid">
+    @for (image of images(); track image.key; let i = $index) {
+      <article class="img-card" [class.img-card--primary]="image.isPrimary">
+        @if (image.previewUrl; as src) {
+          <img [src]="src" [alt]="'products.image' | t" />
+        }
+        <p class="img-card__meta">
+          {{ (image.isNew ? 'products.imageNew' : 'products.imageExisting') | t }}
+          @if (image.isPrimary) {
+            · {{ 'products.primaryImage' | t }}
+          }
+        </p>
+        <div class="img-card__actions">
+          <button
+            class="ghost-btn"
+            type="button"
+            [disabled]="disabled()"
+            [attr.aria-pressed]="image.isPrimary"
+            (click)="setPrimary(image.key)"
+          >
+            {{ 'products.primaryImage' | t }}
+          </button>
+          <button
+            class="ghost-btn"
+            type="button"
+            [disabled]="disabled() || i === 0"
+            [attr.aria-label]="'products.moveEarlier' | t"
+            (click)="move(image.key, -1)"
+          >
+            {{ 'products.moveEarlier' | t }}
+          </button>
+          <button
+            class="ghost-btn"
+            type="button"
+            [disabled]="disabled() || i === images().length - 1"
+            [attr.aria-label]="'products.moveLater' | t"
+            (click)="move(image.key, 1)"
+          >
+            {{ 'products.moveLater' | t }}
+          </button>
+          <button
+            class="danger-btn"
+            type="button"
+            [disabled]="disabled() || images().length <= 1"
+            (click)="remove(image.key)"
+          >
+            {{ 'products.removeImage' | t }}
+          </button>
+        </div>
+      </article>
+    }
+  </div>
+  <label class="filter-field">
+    <span class="filter-field__label">{{ 'products.addImage' | t }}</span>
+    <input
+      type="file"
+      accept="image/jpeg,image/png,image/webp"
+      multiple
+      [disabled]="disabled() || images().length >= 10"
+      [attr.aria-label]="'products.addImage' | t"
+      (change)="addFiles($any($event.target).files); $any($event.target).value = ''"
+    />
+  </label>
+</div>

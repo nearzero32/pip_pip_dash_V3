@@ -1,0 +1,142 @@
+<div class="product-editor" role="dialog" aria-modal="true" [attr.aria-labelledby]="'product-editor-title'">
+  <div class="product-editor__panel">
+    <header class="product-editor__header">
+      <h2 id="product-editor-title">
+        {{ isCreate() ? ('products.add' | t) : ('products.editProduct' | t) }}
+      </h2>
+      <button class="ghost-btn" type="button" [disabled]="saving()" (click)="requestClose()">
+        {{ 'common.cancel' | t }}
+      </button>
+    </header>
+
+    @if (isCreate()) {
+      <ol class="product-editor__steps">
+        <li [class.is-current]="step() === 1"><button type="button" [disabled]="saving()" (click)="goStep(1)">1. {{ 'products.stepBasic' | t }}</button></li>
+        <li [class.is-current]="step() === 2"><button type="button" [disabled]="saving()" (click)="goStep(2)">2. {{ 'products.stepPricing' | t }}</button></li>
+        <li [class.is-current]="step() === 3"><button type="button" [disabled]="saving()" (click)="goStep(3)">3. {{ 'products.stepImages' | t }}</button></li>
+        <li [class.is-current]="step() === 4"><button type="button" [disabled]="saving()" (click)="goStep(4)">4. {{ 'products.stepReview' | t }}</button></li>
+      </ol>
+    } @else {
+      <p class="hint">{{ 'products.editHint' | t }}</p>
+      <div class="product-editor__steps" role="tablist">
+        <button type="button" role="tab" [attr.aria-selected]="section() === 'basic'" (click)="section.set('basic')">{{ 'products.stepBasic' | t }}</button>
+        <button type="button" role="tab" [attr.aria-selected]="section() === 'images'" (click)="section.set('images')">{{ 'products.stepImages' | t }}</button>
+        <button type="button" role="tab" [attr.aria-selected]="section() === 'pricing'" (click)="section.set('pricing')">{{ 'products.stepPricing' | t }}</button>
+        <button type="button" role="tab" [attr.aria-selected]="section() === 'availability'" (click)="section.set('availability')">{{ 'products.availabilityWindows' | t }}</button>
+      </div>
+    }
+
+    @if (nameError()) {
+      <p class="product-editor__error">{{ nameError() }}</p>
+    }
+    @if (stepError()) {
+      <p class="product-editor__error">{{ stepError() }}</p>
+    }
+    @if (submitError()) {
+      <p class="product-editor__error">{{ submitError() }}</p>
+    }
+
+    @if (isCreate() ? step() === 1 : section() === 'basic') {
+      <section class="product-editor__section">
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'catalog.name' | t }}</span>
+          <input class="product-editor__input" type="text" maxlength="100" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+        </label>
+        <p class="hint">{{ 'catalog.nameHint' | t }}</p>
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'products.description' | t }}</span>
+          <textarea class="product-editor__textarea" rows="4" maxlength="2000" [ngModel]="description()" (ngModelChange)="description.set($event)"></textarea>
+        </label>
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'products.storeCategory' | t }}</span>
+          <select class="city-picker" [ngModel]="categoryId()" (ngModelChange)="categoryId.set($event)">
+            <option value="">{{ 'products.uncategorized' | t }}</option>
+            @for (category of categoryChoices(); track category.id) {
+              <option [value]="category.id">{{ categoryLabel(category) }}</option>
+            }
+          </select>
+        </label>
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'catalog.displayOrder' | t }}</span>
+          <input class="product-editor__input" type="number" min="0" [ngModel]="displayOrder()" (ngModelChange)="setDisplayOrder($event)" />
+        </label>
+        @if (!isCreate() && showBasePrice()) {
+          <label class="filter-field">
+            <span class="filter-field__label">{{ 'products.basePrice' | t }} ({{ 'products.iqd' | t }})</span>
+            <input class="product-editor__input" [ngModel]="basePrice()" (ngModelChange)="basePrice.set($event)" inputmode="numeric" />
+          </label>
+        }
+        @if (!isCreate()) {
+          <button class="add-btn" type="button" [disabled]="saving()" (click)="saveBasic()">{{ 'products.saveBasic' | t }}</button>
+        }
+      </section>
+    }
+
+    @if (isCreate() ? step() === 2 : section() === 'pricing') {
+      <app-product-pricing-editor
+        [editorMode]="isCreate() ? 'create' : 'edit'"
+        [storeId]="storeId()"
+        [product]="liveProduct()"
+        [pricingMode]="pricingMode()"
+        [basePrice]="basePrice()"
+        [sizeDrafts]="sizeDrafts()"
+        [disabled]="saving()"
+        (pricingModeChange)="pricingMode.set($event)"
+        (basePriceChange)="basePrice.set($event)"
+        (sizeDraftsChange)="sizeDrafts.set($event)"
+        (productChange)="onProductUpdated($event)"
+        (storeArchived)="storeArchived.emit()"
+        (productGone)="closed.emit()"
+      ></app-product-pricing-editor>
+    }
+
+    @if (isCreate() ? step() === 3 : section() === 'images') {
+      <app-product-images-editor
+        [images]="images()"
+        [disabled]="saving()"
+        (changed)="setImages($event)"
+      ></app-product-images-editor>
+      @if (!isCreate()) {
+        <button class="add-btn" type="button" [disabled]="saving()" (click)="saveImages()">{{ 'products.saveImages' | t }}</button>
+      }
+    }
+
+    @if (isCreate() ? step() === 4 : section() === 'availability') {
+      <app-product-availability-editor
+        [windows]="windows()"
+        [disabled]="saving()"
+        (changed)="windows.set($event)"
+      ></app-product-availability-editor>
+      @if (isCreate()) {
+        <dl class="product-review">
+          <div><dt>{{ 'catalog.name' | t }}</dt><dd>{{ name() }}</dd></div>
+          <div><dt>{{ 'products.pricingMode' | t }}</dt><dd>{{ (pricingMode() === 'sizes' ? 'products.sizedProduct' : 'products.basePriceProduct') | t }}</dd></div>
+          <div><dt>{{ 'products.image' | t }}</dt><dd>{{ images().length }}</dd></div>
+        </dl>
+      } @else {
+        <button class="add-btn" type="button" [disabled]="saving()" (click)="saveAvailability()">{{ 'products.saveAvailability' | t }}</button>
+      }
+    }
+
+    <footer class="product-editor__footer">
+      @if (isCreate()) {
+        <button class="ghost-btn" type="button" [disabled]="saving() || step() === 1" (click)="goPrev()">{{ 'common.previous' | t }}</button>
+        @if (step() < 4) {
+          <button class="add-btn" type="button" [disabled]="saving()" (click)="goNext()">{{ 'common.next' | t }}</button>
+        } @else {
+          <button class="add-btn" type="button" [disabled]="saving()" (click)="submitCreate()">{{ 'common.save' | t }}</button>
+        }
+      }
+    </footer>
+  </div>
+</div>
+
+@if (confirmDiscard()) {
+  <app-confirmation-dialog
+    [type]="'warning'"
+    [title]="'products.discardTitle' | t"
+    [message]="'products.discardMessage' | t"
+    (confirm)="closed.emit()"
+    (cancel)="confirmDiscard.set(false)"
+  ></app-confirmation-dialog>
+}

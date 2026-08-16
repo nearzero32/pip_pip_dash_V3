@@ -1,0 +1,47 @@
+.pricing-mode {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.size-list,
+.size-add {
+  display: grid;
+  gap: var(--space-3);
+  margin-block-start: var(--space-3);
+}
+
+.size-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+}
+
+.size-row input,
+.size-row select {
+  height: var(--control-height-md);
+  font-family: inherit;
+}
+
+.store-editor__error {
+  color: var(--color-danger-text);
+  background: var(--color-danger-soft);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+}
+
+.store-editor__input {
+  height: var(--control-height-md);
+  width: min(16rem, 100%);
+  border: 1.5px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-3);
+  font-family: inherit;
+}

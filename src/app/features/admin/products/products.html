@@ -126,6 +126,14 @@
                 }
               </select>
             </label>
+            <button
+              class="add-btn"
+              type="button"
+              [disabled]="storeArchived()"
+              (click)="openCreate()"
+            >
+              {{ 'products.add' | t }}
+            </button>
           </div>
         </div>
         <app-table
@@ -164,7 +172,20 @@
     (statusChange)="setProductStatus($event)"
     (availabilityChange)="setProductAvailable($event)"
     (archive)="confirmArchive.set(true)"
+    (edit)="openEdit()"
   ></app-product-details>
+}
+
+@if (editorOpen()) {
+  <app-product-editor
+    [storeId]="selectedStoreId()"
+    [product]="editingProduct()"
+    [categories]="categoryContext()"
+    (closed)="closeEditor()"
+    (saved)="onEditorSaved($event)"
+    (productChange)="onProductPatched($event)"
+    (storeArchived)="onStoreArchived(); closeEditor()"
+  ></app-product-editor>
 }
 
 @if (confirmArchive()) {

@@ -112,8 +112,151 @@ export interface ProductStatusPatch {
   status: MutableCatalogStatus;
 }
 
-export interface ProductAvailabilityPatch {
+export interface ProductAvailabilityFlagPatch {
   isAvailable: boolean;
+}
+
+export interface ProductImageInput {
+  assetId: string;
+  isPrimary: boolean;
+  displayOrder?: number;
+}
+
+export interface ProductSizeCreateInput {
+  name: string;
+  price: number;
+  isDefault: boolean;
+  isAvailable?: boolean;
+  status?: MutableCatalogStatus;
+  displayOrder?: number;
+  transitionFromBasePrice?: boolean;
+}
+
+export interface ProductSizePatch {
+  name?: string;
+  price?: number;
+  isDefault?: boolean;
+  isAvailable?: boolean;
+  status?: MutableCatalogStatus;
+  displayOrder?: number;
+  replacementDefaultSizeId?: string;
+}
+
+export interface ProductSizeArchiveBody {
+  replacementDefaultSizeId?: string;
+  basePrice?: number;
+}
+
+export interface ProductAvailabilityInput {
+  dayOfWeek: ProductWeekday;
+  opensAt: string;
+  closesAt: string;
+}
+
+export interface ProductCreateBody {
+  name: string;
+  description?: string | null;
+  categoryId?: string | null;
+  basePrice?: number | null;
+  displayOrder?: number;
+  images: ProductImageInput[];
+  sizes?: ProductSizeCreateInput[];
+  availability?: ProductAvailabilityInput[];
+}
+
+export interface ProductCorePatch {
+  name?: string;
+  description?: string | null;
+  categoryId?: string | null;
+  basePrice?: number;
+  displayOrder?: number;
+}
+
+export type ProductPricingMode = 'base' | 'sizes';
+
+export interface ProductImageDraft {
+  key: string;
+  assetId: string | null;
+  file: File | null;
+  previewUrl: string | null;
+  isPrimary: boolean;
+  isNew: boolean;
+}
+
+export interface ProductSizeDraft {
+  key: string;
+  name: string;
+  price: string;
+  isDefault: boolean;
+  isAvailable: boolean;
+  status: MutableCatalogStatus;
+  displayOrder: number;
+}
+
+const CLOCK_RE = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/;
+
+export function parseIqdInteger(raw: string | number): number | null {
+  if (typeof raw === 'number') {
+    return Number.isInteger(raw) && raw > 0 && Number.isSafeInteger(raw) ? raw : null;
+  }
+  const trimmed = raw.trim().replace(/,/g, '');
+  if (!/^\d+$/.test(trimmed)) return null;
+  const value = Number(trimmed);
+  return Number.isSafeInteger(value) && value > 0 ? value : null;
+}
+
+export function liveSizes(product: Product): ProductSize[] {
+  return product.sizes.filter((size) => size.status !== 'ARCHIVED');
+}
+
+export function isSizedProduct(product: Product): boolean {
+  return product.basePrice == null && liveSizes(product).length > 0;
+}
+
+export function normalizeProductClock(raw: string): string | null {
+  const match = CLOCK_RE.exec(raw.trim());
+  if (!match) return null;
+  return `${match[1]}:${match[2]}`;
+}
+
+function clockMinutes(raw: string): number | null {
+  const normalized = normalizeProductClock(raw);
+  if (!normalized) return null;
+  const [hours, minutes] = normalized.split(':');
+  return Number(hours) * 60 + Number(minutes);
+}
+
+export function validateProductAvailability(
+  windows: readonly ProductAvailabilityInput[]
+): 'invalid' | 'overnight' | 'overlap' | null {
+  const normalized: Array<ProductAvailabilityInput & { open: number; close: number }> = [];
+  for (const window of windows) {
+    const open = clockMinutes(window.opensAt);
+    const close = clockMinutes(window.closesAt);
+    if (open == null || close == null) return 'invalid';
+    if (close <= open) return 'overnight';
+    normalized.push({
+      dayOfWeek: window.dayOfWeek,
+      opensAt: window.opensAt,
+      closesAt: window.closesAt,
+      open,
+      close,
+    });
+  }
+  for (let i = 0; i < normalized.length; i++) {
+    for (let j = i + 1; j < normalized.length; j++) {
+      const a = normalized[i];
+      const b = normalized[j];
+      if (a.dayOfWeek !== b.dayOfWeek) continue;
+      if (a.open < b.close && b.open < a.close) return 'overlap';
+    }
+  }
+  return null;
+}
+
+export function categoryOptionLabel(category: StoreCategory): string {
+  const prefix = category.parentCategoryId ? '\u2003' : '';
+  return `${prefix}${category.name}`;
 }
 
 export interface CatalogListPage<T> {
