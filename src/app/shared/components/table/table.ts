@@ -64,6 +64,11 @@ export class TableComponent<T extends object = object> {
     return column.badgeClassMap[val] || 'badge-default';
   }
 
+  imageSrc(row: T, column: TableColumn): string | null {
+    const value = this.resolveValue(row, column.key);
+    return typeof value === 'string' && value.trim() ? value : null;
+  }
+
   getRowNumber(index: number): number {
     if (!this.pagination) return index + 1;
     const { total, page, limit } = this.pagination;

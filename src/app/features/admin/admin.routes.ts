@@ -39,8 +39,18 @@ export const ADMIN_ROUTES: Routes = [
   },
   { path: 'stores-percentage', ...page('nav.storesPercentage') },
   { path: 'notifications', ...page('nav.notificationsAll') },
-  { path: 'categories', ...page('nav.categoriesMain') },
-  { path: 'categories-sub', ...page('nav.categoriesSub') },
+  {
+    path: 'categories',
+    loadComponent: () =>
+      import('./catalog/main-categories/main-categories').then((m) => m.MainCategoriesComponent),
+    data: { titleKey: 'nav.categoriesMain' },
+  },
+  {
+    path: 'categories-sub',
+    loadComponent: () =>
+      import('./catalog/subcategories/subcategories').then((m) => m.SubcategoriesComponent),
+    data: { titleKey: 'nav.categoriesSub' },
+  },
   { path: 'brands', ...page('nav.brandsList') },
   { path: 'ads', ...page('nav.adsList') },
 ];

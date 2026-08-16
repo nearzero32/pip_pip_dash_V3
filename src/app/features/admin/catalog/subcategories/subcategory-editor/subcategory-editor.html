@@ -1,0 +1,93 @@
+<div class="cat-editor" role="dialog" aria-modal="true" [attr.aria-labelledby]="'sub-cat-editor-title'">
+  <div class="cat-editor__panel">
+    <header class="cat-editor__header">
+      <h2 id="sub-cat-editor-title">
+        {{ isCreate() ? ('catalog.addSub' | t) : ('catalog.editSub' | t) }}
+      </h2>
+      <button class="ghost-btn" type="button" [disabled]="saving()" (click)="requestClose()">
+        {{ 'common.cancel' | t }}
+      </button>
+    </header>
+
+    @if (error()) {
+      <p class="cat-editor__error">{{ error() }}</p>
+    }
+    @if (nameError()) {
+      <p class="cat-editor__error">{{ nameError() }}</p>
+    }
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'catalog.parent' | t }}</span>
+      <select class="city-picker" [ngModel]="mainCategoryId()" (ngModelChange)="mainCategoryId.set($event)">
+        <option value="">{{ 'catalog.selectParent' | t }}</option>
+        @for (parent of parents(); track parent.id) {
+          <option [value]="parent.id">{{ parent.name }} ({{ ('status.' + parent.status) | t }})</option>
+        }
+      </select>
+    </label>
+    @if (mainCategoryId()) {
+      <p class="hint">{{ parentStatus(mainCategoryId()) }}</p>
+    }
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'catalog.name' | t }}</span>
+      <input class="cat-editor__input" type="text" maxlength="100" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+    </label>
+    <p class="hint">{{ 'catalog.nameHint' | t }}</p>
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'catalog.imageOptional' | t }}</span>
+      @if (preview(); as src) {
+        <img class="cat-editor__preview" [src]="src" [alt]="'catalog.image' | t" />
+      }
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        [attr.aria-label]="'catalog.image' | t"
+        (change)="onFile($any($event.target).files?.[0])"
+      />
+      @if (preview() || (!isCreate() && subcategory()?.image && !removeImage())) {
+        <button class="ghost-btn" type="button" (click)="clearImage()">{{ 'catalog.removeImage' | t }}</button>
+      }
+    </label>
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'geo.status' | t }}</span>
+      <select class="city-picker" [ngModel]="status()" (ngModelChange)="setStatus($event)">
+        <option value="ACTIVE">{{ 'status.ACTIVE' | t }}</option>
+        <option value="INACTIVE">{{ 'status.INACTIVE' | t }}</option>
+      </select>
+    </label>
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'catalog.displayOrder' | t }}</span>
+      <input
+        class="cat-editor__input"
+        type="number"
+        min="0"
+        step="1"
+        [ngModel]="displayOrder()"
+        (ngModelChange)="setDisplayOrder($event)"
+      />
+    </label>
+
+    <footer class="cat-editor__footer">
+      <button class="ghost-btn" type="button" [disabled]="saving()" (click)="requestClose()">
+        {{ 'common.cancel' | t }}
+      </button>
+      <button class="add-btn" type="button" [disabled]="saving()" (click)="submit()">
+        {{ saving() ? ('common.saving' | t) : ('common.save' | t) }}
+      </button>
+    </footer>
+  </div>
+</div>
+
+@if (confirmDiscard()) {
+  <app-confirmation-dialog
+    [type]="'warning'"
+    [title]="'catalog.discardTitle' | t"
+    [message]="'catalog.discardMessage' | t"
+    (confirm)="closed.emit()"
+    (cancel)="confirmDiscard.set(false)"
+  ></app-confirmation-dialog>
+}

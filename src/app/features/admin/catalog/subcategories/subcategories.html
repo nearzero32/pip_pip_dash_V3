@@ -1,0 +1,151 @@
+<section class="feature-page">
+  <div class="page-toolbar">
+    <div class="page-toolbar__context">
+      <p class="hint">{{ 'catalog.subHint' | t }}</p>
+    </div>
+    <div class="page-toolbar__actions">
+      <label class="filter-field">
+        <span class="filter-field__label">{{ 'catalog.search' | t }}</span>
+        <input
+          class="cat-search"
+          type="search"
+          [value]="search()"
+          (input)="onSearchInput($any($event.target).value)"
+          [attr.aria-label]="'catalog.search' | t"
+        />
+      </label>
+      <label class="filter-field">
+        <span class="filter-field__label">{{ 'catalog.parent' | t }}</span>
+        <select class="city-picker" [ngModel]="parentFilter()" (ngModelChange)="onParentChange($event)">
+          <option value="">{{ 'catalog.parentAll' | t }}</option>
+          @for (parent of parents(); track parent.id) {
+            <option [value]="parent.id">{{ parent.name }}</option>
+          }
+        </select>
+      </label>
+      <label class="filter-field">
+        <span class="filter-field__label">{{ 'geo.status' | t }}</span>
+        <select class="city-picker" [ngModel]="statusFilter()" (ngModelChange)="onStatusChange($event)">
+          <option value="">{{ 'catalog.statusAll' | t }}</option>
+          <option value="ACTIVE">{{ 'status.ACTIVE' | t }}</option>
+          <option value="INACTIVE">{{ 'status.INACTIVE' | t }}</option>
+          <option value="ARCHIVED">{{ 'status.ARCHIVED' | t }}</option>
+        </select>
+      </label>
+      <button class="add-btn" type="button" [disabled]="blocked()" (click)="openCreate()">
+        {{ 'catalog.addSub' | t }}
+      </button>
+    </div>
+  </div>
+
+  @if (blocked()) {
+    <div class="state-panel state-panel--warning">
+      <h2 class="state-panel__title">{{ 'catalog.blockedTitle' | t }}</h2>
+      <p class="state-panel__message">{{ blockedMessage() }}</p>
+    </div>
+  } @else {
+    <app-table
+      [data]="data()"
+      [columns]="columns"
+      [pagination]="pagination()"
+      [isLoading]="isLoading()"
+      [allowDelete]="false"
+      [allowEdit]="false"
+      [allowView]="true"
+      rowKey="id"
+      (pageChange)="onPageChange($event)"
+      (onView)="onView($event)"
+    ></app-table>
+  }
+</section>
+
+@if (selected(); as row) {
+  <div class="backdrop" (click)="closeDetails()"></div>
+  <aside class="details" aria-labelledby="sub-cat-details-title">
+    <header>
+      <h2 id="sub-cat-details-title">{{ row.name }}</h2>
+      <button type="button" (click)="closeDetails()">{{ 'common.close' | t }}</button>
+    </header>
+    @if (row.image?.url; as src) {
+      <img class="cat-details-image" [src]="src" [alt]="row.name" />
+    }
+    <dl>
+      <div>
+        <dt>{{ 'catalog.name' | t }}</dt>
+        <dd>{{ row.name }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'catalog.parent' | t }}</dt>
+        <dd>{{ row.mainCategory.name }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'geo.status' | t }}</dt>
+        <dd>
+          <span
+            class="badge"
+            [class.badge-success]="row.status === 'ACTIVE'"
+            [class.badge-default]="row.status === 'INACTIVE'"
+            [class.badge-danger]="row.status === 'ARCHIVED'"
+          >{{ statusLabel(row.status) }}</span>
+        </dd>
+      </div>
+      <div>
+        <dt>{{ 'catalog.displayOrder' | t }}</dt>
+        <dd>{{ row.displayOrder }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'geo.createdAt' | t }}</dt>
+        <dd>{{ formatDate(row.createdAt) }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'catalog.updatedAt' | t }}</dt>
+        <dd>{{ formatDate(row.updatedAt) }}</dd>
+      </div>
+      @if (row.archivedAt) {
+        <div>
+          <dt>{{ 'catalog.archivedAt' | t }}</dt>
+          <dd>{{ formatDate(row.archivedAt) }}</dd>
+        </div>
+      }
+    </dl>
+    @if (row.status !== 'ARCHIVED') {
+      <div class="details-actions">
+        <button class="add-btn" type="button" (click)="openEdit()">{{ 'catalog.editSub' | t }}</button>
+        @if (row.status === 'ACTIVE') {
+          <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="setStatus('INACTIVE')">
+            {{ 'catalog.deactivate' | t }}
+          </button>
+        }
+        @if (row.status === 'INACTIVE') {
+          <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="setStatus('ACTIVE')">
+            {{ 'catalog.activate' | t }}
+          </button>
+        }
+        <button class="danger-btn" type="button" (click)="confirmArchive.set(true)">
+          {{ 'catalog.archive' | t }}
+        </button>
+      </div>
+    } @else {
+      <p class="hint">{{ 'catalog.archivedViewOnly' | t }}</p>
+    }
+  </aside>
+}
+
+@if (confirmArchive()) {
+  <app-confirmation-dialog
+    [type]="'danger'"
+    [title]="'catalog.archiveSubTitle' | t"
+    [message]="'catalog.archiveSubMessage' | t"
+    (confirm)="runArchive()"
+    (cancel)="confirmArchive.set(false)"
+  ></app-confirmation-dialog>
+}
+
+@if (editorOpen()) {
+  <app-subcategory-editor
+    [subcategory]="editing()"
+    [parents]="parents()"
+    (closed)="editorOpen.set(false)"
+    (saved)="onSaved($event)"
+  ></app-subcategory-editor>
+}

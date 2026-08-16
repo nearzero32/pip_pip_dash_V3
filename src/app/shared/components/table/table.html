@@ -49,6 +49,12 @@
                       </span>
                     } @else if (col.type === 'date') {
                       {{ $any(cellValue) | date: 'yyyy-MM-dd' }}
+                    } @else if (col.type === 'image') {
+                      @if (imageSrc(row, col); as src) {
+                        <img class="table-thumb" [src]="src" [alt]="col.label" />
+                      } @else {
+                        <span>—</span>
+                      }
                     } @else {
                       {{ cellValue }}
                     }

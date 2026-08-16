@@ -48,7 +48,10 @@ export class MediaApiService {
   /**
    * Upload via dashboard intent + raw presigned PUT (no Authorization) + confirm.
    */
-  async uploadImage(file: File, purpose: Extract<MediaPurpose, 'STORE_LOGO' | 'STORE_IMAGE'>): Promise<MediaAsset> {
+  async uploadImage(
+    file: File,
+    purpose: Extract<MediaPurpose, 'STORE_LOGO' | 'STORE_IMAGE' | 'CATEGORY_IMAGE'>
+  ): Promise<MediaAsset> {
     if (!isAllowedImageType(file.type)) {
       throw new MediaClientError(
         'MEDIA_TYPE',
