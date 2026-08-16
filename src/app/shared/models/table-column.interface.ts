@@ -1,4 +1,4 @@
-export type TableRow = Record<string, any>;
+export type TableRow = any;
 
 export interface TableColumn {
     key: string;
