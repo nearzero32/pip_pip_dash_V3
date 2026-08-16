@@ -48,8 +48,10 @@ export class SignInComponent {
         this.errorMessage.set(this.language.t('auth.invalidCredentials'));
       } else if (code === 'RATE_LIMITED' || status === 429) {
         this.errorMessage.set(this.language.t('auth.rateLimited'));
-      } else if (status === 422) {
-        this.errorMessage.set(this.language.t('auth.invalidForm'));
+      } else if (code === 'VALIDATION_FAILED' || status === 422) {
+        this.errorMessage.set(
+          getApiErrorMessage(err, this.language.t('auth.invalidForm'))
+        );
       } else {
         this.errorMessage.set(
           getApiErrorMessage(err, this.language.t('common.unexpectedError'))

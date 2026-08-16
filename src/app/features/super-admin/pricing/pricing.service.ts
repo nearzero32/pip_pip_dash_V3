@@ -1,10 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../../core/http/api.service';
-import {
-  DeliveryPricingInput,
-  DeliveryPricingVersion,
-  DriverPricing,
-} from './pricing.models';
+import { DeliveryPricingInput, DeliveryPricingVersion, DriverPricing } from './pricing.models';
 
 @Injectable({ providedIn: 'root' })
 export class PricingService {
@@ -20,7 +16,7 @@ export class PricingService {
     return this.api.client
       .post<DeliveryPricingVersion>(
         `/api/v1/dashboard/cities/${cityId}/delivery-pricing/versions`,
-        body
+        body,
       )
       .then((r) => r.data);
   }
@@ -28,7 +24,7 @@ export class PricingService {
   activateDeliveryVersion(cityId: string, versionId: string) {
     return this.api.client
       .post<DeliveryPricingVersion>(
-        `/api/v1/dashboard/cities/${cityId}/delivery-pricing/versions/${versionId}/activate`
+        `/api/v1/dashboard/cities/${cityId}/delivery-pricing/versions/${versionId}/activate`,
       )
       .then((r) => r.data);
   }
@@ -45,7 +41,7 @@ export class PricingService {
       pricingBase: number;
       roundingUnit: number;
       pricingStages: { afterSeconds: number; increasePercentage: number }[];
-    }
+    },
   ) {
     return this.api.client
       .put<DriverPricing>(`/api/v1/dashboard/cities/${cityId}/driver-pricing`, body, {
