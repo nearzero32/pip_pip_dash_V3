@@ -27,6 +27,17 @@ import {
   OrderLifecycleOverrideBody,
   OrderArrivalAtStoreBody,
   OrderDeliveryOverrideBody,
+  OrderOpsSnapshot,
+  OrderOpsAssignment,
+  OrderOpsHandoff,
+  OrderOpsReturnWorkflow,
+  OrderOpsOpenOfferRound,
+  OrderAssignDriverBody,
+  OrderRemoveDriverBody,
+  OrderHandoffStartBody,
+  OrderHandoffCompleteBody,
+  OrderReopenBody,
+  OrderReasonNoteBody,
 } from './orders.models';
 
 interface DashboardListBody<T> {
@@ -207,6 +218,95 @@ export class OrdersService {
       { headers: { 'Idempotency-Key': idempotencyKey } }
     );
     return this.mapDetail(response.data);
+  }
+
+  async getOps(orderId: string): Promise<OrderOpsSnapshot> {
+    const response = await this.api.client.get<Record<string, unknown>>(
+      `/api/v1/dashboard/orders/${orderId}/ops`
+    );
+    return this.mapOps(response.data);
+  }
+
+  async assignDriver(orderId: string, body: OrderAssignDriverBody, idempotencyKey: string) {
+    await this.api.client.post(
+      `/api/v1/dashboard/orders/${orderId}/assign-driver`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+  }
+
+  async removeDriver(orderId: string, body: OrderRemoveDriverBody, idempotencyKey: string) {
+    await this.api.client.post(
+      `/api/v1/dashboard/orders/${orderId}/remove-driver`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+  }
+
+  async reofferAfterPickup(orderId: string, body: OrderReasonNoteBody, idempotencyKey: string) {
+    await this.api.client.post(`/api/v1/dashboard/orders/${orderId}/reoffer`, body, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    });
+  }
+
+  async startHandoff(orderId: string, body: OrderHandoffStartBody, idempotencyKey: string) {
+    await this.api.client.post(`/api/v1/dashboard/orders/${orderId}/handoffs/start`, body, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    });
+  }
+
+  async cancelHandoff(
+    orderId: string,
+    handoffId: string,
+    body: OrderReasonNoteBody,
+    idempotencyKey: string
+  ) {
+    await this.api.client.post(
+      `/api/v1/dashboard/orders/${orderId}/handoffs/${handoffId}/cancel`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+  }
+
+  async completeHandoff(
+    orderId: string,
+    handoffId: string,
+    body: OrderHandoffCompleteBody,
+    idempotencyKey: string
+  ) {
+    await this.api.client.post(
+      `/api/v1/dashboard/orders/${orderId}/handoffs/${handoffId}/complete`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+  }
+
+  async startReturn(orderId: string, body: OrderReasonNoteBody, idempotencyKey: string) {
+    await this.api.client.post(`/api/v1/dashboard/orders/${orderId}/returns/start`, body, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    });
+  }
+
+  async confirmDriverReturn(orderId: string, body: OrderReasonNoteBody, idempotencyKey: string) {
+    await this.api.client.post(
+      `/api/v1/dashboard/orders/${orderId}/returns/confirm-driver`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+  }
+
+  async confirmStoreReturn(orderId: string, body: OrderReasonNoteBody, idempotencyKey: string) {
+    await this.api.client.post(
+      `/api/v1/dashboard/orders/${orderId}/returns/confirm-store`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+  }
+
+  async reopen(orderId: string, body: OrderReopenBody, idempotencyKey: string) {
+    await this.api.client.post(`/api/v1/dashboard/orders/${orderId}/reopen`, body, {
+      headers: { 'Idempotency-Key': idempotencyKey },
+    });
   }
 
   toParams(query: OrderListQuery): Record<string, string | number> {
@@ -501,6 +601,105 @@ export class OrdersService {
       collectingDriverId: String(row['collectingDriverId'] ?? row['collecting_driver_id'] ?? ''),
       confirmationSource: String(row['confirmationSource'] ?? row['confirmation_source'] ?? ''),
       collectedAt: String(row['collectedAt'] ?? row['collected_at'] ?? ''),
+    };
+  }
+
+  private mapOps(row: Record<string, unknown>): OrderOpsSnapshot {
+    const r = (row['data'] as Record<string, unknown> | undefined) ?? row;
+    return {
+      orderId: String(r['orderId'] ?? r['order_id'] ?? ''),
+      orderNumber: String(r['orderNumber'] ?? r['order_number'] ?? ''),
+      status: String(r['status'] ?? ''),
+      custodyStatus: String(r['custodyStatus'] ?? r['custody_status'] ?? ''),
+      custodyDriverId: this.nullableId(r['custodyDriverId'] ?? r['custody_driver_id']),
+      driverAccountId: this.nullableId(r['driverAccountId'] ?? r['driver_account_id']),
+      lockedDriverFee:
+        r['lockedDriverFee'] == null && r['locked_driver_fee'] == null
+          ? null
+          : Number(r['lockedDriverFee'] ?? r['locked_driver_fee']),
+      storeReadyMarkedAt: this.nullableStr(r['storeReadyMarkedAt'] ?? r['store_ready_marked_at']),
+      version: Number(r['version'] ?? 0),
+      statusChangedAt: this.nullableStr(r['statusChangedAt'] ?? r['status_changed_at']),
+      cancelledAt: this.nullableStr(r['cancelledAt'] ?? r['cancelled_at']),
+      assignments: this.asArray(r['assignments']).map((a) => this.mapOpsAssignment(a)),
+      handoff: r['handoff'] ? this.mapOpsHandoff(r['handoff'] as Record<string, unknown>) : null,
+      returnWorkflow: r['returnWorkflow']
+        ? this.mapOpsReturn(r['returnWorkflow'] as Record<string, unknown>)
+        : r['return_workflow']
+          ? this.mapOpsReturn(r['return_workflow'] as Record<string, unknown>)
+          : null,
+      openOfferRound: r['openOfferRound']
+        ? this.mapOpsRound(r['openOfferRound'] as Record<string, unknown>)
+        : r['open_offer_round']
+          ? this.mapOpsRound(r['open_offer_round'] as Record<string, unknown>)
+          : null,
+    };
+  }
+
+  private mapOpsAssignment(row: Record<string, unknown>): OrderOpsAssignment {
+    return {
+      id: String(row['id'] ?? ''),
+      driverId: String(row['driverId'] ?? row['driver_id'] ?? ''),
+      status: String(row['status'] ?? ''),
+      assignmentSource: this.nullableStr(row['assignmentSource'] ?? row['assignment_source']),
+      assignmentSequence: Number(row['assignmentSequence'] ?? row['assignment_sequence'] ?? 0),
+      assignmentReason: this.nullableStr(row['assignmentReason'] ?? row['assignment_reason']),
+      driverFee: Number(row['driverFee'] ?? row['driver_fee'] ?? 0),
+      offerRoundId: this.nullableId(row['offerRoundId'] ?? row['offer_round_id']),
+      assignedAt: this.nullableStr(row['assignedAt'] ?? row['assigned_at']),
+      arrivedAtStoreAt: this.nullableStr(row['arrivedAtStoreAt'] ?? row['arrived_at_store_at']),
+      pickedUpAt: this.nullableStr(row['pickedUpAt'] ?? row['picked_up_at']),
+      arrivedAtCustomerAt: this.nullableStr(
+        row['arrivedAtCustomerAt'] ?? row['arrived_at_customer_at']
+      ),
+      completedAt: this.nullableStr(row['completedAt'] ?? row['completed_at']),
+      cancelledAt: this.nullableStr(row['cancelledAt'] ?? row['cancelled_at']),
+    };
+  }
+
+  private mapOpsHandoff(row: Record<string, unknown>): OrderOpsHandoff {
+    return {
+      id: String(row['id'] ?? ''),
+      status: String(row['status'] ?? ''),
+      fromAssignmentId: String(row['fromAssignmentId'] ?? row['from_assignment_id'] ?? ''),
+      toAssignmentId: String(row['toAssignmentId'] ?? row['to_assignment_id'] ?? ''),
+      fromDriverId: String(row['fromDriverId'] ?? row['from_driver_id'] ?? ''),
+      toDriverId: String(row['toDriverId'] ?? row['to_driver_id'] ?? ''),
+      reason: String(row['reason'] ?? ''),
+      startedAt: this.nullableStr(row['startedAt'] ?? row['started_at']),
+      completedAt: this.nullableStr(row['completedAt'] ?? row['completed_at']),
+      cancelledAt: this.nullableStr(row['cancelledAt'] ?? row['cancelled_at']),
+    };
+  }
+
+  private mapOpsReturn(row: Record<string, unknown>): OrderOpsReturnWorkflow {
+    return {
+      id: String(row['id'] ?? ''),
+      status: String(row['status'] ?? ''),
+      assignmentId: String(row['assignmentId'] ?? row['assignment_id'] ?? ''),
+      driverId: String(row['driverId'] ?? row['driver_id'] ?? ''),
+      reason: String(row['reason'] ?? ''),
+      startedAt: this.nullableStr(row['startedAt'] ?? row['started_at']),
+      driverReturnedAt: this.nullableStr(row['driverReturnedAt'] ?? row['driver_returned_at']),
+      storeConfirmedAt: this.nullableStr(row['storeConfirmedAt'] ?? row['store_confirmed_at']),
+      completedAt: this.nullableStr(row['completedAt'] ?? row['completed_at']),
+      cancelledAt: this.nullableStr(row['cancelledAt'] ?? row['cancelled_at']),
+    };
+  }
+
+  private mapOpsRound(row: Record<string, unknown>): OrderOpsOpenOfferRound {
+    return {
+      id: String(row['id'] ?? ''),
+      status: String(row['status'] ?? ''),
+      roundKind: String(row['roundKind'] ?? row['round_kind'] ?? ''),
+      openedAt: this.nullableStr(row['openedAt'] ?? row['opened_at']),
+      pricingVersionSnapshot: Number(
+        row['pricingVersionSnapshot'] ?? row['pricing_version_snapshot'] ?? 0
+      ),
+      finalDriverFee:
+        row['finalDriverFee'] == null && row['final_driver_fee'] == null
+          ? null
+          : Number(row['finalDriverFee'] ?? row['final_driver_fee']),
     };
   }
 

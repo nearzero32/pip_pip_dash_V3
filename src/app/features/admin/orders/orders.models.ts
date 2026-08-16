@@ -267,7 +267,123 @@ export type OrderCommandAction =
   | 'itemQuantity'
   | 'itemRemove'
   | 'itemReplace'
-  | OrderLifecycleAction;
+  | OrderLifecycleAction
+  | 'assignDriver'
+  | 'removeDriver'
+  | 'reofferAfterPickup'
+  | 'handoffStart'
+  | 'handoffCancel'
+  | 'handoffComplete'
+  | 'returnStart'
+  | 'returnConfirmDriver'
+  | 'returnConfirmStore'
+  | 'reopen';
+
+export interface OrderOpsAssignment {
+  readonly id: string;
+  readonly driverId: string;
+  readonly status: string;
+  readonly assignmentSource: string | null;
+  readonly assignmentSequence: number;
+  readonly assignmentReason: string | null;
+  readonly driverFee: number;
+  readonly offerRoundId: string | null;
+  readonly assignedAt: string | null;
+  readonly arrivedAtStoreAt: string | null;
+  readonly pickedUpAt: string | null;
+  readonly arrivedAtCustomerAt: string | null;
+  readonly completedAt: string | null;
+  readonly cancelledAt: string | null;
+}
+
+export interface OrderOpsHandoff {
+  readonly id: string;
+  readonly status: string;
+  readonly fromAssignmentId: string;
+  readonly toAssignmentId: string;
+  readonly fromDriverId: string;
+  readonly toDriverId: string;
+  readonly reason: string;
+  readonly startedAt: string | null;
+  readonly completedAt: string | null;
+  readonly cancelledAt: string | null;
+}
+
+export interface OrderOpsReturnWorkflow {
+  readonly id: string;
+  readonly status: string;
+  readonly assignmentId: string;
+  readonly driverId: string;
+  readonly reason: string;
+  readonly startedAt: string | null;
+  readonly driverReturnedAt: string | null;
+  readonly storeConfirmedAt: string | null;
+  readonly completedAt: string | null;
+  readonly cancelledAt: string | null;
+}
+
+export interface OrderOpsOpenOfferRound {
+  readonly id: string;
+  readonly status: string;
+  readonly roundKind: string;
+  readonly openedAt: string | null;
+  readonly pricingVersionSnapshot: number;
+  readonly finalDriverFee: number | null;
+}
+
+export interface OrderOpsSnapshot {
+  readonly orderId: string;
+  readonly orderNumber: string;
+  readonly status: string;
+  readonly custodyStatus: string;
+  readonly custodyDriverId: string | null;
+  readonly driverAccountId: string | null;
+  readonly lockedDriverFee: number | null;
+  readonly storeReadyMarkedAt: string | null;
+  readonly version: number;
+  readonly statusChangedAt: string | null;
+  readonly cancelledAt: string | null;
+  readonly assignments: OrderOpsAssignment[];
+  readonly handoff: OrderOpsHandoff | null;
+  readonly returnWorkflow: OrderOpsReturnWorkflow | null;
+  readonly openOfferRound: OrderOpsOpenOfferRound | null;
+}
+
+export interface OrderAssignDriverBody {
+  driverId: string;
+  reason?: string;
+}
+
+export interface OrderRemoveDriverBody {
+  reason: string;
+  note?: string;
+  nextAction: 'REOFFER' | 'ASSIGN_DRIVER';
+  driverId?: string;
+}
+
+export interface OrderHandoffStartBody {
+  driverId: string;
+  reason: string;
+  note?: string;
+}
+
+export interface OrderHandoffCompleteBody {
+  reason: string;
+  note?: string;
+  actedOnBehalfOf: 'DRIVER';
+}
+
+export interface OrderReopenBody {
+  reason: string;
+  note?: string;
+  nextAction: 'KEEP_CANCELLED' | 'PREPARE' | 'REOFFER' | 'ASSIGN_DRIVER';
+  driverId?: string;
+}
+
+export interface OrderReasonNoteBody {
+  reason: string;
+  note?: string;
+}
 
 export interface OrderModifierSelectionInput {
   modifierOptionId: string;
@@ -321,7 +437,13 @@ export type OrderCommandPayload =
   | OrderMutationReasonBody
   | OrderLifecycleOverrideBody
   | OrderArrivalAtStoreBody
-  | OrderDeliveryOverrideBody;
+  | OrderDeliveryOverrideBody
+  | OrderAssignDriverBody
+  | OrderRemoveDriverBody
+  | OrderHandoffStartBody
+  | OrderHandoffCompleteBody
+  | OrderReopenBody
+  | OrderReasonNoteBody;
 
 export interface PendingOrderCommand {
   action: OrderCommandAction;
@@ -427,4 +549,111 @@ export function secondaryLifecycleActions(order: OrderDetail): OrderLifecycleAct
   if (canConfirmArrivalAtCustomer(order)) eligible.push('arrivalAtCustomer');
   if (canConfirmDelivery(order)) eligible.push('delivery');
   return eligible.filter((action) => action !== primary);
+}
+
+export function isOpsActiveAssignment(row: OrderOpsAssignment): boolean {
+  return row.cancelledAt == null && row.completedAt == null;
+}
+
+export function custodyAssignmentOf(ops: OrderOpsSnapshot): OrderOpsAssignment | null {
+  return (
+    ops.assignments.find(
+      (row) =>
+        isOpsActiveAssignment(row) &&
+        row.status !== 'HANDOFF_PENDING' &&
+        (ops.custodyDriverId == null || row.driverId === ops.custodyDriverId)
+    ) ??
+    ops.assignments.find((row) => isOpsActiveAssignment(row) && row.status !== 'HANDOFF_PENDING') ??
+    null
+  );
+}
+
+export function pendingHandoffOf(ops: OrderOpsSnapshot): OrderOpsHandoff | null {
+  return ops.handoff?.status === 'PENDING' ? ops.handoff : null;
+}
+
+export function activeReturnOf(ops: OrderOpsSnapshot): OrderOpsReturnWorkflow | null {
+  const status = ops.returnWorkflow?.status;
+  if (status === 'WAITING_FOR_DRIVER_RETURN' || status === 'WAITING_FOR_STORE_CONFIRMATION') {
+    return ops.returnWorkflow;
+  }
+  return null;
+}
+
+export function completedReturnOf(ops: OrderOpsSnapshot): OrderOpsReturnWorkflow | null {
+  return ops.returnWorkflow?.status === 'COMPLETED' ? ops.returnWorkflow : null;
+}
+
+export function isReplacementSearch(ops: OrderOpsSnapshot): boolean {
+  return ops.openOfferRound?.status === 'OPEN' && ops.openOfferRound.roundKind === 'DRIVER_REPLACEMENT';
+}
+
+export function isInitialSearch(ops: OrderOpsSnapshot): boolean {
+  return ops.openOfferRound?.status === 'OPEN' && ops.openOfferRound.roundKind === 'INITIAL';
+}
+
+export function canManualAssign(ops: OrderOpsSnapshot): boolean {
+  if (custodyAssignmentOf(ops)) return false;
+  if (pendingHandoffOf(ops) || activeReturnOf(ops)) return false;
+  return ops.status === 'APPROVED_BY_STORE' || ops.status === 'SEARCHING_DRIVER';
+}
+
+export function canRemoveDriver(ops: OrderOpsSnapshot): boolean {
+  if (ops.custodyStatus !== 'WITH_STORE') return false;
+  if (!custodyAssignmentOf(ops)) return false;
+  return (
+    ops.status === 'DRIVER_ASSIGNED' ||
+    ops.status === 'READY_FOR_PICKUP' ||
+    ops.status === 'ARRIVED_AT_STORE'
+  );
+}
+
+export function canPostPickupReoffer(ops: OrderOpsSnapshot): boolean {
+  if (pendingHandoffOf(ops) || activeReturnOf(ops) || isReplacementSearch(ops)) return false;
+  return (
+    ops.custodyStatus === 'WITH_DRIVER' &&
+    !!custodyAssignmentOf(ops) &&
+    (ops.status === 'PICKED_UP' || ops.status === 'ARRIVED_AT_CUSTOMER')
+  );
+}
+
+export function canStartHandoff(ops: OrderOpsSnapshot): boolean {
+  return canPostPickupReoffer(ops);
+}
+
+export function canStartReturn(ops: OrderOpsSnapshot): boolean {
+  if (activeReturnOf(ops)) return false;
+  return (
+    ops.custodyStatus === 'WITH_DRIVER' &&
+    !!custodyAssignmentOf(ops) &&
+    (ops.status === 'PICKED_UP' || ops.status === 'ARRIVED_AT_CUSTOMER')
+  );
+}
+
+export function canReopen(ops: OrderOpsSnapshot): boolean {
+  if (ops.custodyStatus !== 'WITH_STORE') return false;
+  if (activeReturnOf(ops)) return false;
+  if (ops.status === 'CANCELLED') return true;
+  return ops.status === 'READY_FOR_PICKUP' && completedReturnOf(ops) != null;
+}
+
+export type RecoveryFocus =
+  | 'return'
+  | 'handoff'
+  | 'replacementSearch'
+  | 'removeDriver'
+  | 'postPickup'
+  | 'assign'
+  | 'reopen'
+  | null;
+
+export function recoveryFocusOf(ops: OrderOpsSnapshot): RecoveryFocus {
+  if (activeReturnOf(ops)) return 'return';
+  if (pendingHandoffOf(ops)) return 'handoff';
+  if (isReplacementSearch(ops)) return 'replacementSearch';
+  if (canRemoveDriver(ops)) return 'removeDriver';
+  if (canPostPickupReoffer(ops) || canStartReturn(ops)) return 'postPickup';
+  if (canManualAssign(ops)) return 'assign';
+  if (canReopen(ops)) return 'reopen';
+  return null;
 }

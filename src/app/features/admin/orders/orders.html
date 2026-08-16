@@ -127,6 +127,14 @@
     [itemsReplaceDenied]="itemsReplaceDenied()"
     [lifecycleDenied]="lifecycleDenied()"
     [catalogDenied]="catalogDenied()"
+    [ops]="ops()"
+    [opsLoading]="opsLoading()"
+    [opsUnavailable]="opsUnavailable()"
+    [assignDenied]="assignDenied()"
+    [reofferDenied]="reofferDenied()"
+    [handoffDenied]="handoffDenied()"
+    [returnDenied]="returnDenied()"
+    [driverNames]="driverNames()"
     (closed)="closeDetails()"
     (approve)="requestApprove()"
     (cancel)="requestCancel()"
@@ -135,6 +143,16 @@
     (removeItem)="openRemove($event)"
     (replaceItem)="openReplace($event)"
     (lifecycle)="openLifecycle($event)"
+    (assignDriver)="openAssign()"
+    (removeDriver)="openRemoveDriver()"
+    (reoffer)="openReoffer()"
+    (handoffStart)="openHandoffStart()"
+    (handoffCancel)="openHandoffCancel()"
+    (handoffComplete)="openHandoffComplete()"
+    (returnStart)="openReturnStart()"
+    (returnConfirmDriver)="openReturnDriver()"
+    (returnConfirmStore)="openReturnStore()"
+    (reopen)="openReopen()"
   ></app-order-details>
 }
 
@@ -201,4 +219,80 @@
       (confirmed)="runLifecycle($event)"
     ></app-order-lifecycle-override-dialog>
   }
+}
+
+@if (recoveryDialog() === 'assign') {
+  <app-order-driver-assignment-dialog
+    [hasOpenInitialSearch]="ops()?.openOfferRound?.roundKind === 'INITIAL'"
+    [refreshToken]="candidateRefresh()"
+    [submitting]="mutating()"
+    [uncertain]="uncertain()"
+    (closed)="closeMutationDialogs()"
+    (denied)="assignDenied.set(true); closeMutationDialogs()"
+    (named)="rememberDriver($event)"
+    (confirmed)="runAssign($event)"
+  ></app-order-driver-assignment-dialog>
+}
+
+@if (recoveryDialog() === 'remove') {
+  <app-order-remove-driver-dialog
+    [excludeDriverId]="custodyDriverId()"
+    [refreshToken]="candidateRefresh()"
+    [submitting]="mutating()"
+    [uncertain]="uncertain()"
+    (closed)="closeMutationDialogs()"
+    (denied)="assignDenied.set(true); closeMutationDialogs()"
+    (named)="rememberDriver($event)"
+    (confirmed)="runRemoveDriver($event)"
+  ></app-order-remove-driver-dialog>
+}
+
+@if (recoveryDialog() === 'reoffer') {
+  <app-order-return-dialog
+    mode="reoffer"
+    [submitting]="mutating()"
+    [uncertain]="uncertain()"
+    (closed)="closeMutationDialogs()"
+    (confirmed)="runReoffer($event)"
+  ></app-order-return-dialog>
+}
+
+@if (recoveryDialog() === 'handoffStart' || recoveryDialog() === 'handoffCancel' || recoveryDialog() === 'handoffComplete') {
+  <app-order-handoff-dialog
+    [mode]="handoffMode()"
+    [excludeDriverId]="custodyDriverId()"
+    [rollbackToPickup]="selected()?.status === 'ARRIVED_AT_CUSTOMER'"
+    [refreshToken]="candidateRefresh()"
+    [submitting]="mutating()"
+    [uncertain]="uncertain()"
+    (closed)="closeMutationDialogs()"
+    (denied)="assignDenied.set(true); closeMutationDialogs()"
+    (named)="rememberDriver($event)"
+    (confirmed)="onHandoffConfirmed($event)"
+  ></app-order-handoff-dialog>
+}
+
+@if (recoveryDialog() === 'returnStart' || recoveryDialog() === 'returnDriver' || recoveryDialog() === 'returnStore') {
+  <app-order-return-dialog
+    [mode]="returnMode()"
+    [hasPendingHandoff]="ops()?.handoff?.status === 'PENDING'"
+    [submitting]="mutating()"
+    [uncertain]="uncertain()"
+    (closed)="closeMutationDialogs()"
+    (confirmed)="onReturnConfirmed($event)"
+  ></app-order-return-dialog>
+}
+
+@if (recoveryDialog() === 'reopen') {
+  <app-order-reopen-dialog
+    [allowKeepCancelled]="selected()?.status === 'CANCELLED'"
+    [reofferDenied]="reofferDenied()"
+    [refreshToken]="candidateRefresh()"
+    [submitting]="mutating()"
+    [uncertain]="uncertain()"
+    (closed)="closeMutationDialogs()"
+    (denied)="assignDenied.set(true); closeMutationDialogs()"
+    (named)="rememberDriver($event)"
+    (confirmed)="runReopen($event)"
+  ></app-order-reopen-dialog>
 }

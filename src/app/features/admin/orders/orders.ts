@@ -31,10 +31,22 @@ import { OrderItemEditorComponent } from './order-item-editor/order-item-editor'
 import { OrderItemQuantityDialogComponent } from './order-item-quantity-dialog/order-item-quantity-dialog';
 import { OrderItemRemoveDialogComponent } from './order-item-remove-dialog/order-item-remove-dialog';
 import { OrderLifecycleOverrideDialogComponent } from './order-lifecycle-override-dialog/order-lifecycle-override-dialog';
+import { OrderDriverAssignmentDialogComponent } from './order-driver-assignment-dialog/order-driver-assignment-dialog';
+import { OrderRemoveDriverDialogComponent } from './order-remove-driver-dialog/order-remove-driver-dialog';
+import { OrderHandoffDialogComponent } from './order-handoff-dialog/order-handoff-dialog';
+import { OrderReturnDialogComponent } from './order-return-dialog/order-return-dialog';
+import { OrderReopenDialogComponent } from './order-reopen-dialog/order-reopen-dialog';
 import {
   CustodyStatus,
   ORDER_STATUSES,
   OrderAddItemBody,
+  OrderAssignDriverBody,
+  OrderHandoffCompleteBody,
+  OrderHandoffStartBody,
+  OrderOpsSnapshot,
+  OrderReasonNoteBody,
+  OrderRemoveDriverBody,
+  OrderReopenBody,
   OrderCommandAction,
   OrderCommandPayload,
   OrderDetail,
@@ -52,6 +64,17 @@ import {
 } from './orders.models';
 
 type SortPreset = 'newest' | 'oldest' | 'totalHigh' | 'totalLow' | 'number';
+type RecoveryDialog =
+  | 'assign'
+  | 'remove'
+  | 'reoffer'
+  | 'handoffStart'
+  | 'handoffCancel'
+  | 'handoffComplete'
+  | 'returnStart'
+  | 'returnDriver'
+  | 'returnStore'
+  | 'reopen';
 
 @Component({
   selector: 'app-orders',
@@ -68,6 +91,11 @@ type SortPreset = 'newest' | 'oldest' | 'totalHigh' | 'totalLow' | 'number';
     OrderItemQuantityDialogComponent,
     OrderItemRemoveDialogComponent,
     OrderLifecycleOverrideDialogComponent,
+    OrderDriverAssignmentDialogComponent,
+    OrderRemoveDriverDialogComponent,
+    OrderHandoffDialogComponent,
+    OrderReturnDialogComponent,
+    OrderReopenDialogComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './orders.html',
@@ -99,6 +127,16 @@ export class OrdersComponent implements OnInit, OnDestroy {
   readonly itemsReplaceDenied = signal(false);
   readonly lifecycleDenied = signal(false);
   readonly catalogDenied = signal(false);
+  readonly ops = signal<OrderOpsSnapshot | null>(null);
+  readonly opsLoading = signal(false);
+  readonly opsUnavailable = signal(false);
+  readonly assignDenied = signal(false);
+  readonly reofferDenied = signal(false);
+  readonly handoffDenied = signal(false);
+  readonly returnDenied = signal(false);
+  readonly driverNames = signal<Record<string, string>>({});
+  readonly recoveryDialog = signal<RecoveryDialog | null>(null);
+  readonly candidateRefresh = signal(0);
   readonly uncertain = signal(false);
 
   readonly search = signal('');
@@ -199,6 +237,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   closeDetails() {
     this.selected.set(null);
+    this.ops.set(null);
     this.confirmApprove.set(false);
     this.cancelOpen.set(false);
     this.closeMutationDialogs();
@@ -211,7 +250,282 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.quantityItem.set(null);
     this.removeItemTarget.set(null);
     this.overrideAction.set(null);
+    this.recoveryDialog.set(null);
     this.uncertain.set(false);
+  }
+
+  rememberDriver(row: { id: string; name: string }) {
+    this.driverNames.update((map) => ({ ...map, [row.id]: row.name }));
+  }
+
+  openAssign() {
+    this.recoveryDialog.set('assign');
+  }
+  openRemoveDriver() {
+    this.recoveryDialog.set('remove');
+  }
+  openReoffer() {
+    this.recoveryDialog.set('reoffer');
+  }
+  openHandoffStart() {
+    this.recoveryDialog.set('handoffStart');
+  }
+  openHandoffCancel() {
+    this.recoveryDialog.set('handoffCancel');
+  }
+  openHandoffComplete() {
+    this.recoveryDialog.set('handoffComplete');
+  }
+  openReturnStart() {
+    this.recoveryDialog.set('returnStart');
+  }
+  openReturnDriver() {
+    this.recoveryDialog.set('returnDriver');
+  }
+  openReturnStore() {
+    this.recoveryDialog.set('returnStore');
+  }
+  openReopen() {
+    this.recoveryDialog.set('reopen');
+  }
+
+  handoffMode(): 'start' | 'cancel' | 'complete' {
+    const dialog = this.recoveryDialog();
+    if (dialog === 'handoffCancel') return 'cancel';
+    if (dialog === 'handoffComplete') return 'complete';
+    return 'start';
+  }
+
+  returnMode(): 'start' | 'confirmDriver' | 'confirmStore' {
+    const dialog = this.recoveryDialog();
+    if (dialog === 'returnDriver') return 'confirmDriver';
+    if (dialog === 'returnStore') return 'confirmStore';
+    return 'start';
+  }
+
+  onHandoffConfirmed(body: { driverId?: string; reason: string; note?: string }) {
+    const dialog = this.recoveryDialog();
+    if (dialog === 'handoffStart') void this.runHandoffStart(body);
+    else if (dialog === 'handoffCancel') void this.runHandoffCancel(body);
+    else void this.runHandoffComplete(body);
+  }
+
+  onReturnConfirmed(body: OrderReasonNoteBody) {
+    const dialog = this.recoveryDialog();
+    if (dialog === 'returnStart') void this.runReturnStart(body);
+    else if (dialog === 'returnDriver') void this.runReturnDriver(body);
+    else void this.runReturnStore(body);
+  }
+
+  custodyDriverId(): string | null {
+    return this.ops()?.custodyDriverId ?? null;
+  }
+
+  pendingHandoffId(): string | null {
+    const handoff = this.ops()?.handoff;
+    return handoff?.status === 'PENDING' ? handoff.id : null;
+  }
+
+  async runAssign(body: OrderAssignDriverBody) {
+    const order = this.selected();
+    if (!order) return;
+    const command = this.ensurePending('assignDriver', order.id, body);
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      await this.api.assignDriver(order.id, body, command.idempotencyKey);
+      this.pending = null;
+      this.recoveryDialog.set(null);
+      this.notify.success(this.language.t('orders.ops.assignDone'));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, 'assignDriver');
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  async runRemoveDriver(body: OrderRemoveDriverBody) {
+    const order = this.selected();
+    if (!order) return;
+    const command = this.ensurePending('removeDriver', order.id, body);
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      await this.api.removeDriver(order.id, body, command.idempotencyKey);
+      this.pending = null;
+      this.recoveryDialog.set(null);
+      this.notify.success(this.language.t('orders.ops.removeDone'));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, 'removeDriver');
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  async runReoffer(body: OrderReasonNoteBody) {
+    const order = this.selected();
+    if (!order) return;
+    const command = this.ensurePending('reofferAfterPickup', order.id, body);
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      await this.api.reofferAfterPickup(order.id, body, command.idempotencyKey);
+      this.pending = null;
+      this.recoveryDialog.set(null);
+      this.notify.success(this.language.t('orders.ops.reofferDone'));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, 'reofferAfterPickup');
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  async runHandoffStart(body: { driverId?: string; reason: string; note?: string }) {
+    const order = this.selected();
+    if (!order || !body.driverId) return;
+    const payload: OrderHandoffStartBody = {
+      driverId: body.driverId,
+      reason: body.reason,
+      ...(body.note ? { note: body.note } : {}),
+    };
+    const command = this.ensurePending('handoffStart', order.id, payload);
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      await this.api.startHandoff(order.id, payload, command.idempotencyKey);
+      this.pending = null;
+      this.recoveryDialog.set(null);
+      this.notify.success(this.language.t('orders.ops.handoffStarted'));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, 'handoffStart');
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  async runHandoffCancel(body: OrderReasonNoteBody) {
+    const order = this.selected();
+    const handoffId = this.pendingHandoffId();
+    if (!order || !handoffId) return;
+    const command = this.ensurePending('handoffCancel', order.id, body, handoffId);
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      await this.api.cancelHandoff(order.id, handoffId, body, command.idempotencyKey);
+      this.pending = null;
+      this.recoveryDialog.set(null);
+      this.notify.success(this.language.t('orders.ops.handoffCancelled'));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, 'handoffCancel');
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  async runHandoffComplete(body: { reason: string; note?: string }) {
+    const order = this.selected();
+    const handoffId = this.pendingHandoffId();
+    if (!order || !handoffId) return;
+    const payload: OrderHandoffCompleteBody = {
+      reason: body.reason,
+      actedOnBehalfOf: 'DRIVER',
+      ...(body.note ? { note: body.note } : {}),
+    };
+    const command = this.ensurePending('handoffComplete', order.id, payload, handoffId);
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      await this.api.completeHandoff(order.id, handoffId, payload, command.idempotencyKey);
+      this.pending = null;
+      this.recoveryDialog.set(null);
+      this.notify.success(this.language.t('orders.ops.handoffCompleted'));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, 'handoffComplete');
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  async runReturnStart(body: OrderReasonNoteBody) {
+    const order = this.selected();
+    if (!order) return;
+    const command = this.ensurePending('returnStart', order.id, body);
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      await this.api.startReturn(order.id, body, command.idempotencyKey);
+      this.pending = null;
+      this.recoveryDialog.set(null);
+      this.notify.success(this.language.t('orders.ops.returnStarted'));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, 'returnStart');
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  async runReturnDriver(body: OrderReasonNoteBody) {
+    const order = this.selected();
+    if (!order) return;
+    const command = this.ensurePending('returnConfirmDriver', order.id, body);
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      await this.api.confirmDriverReturn(order.id, body, command.idempotencyKey);
+      this.pending = null;
+      this.recoveryDialog.set(null);
+      this.notify.success(this.language.t('orders.ops.returnDriverDone'));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, 'returnConfirmDriver');
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  async runReturnStore(body: OrderReasonNoteBody) {
+    const order = this.selected();
+    if (!order) return;
+    const command = this.ensurePending('returnConfirmStore', order.id, body);
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      await this.api.confirmStoreReturn(order.id, body, command.idempotencyKey);
+      this.pending = null;
+      this.recoveryDialog.set(null);
+      this.notify.success(this.language.t('orders.ops.returnStoreDone'));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, 'returnConfirmStore');
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  async runReopen(body: OrderReopenBody) {
+    const order = this.selected();
+    if (!order) return;
+    const command = this.ensurePending('reopen', order.id, body);
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      await this.api.reopen(order.id, body, command.idempotencyKey);
+      this.pending = null;
+      this.recoveryDialog.set(null);
+      this.notify.success(this.language.t('orders.ops.reopenDone'));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, 'reopen');
+    } finally {
+      this.mutating.set(false);
+    }
   }
 
   openAdd() {
@@ -505,19 +819,35 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   private async openDetail(orderId: string) {
     const seq = ++this.detailSeq;
+    this.opsLoading.set(true);
+    const detailPromise = this.api.get(orderId);
+    const opsPromise = this.api.getOps(orderId);
     try {
-      const detail = await this.api.get(orderId);
+      const detail = await detailPromise;
       if (seq !== this.detailSeq) return;
       this.selected.set(detail);
     } catch (err) {
       if (seq !== this.detailSeq) return;
       if (isApiErrorCode(err, 'ORDER_NOT_FOUND') || getApiErrorStatus(err) === 404) {
         this.selected.set(null);
+        this.ops.set(null);
         this.notify.error(this.language.t('orders.notFound'));
         void this.loadList(this.page());
         return;
       }
       this.notify.error(getApiErrorMessage(err, this.language.t('common.unexpectedError')));
+    }
+    try {
+      const ops = await opsPromise;
+      if (seq !== this.detailSeq) return;
+      this.ops.set(ops);
+      this.opsUnavailable.set(false);
+    } catch {
+      if (seq !== this.detailSeq) return;
+      this.ops.set(null);
+      this.opsUnavailable.set(true);
+    } finally {
+      if (seq === this.detailSeq) this.opsLoading.set(false);
     }
   }
 
@@ -612,6 +942,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     const status = getApiErrorStatus(err);
     const keepPending =
       status === undefined || status >= 500 || isApiErrorCode(err, 'IDEMPOTENCY_IN_PROGRESS');
+    const pendingSnapshot = this.pending;
     if (keepPending) this.uncertain.set(true);
     if (!keepPending && !isApiErrorCode(err, 'IDEMPOTENCY_KEY_REUSED')) {
       this.pending = null;
@@ -682,6 +1013,35 @@ export class OrdersComponent implements OnInit, OnDestroy {
     if (isApiErrorCode(err, 'DRIVER_ASSIGNMENT_REQUIRED')) {
       this.notify.error(this.language.t('orders.driverRequired'));
       refresh();
+      return;
+    }
+    if (
+      isApiErrorCode(err, 'ORDER_ALREADY_ASSIGNED') ||
+      isApiErrorCode(err, 'OFFER_ROUND_ALREADY_OPEN') ||
+      isApiErrorCode(err, 'HANDOFF_ALREADY_PENDING') ||
+      isApiErrorCode(err, 'HANDOFF_NOT_FOUND') ||
+      isApiErrorCode(err, 'HANDOFF_NOT_PENDING') ||
+      isApiErrorCode(err, 'DRIVER_HANDOFF_CUSTODY_MISMATCH') ||
+      isApiErrorCode(err, 'RETURN_WORKFLOW_REQUIRED') ||
+      isApiErrorCode(err, 'ORDER_CUSTODY_NOT_WITH_DRIVER') ||
+      isApiErrorCode(err, 'ORDER_CUSTODY_NOT_WITH_STORE')
+    ) {
+      this.notify.error(this.mapOpsError(err));
+      refresh();
+      return;
+    }
+    if (
+      isApiErrorCode(err, 'DRIVER_NOT_ELIGIBLE') ||
+      isApiErrorCode(err, 'DRIVER_ACTIVE_ASSIGNMENT_LIMIT_REACHED') ||
+      isApiErrorCode(err, 'CITY_MISMATCH') ||
+      isApiErrorCode(err, 'CITY_DRIVER_PRICING_NOT_FOUND')
+    ) {
+      this.notify.error(this.mapOpsError(err));
+      this.candidateRefresh.update((n) => n + 1);
+      return;
+    }
+    if (status === 429 || isApiErrorCode(err, 'RATE_LIMITED')) {
+      this.notify.error(this.language.t('orders.ops.rateLimited'));
       return;
     }
     if (isApiErrorCode(err, 'DRIVER_HANDOFF_ALREADY_ACTIVE')) {
@@ -765,6 +1125,42 @@ export class OrdersComponent implements OnInit, OnDestroy {
       ) {
         this.lifecycleDenied.set(true);
         this.notify.error(this.language.t('orders.lifecycleDenied'));
+      } else if (action === 'assignDriver') {
+        this.assignDenied.set(true);
+        this.notify.error(this.language.t('orders.ops.assignDenied'));
+      } else if (action === 'removeDriver') {
+        const payload = pendingSnapshot?.payload;
+        const next = payload && 'nextAction' in payload ? payload.nextAction : null;
+        if (next === 'REOFFER') {
+          this.reofferDenied.set(true);
+          this.notify.error(this.language.t('orders.ops.reofferDenied'));
+        } else {
+          this.assignDenied.set(true);
+          this.notify.error(this.language.t('orders.ops.assignDenied'));
+        }
+      } else if (action === 'reopen') {
+        const payload = pendingSnapshot?.payload;
+        const next = payload && 'nextAction' in payload ? payload.nextAction : null;
+        if (next === 'REOFFER') {
+          this.reofferDenied.set(true);
+          this.notify.error(this.language.t('orders.ops.reofferDenied'));
+          return;
+        }
+        this.assignDenied.set(true);
+        this.notify.error(this.language.t('orders.ops.assignDenied'));
+      } else if (action === 'reofferAfterPickup') {
+        this.reofferDenied.set(true);
+        this.notify.error(this.language.t('orders.ops.reofferDenied'));
+      } else if (action === 'handoffStart' || action === 'handoffCancel' || action === 'handoffComplete') {
+        this.handoffDenied.set(true);
+        this.notify.error(this.language.t('orders.ops.handoffDenied'));
+      } else if (
+        action === 'returnStart' ||
+        action === 'returnConfirmDriver' ||
+        action === 'returnConfirmStore'
+      ) {
+        this.returnDenied.set(true);
+        this.notify.error(this.language.t('orders.ops.returnDenied'));
       } else {
         this.notify.error(
           getApiErrorMessage(
@@ -780,6 +1176,26 @@ export class OrdersComponent implements OnInit, OnDestroy {
       return;
     }
     this.notify.error(getApiErrorMessage(err, this.language.t('common.unexpectedError')));
+  }
+
+  private mapOpsError(err: unknown): string {
+    if (isApiErrorCode(err, 'ORDER_ALREADY_ASSIGNED')) return this.language.t('orders.ops.alreadyAssigned');
+    if (isApiErrorCode(err, 'DRIVER_NOT_ELIGIBLE')) return this.language.t('orders.ops.driverNotEligible');
+    if (isApiErrorCode(err, 'DRIVER_ACTIVE_ASSIGNMENT_LIMIT_REACHED')) {
+      return this.language.t('orders.ops.driverCapacity');
+    }
+    if (isApiErrorCode(err, 'CITY_MISMATCH')) return this.language.t('orders.ops.cityMismatch');
+    if (isApiErrorCode(err, 'CITY_DRIVER_PRICING_NOT_FOUND')) return this.language.t('orders.ops.pricingMissing');
+    if (isApiErrorCode(err, 'HANDOFF_NOT_FOUND') || isApiErrorCode(err, 'HANDOFF_NOT_PENDING')) {
+      return this.language.t('orders.ops.handoffStale');
+    }
+    if (isApiErrorCode(err, 'HANDOFF_ALREADY_PENDING') || isApiErrorCode(err, 'DRIVER_HANDOFF_ALREADY_ACTIVE')) {
+      return this.language.t('orders.handoffActive');
+    }
+    if (isApiErrorCode(err, 'RETURN_WORKFLOW_REQUIRED')) return this.language.t('orders.ops.returnRequired');
+    if (isApiErrorCode(err, 'ORDER_CUSTODY_NOT_WITH_DRIVER')) return this.language.t('orders.ops.custodyNotDriver');
+    if (isApiErrorCode(err, 'ORDER_CUSTODY_NOT_WITH_STORE')) return this.language.t('orders.ops.custodyNotStore');
+    return getApiErrorMessage(err, this.language.t('orders.stateStale'));
   }
 
   private collectionError(err: unknown): string {

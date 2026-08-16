@@ -1,5 +1,16 @@
-.order-details {
-  width: min(560px, 100%);
+.recovery-card,
+.recovery-panel {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block-end: var(--space-3);
+}
+
+.recovery-panel {
+  background: var(--color-surface);
 }
 
 .order-details h3 {

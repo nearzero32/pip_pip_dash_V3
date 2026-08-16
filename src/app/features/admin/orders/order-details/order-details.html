@@ -85,6 +85,118 @@
   }
 
   <section>
+    <h3>{{ 'orders.ops.recovery' | t }}</h3>
+    @if (opsLoading()) {
+      <p class="hint">{{ 'common.loading' | t }}</p>
+    } @else if (opsUnavailable()) {
+      <p class="hint">{{ 'orders.ops.unavailable' | t }}</p>
+    } @else if (snapshot(); as ops) {
+      <div class="recovery-card">
+        <p>
+          <strong>{{ 'orders.ops.currentDriver' | t }}:</strong>
+          <span dir="ltr">{{ driverLabel(ops.custodyDriverId) }}</span>
+        </p>
+        <p>{{ custodyLabel(ops.custodyStatus) }} · {{ statusLabel(ops.status) }}</p>
+        @if (ops.lockedDriverFee != null) {
+          <p>{{ 'orders.ops.lockedDriverFee' | t }}: {{ formatIqd(ops.lockedDriverFee) }}</p>
+        }
+        @if (custodyRow(); as row) {
+          <p>{{ 'orders.currentAssignment' | t }}: {{ assignmentStatusLabel(row.status) }}</p>
+        }
+        @if (ops.openOfferRound; as round) {
+          <p>
+            {{ roundKindLabel(round.roundKind) }}
+            @if (round.openedAt) {
+              · {{ formatDate(round.openedAt) }}
+            }
+          </p>
+          @if (initialSearch()) {
+            <p class="hint">{{ 'orders.ops.searchingDriver' | t }}</p>
+          }
+          @if (replacementSearch()) {
+            <p class="hint">{{ 'orders.ops.searchingReplacement' | t }}</p>
+            <p class="hint">{{ 'orders.ops.custodyRemains' | t }}</p>
+            <p class="hint">{{ 'orders.ops.refreshSearch' | t }}</p>
+          }
+        }
+        @if (pendingHandoff(); as handoff) {
+          <div class="recovery-panel">
+            <h4>{{ 'orders.ops.pendingHandoff' | t }}</h4>
+            <p>{{ 'orders.ops.fromDriver' | t }}: <span dir="ltr">{{ driverLabel(handoff.fromDriverId) }}</span></p>
+            <p>{{ 'orders.ops.toDriver' | t }}: <span dir="ltr">{{ driverLabel(handoff.toDriverId) }}</span></p>
+            <p>{{ formatDate(handoff.startedAt) }}</p>
+            <p>{{ handoff.reason }}</p>
+            <p>{{ statusLabel(ops.status) }} · {{ driverLabel(ops.custodyDriverId) }}</p>
+            <div class="details-actions">
+              @if (!handoffDenied()) {
+                <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="handoffCancel.emit()">
+                  {{ 'orders.ops.handoff.cancel' | t }}
+                </button>
+                <button class="add-btn" type="button" [disabled]="mutating()" (click)="handoffComplete.emit()">
+                  {{ 'orders.ops.handoff.complete' | t }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+        @if (activeReturn(); as wf) {
+          <div class="recovery-panel">
+            <h4>{{ returnStatusLabel(wf.status) }}</h4>
+            <p><span dir="ltr">{{ driverLabel(wf.driverId) }}</span> · {{ wf.reason }}</p>
+            <p>{{ formatDate(wf.startedAt) }}</p>
+            @if (wf.status === 'WAITING_FOR_DRIVER_RETURN' && !returnDenied()) {
+              <button class="add-btn" type="button" [disabled]="mutating()" (click)="returnConfirmDriver.emit()">
+                {{ 'orders.ops.return.confirmDriver' | t }}
+              </button>
+            }
+            @if (wf.status === 'WAITING_FOR_STORE_CONFIRMATION' && !returnDenied()) {
+              <p class="hint">{{ 'orders.ops.driverReturnDone' | t }}</p>
+              <button class="add-btn" type="button" [disabled]="mutating()" (click)="returnConfirmStore.emit()">
+                {{ 'orders.ops.return.confirmStore' | t }}
+              </button>
+            }
+          </div>
+        } @else if (completedReturn(); as done) {
+          <p class="hint">{{ 'orders.ops.returnHistory' | t }}: {{ returnStatusLabel(done.status) }} · {{ formatDate(done.completedAt) }}</p>
+        }
+        <div class="details-actions">
+          @if (showAssign()) {
+            <button class="add-btn" type="button" [disabled]="mutating()" (click)="assignDriver.emit()">
+              {{ 'orders.ops.assignManual' | t }}
+            </button>
+          }
+          @if (showRemove()) {
+            <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="removeDriver.emit()">
+              {{ 'orders.ops.removeDriver' | t }}
+            </button>
+          }
+          @if (showReoffer()) {
+            <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="reoffer.emit()">
+              {{ 'orders.ops.searchReplacement' | t }}
+            </button>
+          }
+          @if (showStartHandoff()) {
+            <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="handoffStart.emit()">
+              {{ 'orders.ops.handoff.start' | t }}
+            </button>
+          }
+          @if (showStartReturn()) {
+            <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="returnStart.emit()">
+              {{ 'orders.ops.return.start' | t }}
+            </button>
+          }
+          @if (showReopen()) {
+            <button class="add-btn" type="button" [disabled]="mutating()" (click)="reopen.emit()">
+              {{ 'orders.ops.reopenTitle' | t }}
+            </button>
+          }
+        </div>
+        <p class="hint">{{ 'orders.ops.offerAdminDeferred' | t }}</p>
+      </div>
+    }
+  </section>
+
+  <section>
     <h3>{{ 'orders.items' | t }}</h3>
     @if (!itemsUnlocked()) {
       <p class="hint">{{ 'orders.itemsLocked' | t }}</p>
@@ -222,7 +334,7 @@
         </div>
         <div>
           <dt>{{ 'geo.status' | t }}</dt>
-          <dd>{{ current.status || '—' }}</dd>
+          <dd>{{ assignmentStatusLabel(current.status || '') }}</dd>
         </div>
         <div>
           <dt>{{ 'orders.driverFee' | t }}</dt>
@@ -247,7 +359,7 @@
         @for (row of pastAssignments(); track row.id) {
           <li>
             <span dir="ltr">{{ driverId(row) }}</span>
-            <span>{{ row.status }}</span>
+            <span>{{ assignmentStatusLabel(row.status) }}</span>
             <span>{{ formatDate(row.assignedAt) }}</span>
           </li>
         }

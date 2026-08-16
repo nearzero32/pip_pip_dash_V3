@@ -6,12 +6,26 @@ import {
   OrderDetail,
   OrderItemSnapshot,
   OrderLifecycleAction,
+  OrderOpsSnapshot,
   canApprove,
   canCancel,
   canMutateOrderItems,
   canMutateOrderItemsPayment,
+  canManualAssign,
+  canPostPickupReoffer,
+  canRemoveDriver,
+  canReopen,
+  canStartHandoff,
+  canStartReturn,
+  custodyAssignmentOf,
   isActiveAssignment,
+  isInitialSearch,
+  isReplacementSearch,
+  pendingHandoffOf,
   primaryLifecycleAction,
+  recoveryFocusOf,
+  activeReturnOf,
+  completedReturnOf,
   secondaryLifecycleActions,
 } from '../orders.models';
 import { OrderMapComponent } from '../order-map/order-map';
@@ -34,6 +48,14 @@ export class OrderDetailsComponent {
   readonly itemsReplaceDenied = input(false);
   readonly lifecycleDenied = input(false);
   readonly catalogDenied = input(false);
+  readonly ops = input<OrderOpsSnapshot | null>(null);
+  readonly opsLoading = input(false);
+  readonly opsUnavailable = input(false);
+  readonly assignDenied = input(false);
+  readonly reofferDenied = input(false);
+  readonly handoffDenied = input(false);
+  readonly returnDenied = input(false);
+  readonly driverNames = input<Record<string, string>>({});
   readonly closed = output<void>();
   readonly approve = output<void>();
   readonly cancel = output<void>();
@@ -42,6 +64,16 @@ export class OrderDetailsComponent {
   readonly removeItem = output<OrderItemSnapshot>();
   readonly replaceItem = output<OrderItemSnapshot>();
   readonly lifecycle = output<OrderLifecycleAction>();
+  readonly assignDriver = output<void>();
+  readonly removeDriver = output<void>();
+  readonly reoffer = output<void>();
+  readonly handoffStart = output<void>();
+  readonly handoffCancel = output<void>();
+  readonly handoffComplete = output<void>();
+  readonly returnStart = output<void>();
+  readonly returnConfirmDriver = output<void>();
+  readonly returnConfirmStore = output<void>();
+  readonly reopen = output<void>();
 
   readonly eventsOpen = signal(false);
 
@@ -98,6 +130,105 @@ export class OrderDetailsComponent {
 
   secondaryOps(): OrderLifecycleAction[] {
     return this.lifecycleDenied() ? [] : secondaryLifecycleActions(this.order());
+  }
+
+  focus() {
+    const ops = this.ops();
+    return ops ? recoveryFocusOf(ops) : null;
+  }
+
+  snapshot() {
+    return this.ops();
+  }
+
+  custodyRow() {
+    const ops = this.ops();
+    return ops ? custodyAssignmentOf(ops) : null;
+  }
+
+  pendingHandoff() {
+    const ops = this.ops();
+    return ops ? pendingHandoffOf(ops) : null;
+  }
+
+  activeReturn() {
+    const ops = this.ops();
+    return ops ? activeReturnOf(ops) : null;
+  }
+
+  completedReturn() {
+    const ops = this.ops();
+    return ops ? completedReturnOf(ops) : null;
+  }
+
+  showAssign(): boolean {
+    const ops = this.ops();
+    return !!ops && !this.assignDenied() && canManualAssign(ops) && this.focus() === 'assign';
+  }
+
+  showRemove(): boolean {
+    const ops = this.ops();
+    return !!ops && !this.assignDenied() && canRemoveDriver(ops) && this.focus() === 'removeDriver';
+  }
+
+  showPostPickup(): boolean {
+    return this.focus() === 'postPickup';
+  }
+
+  showReoffer(): boolean {
+    const ops = this.ops();
+    return !!ops && !this.reofferDenied() && !this.handoffDenied() && canPostPickupReoffer(ops) && this.showPostPickup();
+  }
+
+  showStartHandoff(): boolean {
+    const ops = this.ops();
+    return !!ops && !this.handoffDenied() && !this.assignDenied() && canStartHandoff(ops) && this.showPostPickup();
+  }
+
+  showStartReturn(): boolean {
+    const ops = this.ops();
+    if (!ops || this.returnDenied() || !canStartReturn(ops)) return false;
+    const focus = this.focus();
+    return focus === 'postPickup' || focus === 'handoff';
+  }
+
+  showReopen(): boolean {
+    const ops = this.ops();
+    return !!ops && !this.assignDenied() && canReopen(ops) && this.focus() === 'reopen';
+  }
+
+  replacementSearch(): boolean {
+    const ops = this.ops();
+    return !!ops && isReplacementSearch(ops);
+  }
+
+  initialSearch(): boolean {
+    const ops = this.ops();
+    return !!ops && isInitialSearch(ops);
+  }
+
+  driverLabel(id: string | null | undefined): string {
+    if (!id) return '—';
+    return this.driverNames()[id] ?? id;
+  }
+
+  assignmentStatusLabel(status: string | null | undefined): string {
+    if (!status) return '—';
+    const key = `orders.ops.assignStatus.${status}`;
+    const value = this.language.t(key);
+    return value === key ? status : value;
+  }
+
+  roundKindLabel(kind: string): string {
+    const key = `orders.ops.round.${kind}`;
+    const value = this.language.t(key);
+    return value === key ? kind : value;
+  }
+
+  returnStatusLabel(status: string): string {
+    const key = `orders.ops.returnStatus.${status}`;
+    const value = this.language.t(key);
+    return value === key ? status : value;
   }
 
   lifecycleLabel(action: OrderLifecycleAction): string {

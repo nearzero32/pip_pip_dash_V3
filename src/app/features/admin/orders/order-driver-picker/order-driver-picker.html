@@ -1,0 +1,57 @@
+<div class="picker">
+  <label class="filter-field">
+    <span class="filter-field__label">{{ 'orders.ops.driverSearch' | t }}</span>
+    <input
+      type="search"
+      [ngModel]="search()"
+      (ngModelChange)="onSearch($event)"
+      [attr.aria-label]="'orders.ops.driverSearch' | t"
+    />
+  </label>
+  @if (loading()) {
+    <p class="hint">{{ 'common.loading' | t }}</p>
+  }
+  <ul class="picker-list" role="listbox">
+    @for (row of rows(); track row.driverId) {
+      <li>
+        <button
+          type="button"
+          class="picker-row"
+          role="option"
+          [class.picker-row--selected]="selectedId() === row.driverId"
+          [disabled]="row.eligibilityStatus === 'INELIGIBLE'"
+          [attr.aria-selected]="selectedId() === row.driverId"
+          (click)="select(row)"
+        >
+          <strong>{{ row.driverName }}</strong>
+          <span>{{ eligibility(row) }}</span>
+          <span>{{ work(row) }}</span>
+          <span>{{ 'orders.ops.activeOrders' | t }}: {{ row.activeOrderCount }}</span>
+          <span>{{ freshness(row) }}</span>
+          @if (row.lastLocationAt) {
+            <span dir="ltr">{{ row.lastLocationAt }}</span>
+          }
+          @if (row.currentOrderSummary; as current) {
+            <small>{{ current.storeName }} · {{ current.status }}</small>
+          }
+          @if (row.nextOrderSummary; as next) {
+            <small>{{ next.storeName }} · {{ next.status }}</small>
+          }
+        </button>
+      </li>
+    }
+  </ul>
+  <div class="picker-nav">
+    <button type="button" class="ghost-btn" [disabled]="page() <= 1 || loading()" (click)="prevPage()">
+      {{ 'common.previous' | t }}
+    </button>
+    <button
+      type="button"
+      class="ghost-btn"
+      [disabled]="page() * limit >= total() || loading()"
+      (click)="nextPage()"
+    >
+      {{ 'common.next' | t }}
+    </button>
+  </div>
+</div>
