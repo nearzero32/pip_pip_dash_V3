@@ -1,0 +1,28 @@
+.store-location-map {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.store-map-host {
+  height: 360px;
+  width: 100%;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+:host ::ng-deep .store-map-marker {
+  width: 18px;
+  height: 18px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: #1d4ed8;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.35);
+}
+
+@media (max-width: 1024px) {
+  .store-map-host {
+    height: 280px;
+  }
+}

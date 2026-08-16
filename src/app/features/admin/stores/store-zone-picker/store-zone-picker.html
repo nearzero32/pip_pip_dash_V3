@@ -1,0 +1,28 @@
+<label class="filter-field">
+  <span class="filter-field__label">{{ 'stores.searchZones' | t }}</span>
+  <input
+    class="zone-picker__search"
+    type="search"
+    [ngModel]="query()"
+    (ngModelChange)="query.set($event)"
+  />
+</label>
+<p class="hint">{{ 'stores.selectedCount' | t }} {{ selectedCount() }}</p>
+@if (selectedIds().length < 1) {
+  <p class="zone-picker__error">{{ 'stores.needZone' | t }}</p>
+}
+<ul class="zone-picker__list">
+  @for (zone of filteredZones(); track zone.id) {
+    <li>
+      <label class="zone-picker__item">
+        <input type="checkbox" [checked]="isChecked(zone.id)" (change)="toggle(zone.id)" />
+        <span>{{ zone.name }}</span>
+        <span
+          class="badge"
+          [class.badge-success]="zone.status === 'ACTIVE'"
+          [class.badge-default]="zone.status === 'INACTIVE'"
+        >{{ ('status.' + zone.status) | t }}</span>
+      </label>
+    </li>
+  }
+</ul>

@@ -25,6 +25,7 @@ import { ZonesService } from '../zones/zones.service';
 import { IRAQ_MAP_FALLBACK, MapCenter, Zone } from '../zones/zones.models';
 import { StoreMapComponent } from './store-map/store-map';
 import { StoreZoneAssignmentComponent } from './store-zone-assignment/store-zone-assignment';
+import { StoreEditorComponent } from './store-editor/store-editor';
 import { StoresService } from './stores.service';
 import {
   MutableStoreStatus,
@@ -49,6 +50,7 @@ import {
     TranslatePipe,
     StoreMapComponent,
     StoreZoneAssignmentComponent,
+    StoreEditorComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './stores.html',
@@ -91,6 +93,9 @@ export class StoresComponent implements OnInit, OnDestroy {
   readonly archiving = signal(false);
   readonly confirmArchive = signal(false);
 
+  readonly editorOpen = signal(false);
+  readonly editingStore = signal<Store | null>(null);
+
   readonly filterZones = computed(() =>
     this.zones()
       .filter((zone) => zone.status !== 'ARCHIVED')
@@ -101,6 +106,8 @@ export class StoresComponent implements OnInit, OnDestroy {
   readonly assignableZones = computed(() =>
     this.zones().filter((zone) => zone.status === 'ACTIVE' || zone.status === 'INACTIVE')
   );
+
+  readonly activeZones = computed(() => this.zones().filter((zone) => zone.status === 'ACTIVE'));
 
   readonly selectedServiceZones = computed(() => {
     const store = this.selectedStore();
@@ -215,6 +222,29 @@ export class StoresComponent implements OnInit, OnDestroy {
   closeDetails() {
     this.selectedStore.set(null);
     this.assignmentOpen.set(false);
+  }
+
+  openCreate() {
+    this.editingStore.set(null);
+    this.editorOpen.set(true);
+  }
+
+  openEdit() {
+    const store = this.selectedStore();
+    if (!store || store.status === 'ARCHIVED') return;
+    this.editingStore.set(store);
+    this.editorOpen.set(true);
+  }
+
+  closeEditor() {
+    this.editorOpen.set(false);
+    this.editingStore.set(null);
+  }
+
+  async onEditorSaved(store: Store) {
+    this.closeEditor();
+    this.selectedStore.set(store);
+    await this.loadList(this.page());
   }
 
   openAssignment() {

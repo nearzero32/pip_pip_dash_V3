@@ -3,8 +3,10 @@ import { ApiService } from '../../../core/http/api.service';
 import {
   Store,
   StoreAcceptancePatch,
+  StoreCreateBody,
   StoreListPage,
   StoreListQuery,
+  StorePatch,
   StoreStatusPatch,
   StoreZoneIdsPatch,
 } from './stores.models';
@@ -51,9 +53,14 @@ export class StoresService {
     return response.data;
   }
 
+  async create(body: StoreCreateBody): Promise<Store> {
+    const response = await this.api.client.post<Store>('/api/v1/dashboard/stores', body);
+    return response.data;
+  }
+
   async update(
     storeId: string,
-    patch: StoreStatusPatch | StoreAcceptancePatch | StoreZoneIdsPatch
+    patch: StoreStatusPatch | StoreAcceptancePatch | StoreZoneIdsPatch | StorePatch
   ): Promise<Store> {
     const response = await this.api.client.patch<Store>(
       `/api/v1/dashboard/stores/${storeId}`,

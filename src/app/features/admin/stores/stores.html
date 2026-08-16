@@ -41,6 +41,9 @@
           }
         </select>
       </label>
+      <button class="add-btn" type="button" [disabled]="blocked()" (click)="openCreate()">
+        {{ 'stores.create' | t }}
+      </button>
     </div>
   </div>
 
@@ -216,6 +219,9 @@
 
     @if (store.status !== 'ARCHIVED') {
       <div class="details-actions">
+        <button class="add-btn" type="button" (click)="openEdit()">
+          {{ 'stores.edit' | t }}
+        </button>
         <button class="add-btn" type="button" (click)="openAssignment()">
           {{ 'stores.editServiceZones' | t }}
         </button>
@@ -288,4 +294,16 @@
     (save)="saveAssignment($event)"
     (selectedChange)="onAssignmentSelection($event)"
   ></app-store-zone-assignment>
+}
+
+@if (editorOpen()) {
+  <app-store-editor
+    [store]="editingStore()"
+    [assignableZones]="assignableZones()"
+    [activeZones]="activeZones()"
+    [fallbackCenter]="mapCenter()"
+    [zonesError]="zonesError()"
+    (closed)="closeEditor()"
+    (saved)="onEditorSaved($event)"
+  ></app-store-editor>
 }

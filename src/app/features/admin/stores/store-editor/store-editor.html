@@ -1,0 +1,249 @@
+<div class="store-editor" role="dialog" aria-modal="true" [attr.aria-labelledby]="'store-editor-title'">
+  <div class="store-editor__panel">
+    <header class="store-editor__header">
+      <h2 id="store-editor-title">
+        {{ isCreate() ? ('stores.create' | t) : ('stores.edit' | t) }}
+      </h2>
+      <button class="ghost-btn" type="button" [disabled]="saving()" (click)="requestClose()">
+        {{ 'common.cancel' | t }}
+      </button>
+    </header>
+
+    <ol class="store-editor__steps" aria-label="steps">
+      <li [class.is-current]="step() === 1" [class.is-done]="step() > 1">
+        <button type="button" [disabled]="saving()" (click)="goStep(1)">1. {{ 'stores.step.catalog' | t }}</button>
+      </li>
+      <li [class.is-current]="step() === 2" [class.is-done]="step() > 2">
+        <button type="button" [disabled]="saving()" (click)="goStep(2)">2. {{ 'stores.step.geo' | t }}</button>
+      </li>
+      <li [class.is-current]="step() === 3" [class.is-done]="step() > 3">
+        <button type="button" [disabled]="saving()" (click)="goStep(3)">3. {{ 'stores.step.hours' | t }}</button>
+      </li>
+      <li [class.is-current]="step() === 4">
+        <button type="button" [disabled]="saving()" (click)="goStep(4)">4. {{ 'stores.step.media' | t }}</button>
+      </li>
+    </ol>
+
+    @if (stepError()) {
+      <p class="store-editor__error">{{ stepError() }}</p>
+    }
+    @if (submitError()) {
+      <p class="store-editor__error">{{ submitError() }}</p>
+    }
+
+    @if (step() === 1) {
+      <section class="store-editor__section">
+        @if (catalogBlocked()) {
+          <div class="state-panel state-panel--warning">
+            <h3 class="state-panel__title">{{ 'stores.catalogBlockedTitle' | t }}</h3>
+            <p class="state-panel__message">{{ catalogBlockedMessage() }}</p>
+          </div>
+        } @else {
+          <label class="filter-field">
+            <span class="filter-field__label">{{ 'stores.name' | t }}</span>
+            <input class="store-editor__input" type="text" maxlength="100" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+          </label>
+          <p class="hint">{{ 'stores.nameHint' | t }}</p>
+          <label class="filter-field">
+            <span class="filter-field__label">{{ 'stores.phone' | t }}</span>
+            <input class="store-editor__input" type="tel" [ngModel]="phone()" (ngModelChange)="phone.set($event)" />
+          </label>
+          <label class="filter-field">
+            <span class="filter-field__label">{{ 'stores.address' | t }}</span>
+            <textarea class="store-editor__textarea" rows="3" [ngModel]="address()" (ngModelChange)="address.set($event)"></textarea>
+          </label>
+          <label class="filter-field">
+            <span class="filter-field__label">{{ 'stores.displayOrder' | t }}</span>
+            <input
+              class="store-editor__input"
+              type="number"
+              min="0"
+              step="1"
+              [ngModel]="displayOrder()"
+              (ngModelChange)="setDisplayOrder($event)"
+            />
+          </label>
+          <label class="filter-field">
+            <span class="filter-field__label">{{ 'stores.mainCategory' | t }}</span>
+            <select class="city-picker" [ngModel]="mainCategoryId()" (ngModelChange)="onMainCategoryChange($event)">
+              <option value="">{{ 'stores.selectMain' | t }}</option>
+              @for (category of mains(); track category.id) {
+                <option [value]="category.id">{{ category.name }} ({{ ('status.' + category.status) | t }})</option>
+              }
+            </select>
+          </label>
+          @if (selectedMain()?.status === 'INACTIVE') {
+            <p class="hint">{{ 'stores.inactiveMainNote' | t }}</p>
+          }
+          <p class="filter-field__label">{{ 'stores.subcategories' | t }}</p>
+          @if (subsLoading()) {
+            <p class="hint">{{ 'stores.subsLoading' | t }}</p>
+          } @else if (mainCategoryId() && subs().length === 0) {
+            <p class="store-editor__error">{{ 'stores.noSubcategories' | t }}</p>
+          } @else {
+            <ul class="store-editor__checks">
+              @for (sub of subs(); track sub.id) {
+                <li>
+                  <label>
+                    <input
+                      type="checkbox"
+                      [checked]="subcategoryIds().includes(sub.id)"
+                      (change)="toggleSubcategory(sub.id)"
+                    />
+                    <span>{{ sub.name }}</span>
+                    <span
+                      class="badge"
+                      [class.badge-success]="sub.status === 'ACTIVE'"
+                      [class.badge-default]="sub.status === 'INACTIVE'"
+                    >{{ ('status.' + sub.status) | t }}</span>
+                  </label>
+                </li>
+              }
+            </ul>
+          }
+        }
+      </section>
+    }
+
+    @if (step() === 2) {
+      <section class="store-editor__section store-editor__geo">
+        @if (activeZones().length === 0) {
+          <div class="state-panel state-panel--warning">
+            <h3 class="state-panel__title">{{ 'stores.noActiveZonesTitle' | t }}</h3>
+            <p class="state-panel__message">{{ 'stores.noActiveZones' | t }}</p>
+          </div>
+        } @else {
+          <div>
+            <h3>{{ 'stores.physicalLocation' | t }}</h3>
+            <p class="hint">{{ 'stores.locationMustBeActive' | t }}</p>
+            <app-store-location-map
+              [activeZones]="activeZones()"
+              [location]="location()"
+              [fallbackCenter]="fallbackCenter()"
+              [disabled]="saving()"
+              (locationChange)="onLocation($event)"
+            ></app-store-location-map>
+            <p class="hint">{{ coordText() }}</p>
+            @if (insideActiveHint() === false) {
+              <p class="store-editor__error">{{ 'stores.error.INVALID_STORE_LOCATION' | t }}</p>
+            }
+          </div>
+          <div>
+            <h3>{{ 'stores.serviceZones' | t }}</h3>
+            <p class="hint">{{ 'stores.serviceZonesIndependent' | t }}</p>
+            <app-store-zone-picker
+              [assignableZones]="assignableZones()"
+              [selectedIds]="zoneIds()"
+              (selectedChange)="onZones($event)"
+            ></app-store-zone-picker>
+          </div>
+        }
+      </section>
+    }
+
+    @if (step() === 3) {
+      <section class="store-editor__section">
+        <p class="hint">{{ 'stores.hoursHint' | t }}</p>
+        <p class="hint">{{ 'stores.hoursEmptyHint' | t }}</p>
+        @for (group of hoursGroups(); track group.day) {
+          <div class="store-hours-day">
+            <header>
+              <strong>{{ weekdayLabel(group.day) }}</strong>
+              <button class="ghost-btn" type="button" [disabled]="saving()" (click)="addPeriod(group.day)">
+                {{ 'stores.addPeriod' | t }}
+              </button>
+            </header>
+            @if (group.items.length === 0) {
+              <p class="hint">{{ 'stores.dayClosed' | t }}</p>
+            }
+            @for (item of group.items; track item.index) {
+              <div class="store-hours-row">
+                <input
+                  type="time"
+                  [ngModel]="item.period.opensAt"
+                  (ngModelChange)="setPeriodTime(item.index, 'opensAt', $event)"
+                />
+                <span>→</span>
+                <input
+                  type="time"
+                  [ngModel]="item.period.closesAt"
+                  (ngModelChange)="setPeriodTime(item.index, 'closesAt', $event)"
+                />
+                @if (item.period.closesAt < item.period.opensAt) {
+                  <em>{{ 'stores.overnight' | t }}</em>
+                }
+                <button class="ghost-btn" type="button" (click)="removePeriod(item.index)">
+                  {{ 'stores.removePeriod' | t }}
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    @if (step() === 4) {
+      <section class="store-editor__section">
+        <p class="hint">{{ 'stores.mediaHint' | t }}</p>
+        <div class="store-media-fields">
+          <div>
+            <span class="filter-field__label">{{ 'stores.logo' | t }} *</span>
+            @if (logoPreview(); as src) {
+              <img [src]="src" [alt]="'stores.logo' | t" class="store-media__logo" />
+            }
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              (change)="onLogoFile($any($event.target).files?.[0])"
+            />
+          </div>
+          <div>
+            <span class="filter-field__label">{{ 'stores.cover' | t }}</span>
+            @if (coverPreview(); as src) {
+              <img [src]="src" [alt]="'stores.cover' | t" class="store-media__cover" />
+            }
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              (change)="onCoverFile($any($event.target).files?.[0])"
+            />
+            @if (coverPreview() || (!isCreate() && store()?.cover && !removeCover())) {
+              <button class="ghost-btn" type="button" (click)="clearCover()">{{ 'stores.removeCover' | t }}</button>
+            }
+          </div>
+        </div>
+        <dl class="store-review">
+          <div><dt>{{ 'stores.name' | t }}</dt><dd>{{ name() }}</dd></div>
+          <div><dt>{{ 'stores.mainCategory' | t }}</dt><dd>{{ selectedMain()?.name }}</dd></div>
+          <div><dt>{{ 'stores.physicalLocation' | t }}</dt><dd>{{ coordText() }}</dd></div>
+          <div><dt>{{ 'stores.serviceZones' | t }}</dt><dd>{{ zoneIds().length }}</dd></div>
+        </dl>
+      </section>
+    }
+
+    <footer class="store-editor__footer">
+      <button class="ghost-btn" type="button" [disabled]="saving() || step() === 1" (click)="goPrev()">
+        {{ 'common.previous' | t }}
+      </button>
+      @if (step() < 4) {
+        <button class="add-btn" type="button" [disabled]="saving()" (click)="goNext()">
+          {{ 'common.next' | t }}
+        </button>
+      } @else {
+        <button class="add-btn" type="button" [disabled]="saving()" (click)="submit()">
+          {{ saving() ? ('common.saving' | t) : (isCreate() ? ('stores.create' | t) : ('common.save' | t)) }}
+        </button>
+      }
+    </footer>
+  </div>
+</div>
+
+@if (confirmDiscard()) {
+  <app-confirmation-dialog
+    [type]="'warning'"
+    [title]="'stores.discardTitle' | t"
+    [message]="'stores.discardMessage' | t"
+    (confirm)="discard()"
+    (cancel)="confirmDiscard.set(false)"
+  ></app-confirmation-dialog>
+}
