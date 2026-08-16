@@ -10,18 +10,18 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog';
-import { TranslatePipe } from '../../../../i18n/translate.pipe';
-import { LanguageService } from '../../../../i18n/language.service';
-import { NotificationService } from '../../../../shared/services/notification.service';
+import { ConfirmationDialogComponent } from '../../../../../shared/components/confirmation-dialog/confirmation-dialog';
+import { TranslatePipe } from '../../../../../i18n/translate.pipe';
+import { LanguageService } from '../../../../../i18n/language.service';
+import { NotificationService } from '../../../../../shared/services/notification.service';
 import {
   getApiErrorMessage,
   getApiErrorStatus,
   isApiErrorCode,
-} from '../../../../core/http/api-error';
-import { ProductCatalogService } from '../product-catalog.service';
-import { Product } from '../product-catalog.models';
-import { ModifierCatalogService } from './modifier.service';
+} from '../../../../../core/http/api-error';
+import { ProductCatalogService } from '../../product-catalog.service';
+import { Product } from '../../product-catalog.models';
+import { ModifierCatalogService } from '../modifier.service';
 import {
   ModifierGroup,
   ModifierOption,
@@ -30,7 +30,7 @@ import {
   ProductModifiers,
   parseNonNegativeIqd,
   parsePositiveInt,
-} from './modifier.models';
+} from '../modifier.models';
 
 interface OptionRow {
   option: ModifierOption;

@@ -8,20 +8,20 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ConfirmationDialogComponent } from '../../../../../shared/components/confirmation-dialog/confirmation-dialog';
-import { TranslatePipe } from '../../../../../i18n/translate.pipe';
-import { LanguageService } from '../../../../../i18n/language.service';
-import { NotificationService } from '../../../../../shared/services/notification.service';
-import { getApiErrorMessage, isApiErrorCode } from '../../../../../core/http/api-error';
-import { validateArabicCatalogName } from '../../../catalog/catalog.models';
-import { ModifierCatalogService } from '../modifier.service';
+import { ConfirmationDialogComponent } from '../../../../../../shared/components/confirmation-dialog/confirmation-dialog';
+import { TranslatePipe } from '../../../../../../i18n/translate.pipe';
+import { LanguageService } from '../../../../../../i18n/language.service';
+import { NotificationService } from '../../../../../../shared/services/notification.service';
+import { getApiErrorMessage, isApiErrorCode } from '../../../../../../core/http/api-error';
+import { validateArabicCatalogName } from '../../../../catalog/catalog.models';
+import { ModifierCatalogService } from '../../modifier.service';
 import {
   ModifierGroup,
   ModifierGroupPatch,
   ModifierOptionDraft,
   MutableModifierStatus,
   parsePositiveInt,
-} from '../modifier.models';
+} from '../../modifier.models';
 
 @Component({
   selector: 'app-modifier-group-editor',
