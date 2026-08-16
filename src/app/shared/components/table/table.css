@@ -47,7 +47,6 @@
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
@@ -176,7 +175,7 @@
 /* View */
 .view-bg {
   background: var(--color-info-soft);
-  border-color: rgba(37, 99, 235, 0.18);
+  border-color: color-mix(in srgb, var(--color-info) 18%, transparent);
   color: var(--color-info);
 }
 .view-bg svg { stroke: var(--color-info); }
@@ -344,7 +343,6 @@
     font-weight: var(--font-weight-semibold);
     color: var(--color-text-secondary);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
   }
 
   .cell-content {

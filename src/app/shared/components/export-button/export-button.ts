@@ -6,75 +6,7 @@ import { TranslatePipe } from '../../../i18n/translate.pipe';
   selector: 'app-export-button',
   standalone: true,
   imports: [CommonModule, TranslatePipe],
-  styles: [`
-    .filter-btn {
-      background: #F3F4F6;
-      color: #6B7280;
-      padding: 0.875rem 1.5rem;
-      border-radius: 16px;
-      border: 2px solid #E5E7EB;
-      font-weight: 700;
-      font-size: 0.95rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      white-space: nowrap;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .filter-btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-      transition: left 0.5s;
-    }
-
-    .filter-btn:hover::before {
-      left: 100%;
-    }
-
-    .filter-btn:not(:disabled):hover {
-      background: #E5E7EB;
-      color: #374151;
-      border-color: #D1D5DB;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .filter-btn:disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
-    }
-
-    .spinner-sm {
-        width: 16px;
-        height: 16px;
-        border: 2px solid currentColor;
-        border-right-color: transparent;
-        border-radius: 50%;
-        animation: spin 0.75s linear infinite;
-    }
-
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-
-    /* Mobile Responsiveness */
-    @media (max-width: 1024px) {
-      .filter-btn {
-        width: 100%;
-        justify-content: center;
-      }
-    }
-  `],
+  styleUrl: './export-button.css',
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <button class="filter-btn" (click)="onClick()" [disabled]="isLoading">

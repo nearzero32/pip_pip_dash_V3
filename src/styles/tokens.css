@@ -74,10 +74,15 @@
   --color-neutral-soft:  #F3F4F6;
 
   /* ── SEMANTIC BRAND ALIASES (used in components) ───────── */
-  --color-brand-primary:       var(--brand-orange);
-  --color-brand-primary-hover: var(--brand-orange-hover);
-  --color-brand-primary-soft:  var(--brand-orange-soft);
-  --color-brand-primary-ring:  var(--brand-orange-ring);
+  --color-brand-primary:        var(--brand-orange);
+  --color-brand-primary-hover:  var(--brand-orange-hover);
+  --color-brand-primary-active: var(--brand-orange-active);
+  --color-brand-primary-soft:   var(--brand-orange-soft);
+  --color-brand-primary-ring:   var(--brand-orange-ring);
+  --color-brand-secondary:      var(--brand-purple);
+  --color-brand-accent:         var(--brand-yellow);
+
+  --color-overlay: rgba(28, 27, 46, 0.45);
 
   /* Legacy aliases — sidebar/layout still use these */
   --primary-color:  var(--brand-orange);
@@ -165,8 +170,8 @@
   --control-height-lg: 48px;
 
   /* ── MOTION ────────────────────────────────────────────── */
-  --duration-fast:   100ms;
-  --duration-normal: 170ms;
+  --duration-fast:   120ms;
+  --duration-normal: 180ms;
   --duration-slow:   240ms;
 
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);

@@ -1,46 +1,43 @@
-/* Dialog Overlay */
+/* Confirmation dialog — semantic tokens, no competing visual language */
+
 .dialog-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
+  inset: 0;
+  background: var(--color-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  backdrop-filter: blur(8px);
-  animation: fadeIn 0.2s ease-out;
-  padding: 1rem;
+  backdrop-filter: blur(3px);
+  animation: overlayIn var(--duration-normal) var(--ease-out);
+  padding: var(--space-4);
 }
 
-@keyframes fadeIn {
+@keyframes overlayIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-/* Dialog Container */
 .dialog-container {
-  background: white;
-  border-radius: 20px;
-  width: 90%;
-  max-width: 440px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-lg);
+  animation: dialogIn var(--duration-slow) var(--ease-out);
   overflow: hidden;
   position: relative;
-  padding: 2.5rem 2rem 2rem;
+  padding: var(--space-8) var(--space-6) var(--space-6);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
 }
 
-@keyframes slideUp {
+@keyframes dialogIn {
   from {
     opacity: 0;
-    transform: translateY(40px) scale(0.9);
+    transform: translateY(12px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -48,224 +45,153 @@
   }
 }
 
-/* Top Accent Bar */
+@media (prefers-reduced-motion: reduce) {
+  .dialog-overlay,
+  .dialog-container,
+  .dialog-icon {
+    animation: none;
+  }
+}
+
 .dialog-container::before {
   content: '';
   position: absolute;
+  inset-inline: 0;
   top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #EF4444, #DC2626);
+  height: 3px;
+  background: var(--color-danger);
 }
 
 .dialog-container.warning::before {
-  background: linear-gradient(90deg, #F59E0B, #D97706);
+  background: var(--color-warning);
 }
 
 .dialog-container.info::before {
-  background: linear-gradient(90deg, #3B82F6, #2563EB);
+  background: var(--color-info);
 }
 
-/* Icon */
 .dialog-icon {
-  width: 80px;
-  height: 80px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1.5rem;
-  animation: iconPulse 0.5s ease-out;
-  position: relative;
-}
-
-@keyframes iconPulse {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  margin-bottom: var(--space-5);
 }
 
 .danger-icon {
-  background: linear-gradient(135deg, #FEE2E2, #FECACA);
-  color: #DC2626;
-}
-
-.danger-icon svg {
-  stroke: #DC2626;
-  filter: drop-shadow(0 2px 4px rgba(220, 38, 38, 0.2));
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
 }
 
 .warning-icon {
-  background: linear-gradient(135deg, #FEF3C7, #FDE68A);
-  color: #D97706;
-}
-
-.warning-icon svg {
-  stroke: #D97706;
-  filter: drop-shadow(0 2px 4px rgba(217, 119, 6, 0.2));
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
 }
 
 .info-icon {
-  background: linear-gradient(135deg, #DBEAFE, #BFDBFE);
-  color: #2563EB;
+  background: var(--color-info-soft);
+  color: var(--color-info);
 }
 
-.info-icon svg {
-  stroke: #2563EB;
-  filter: drop-shadow(0 2px 4px rgba(37, 99, 235, 0.2));
-}
-
-/* Content */
 .dialog-content {
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-6);
 }
 
 .dialog-title {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #1F2937;
-  margin: 0 0 0.75rem 0;
-  line-height: 1.3;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-strong);
+  margin: 0 0 var(--space-3) 0;
+  line-height: var(--line-height-tight);
 }
 
 .dialog-message {
-  font-size: 1rem;
-  color: #6B7280;
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
   margin: 0;
-  line-height: 1.6;
-  font-weight: 500;
+  line-height: var(--line-height-normal);
+  font-weight: var(--font-weight-normal);
 }
 
-/* Actions */
 .dialog-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-3);
   width: 100%;
 }
 
 .dialog-btn {
   flex: 1;
-  padding: 0.875rem 1.5rem;
-  border-radius: 12px;
-  font-size: 0.9375rem;
-  font-weight: 700;
+  height: var(--control-height-md);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: none;
-  outline: none;
+  transition:
+    background var(--duration-normal) var(--ease-default),
+    border-color var(--duration-normal) var(--ease-default),
+    color var(--duration-normal) var(--ease-default);
+  border: 1.5px solid transparent;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Cancel Button */
+.dialog-btn:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
 .btn-cancel {
-  background: #F3F4F6;
-  color: #6B7280;
-  border: 2px solid #E5E7EB;
+  background: var(--color-surface-subtle);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-default);
 }
 
 .btn-cancel:hover {
-  background: #E5E7EB;
-  color: #374151;
-  border-color: #D1D5DB;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: var(--color-surface-hover);
+  color: var(--color-text-strong);
+  border-color: var(--color-border-strong);
 }
 
-.btn-cancel:active {
-  transform: translateY(0);
-}
-
-/* Confirm Button - Danger */
 .btn-confirm.danger-btn {
-  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-confirm.danger-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-  transition: left 0.5s;
+  background: var(--color-danger);
+  color: var(--color-text-on-brand);
+  border-color: var(--color-danger);
 }
 
 .btn-confirm.danger-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.5);
+  background: var(--color-danger-text);
+  border-color: var(--color-danger-text);
 }
 
-.btn-confirm.danger-btn:hover::before {
-  left: 100%;
-}
-
-.btn-confirm.danger-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-}
-
-/* Confirm Button - Warning */
 .btn-confirm.warning-btn {
-  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+  background: var(--color-warning);
+  color: var(--color-text-on-brand);
+  border-color: var(--color-warning);
 }
 
 .btn-confirm.warning-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.5);
+  background: var(--color-warning-text);
+  border-color: var(--color-warning-text);
 }
 
-/* Confirm Button - Info */
 .btn-confirm.info-btn {
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  background: var(--color-info);
+  color: var(--color-text-on-brand);
+  border-color: var(--color-info);
 }
 
 .btn-confirm.info-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);
+  background: var(--color-info-text);
+  border-color: var(--color-info-text);
 }
 
-/* Mobile Responsiveness */
 @media (max-width: 640px) {
   .dialog-container {
-    padding: 2rem 1.5rem 1.5rem;
-  }
-
-  .dialog-icon {
-    width: 70px;
-    height: 70px;
-  }
-
-  .dialog-icon svg {
-    width: 40px;
-    height: 40px;
-  }
-
-  .dialog-title {
-    font-size: 1.25rem;
-  }
-
-  .dialog-message {
-    font-size: 0.9375rem;
+    padding: var(--space-6) var(--space-5) var(--space-5);
   }
 
   .dialog-actions {
@@ -276,4 +202,3 @@
     width: 100%;
   }
 }
-

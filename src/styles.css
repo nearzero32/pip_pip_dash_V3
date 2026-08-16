@@ -61,7 +61,7 @@
 }
 
 .add-btn:active:not(:disabled) {
-  background: var(--brand-orange-active);
+  background: var(--color-brand-primary-active);
   transform: translateY(0);
   box-shadow: none;
 }
@@ -116,6 +116,42 @@
 
 .ghost-btn:focus-visible {
   box-shadow: var(--focus-ring);
+}
+
+/* Danger — destructive confirmation only */
+.danger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--control-height-md);
+  padding: 0 var(--space-5);
+  background: var(--color-danger);
+  color: var(--color-text-on-brand);
+  border: 1.5px solid var(--color-danger);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition:
+    background var(--duration-normal) var(--ease-default),
+    box-shadow var(--duration-normal) var(--ease-default),
+    transform var(--duration-fast) var(--ease-default);
+}
+
+.danger-btn:hover:not(:disabled) {
+  background: var(--color-danger-text);
+  border-color: var(--color-danger-text);
+}
+
+.danger-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.danger-btn:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-danger-soft);
 }
 
 /* ── CITY PICKER ────────────────────────────────────────────── */
@@ -191,7 +227,6 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 
@@ -218,4 +253,60 @@
 .badge-default {
   background: var(--color-neutral-soft);
   color: var(--color-neutral);
+}
+
+/* ── DETAIL DRAWER (shared by cities / drivers) ─────────────── */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--color-overlay);
+  z-index: 80;
+}
+
+.details {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: min(420px, 100%);
+  background: var(--color-surface-raised);
+  z-index: 90;
+  padding: var(--space-6);
+  box-shadow: var(--shadow-lg);
+  overflow: auto;
+}
+
+.details header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-5);
+}
+
+.details header button {
+  border: 1px solid var(--color-border-default);
+  background: transparent;
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-3);
+  cursor: pointer;
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+}
+
+.details header button:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.details dl {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.details dt {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.details dd {
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
 }
