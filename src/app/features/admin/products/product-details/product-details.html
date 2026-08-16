@@ -1,0 +1,164 @@
+<div class="backdrop" (click)="closed.emit()"></div>
+<aside class="details product-details" aria-labelledby="product-details-title">
+  <header>
+    <h2 id="product-details-title">{{ product().name }}</h2>
+    <button type="button" (click)="closed.emit()">{{ 'common.close' | t }}</button>
+  </header>
+
+  @if (product().images.length) {
+    <div class="product-gallery">
+      @if (activeImage()?.url; as src) {
+        <img class="product-gallery__main" [src]="src" [alt]="product().name" />
+      }
+      <div class="product-gallery__thumbs" role="list">
+        @for (image of product().images; track image.id) {
+          <button
+            class="product-gallery__thumb"
+            type="button"
+            role="listitem"
+            [class.product-gallery__thumb--active]="image.id === selectedImageId()"
+            [attr.aria-pressed]="image.id === selectedImageId()"
+            [attr.aria-label]="image.isPrimary ? ('products.primaryImage' | t) : product().name"
+            (click)="selectImage(image.id)"
+          >
+            @if (image.url; as thumb) {
+              <img [src]="thumb" [alt]="product().name" />
+            }
+            @if (image.isPrimary) {
+              <span class="product-gallery__badge">{{ 'products.primaryImage' | t }}</span>
+            }
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <dl>
+    <div>
+      <dt>{{ 'catalog.name' | t }}</dt>
+      <dd>{{ product().name }}</dd>
+    </div>
+    <div>
+      <dt>{{ 'products.description' | t }}</dt>
+      <dd>{{ description() }}</dd>
+    </div>
+    <div>
+      <dt>{{ 'products.storeCategory' | t }}</dt>
+      <dd>{{ categoryLabel() }}</dd>
+    </div>
+    <div>
+      <dt>{{ 'geo.status' | t }}</dt>
+      <dd>
+        <span
+          class="badge"
+          [class.badge-success]="product().status === 'ACTIVE'"
+          [class.badge-default]="product().status === 'INACTIVE'"
+          [class.badge-danger]="product().status === 'ARCHIVED'"
+        >{{ statusLabel(product().status) }}</span>
+      </dd>
+    </div>
+    <div>
+      <dt>{{ 'products.availability' | t }}</dt>
+      <dd>
+        <span
+          class="badge"
+          [class.badge-success]="product().isAvailable"
+          [class.badge-default]="!product().isAvailable"
+        >{{ (product().isAvailable ? 'products.available' : 'products.unavailable') | t }}</span>
+      </dd>
+    </div>
+    <div>
+      <dt>{{ 'products.pricingMode' | t }}</dt>
+      <dd>{{ (isSized() ? 'products.sizedProduct' : 'products.basePriceProduct') | t }}</dd>
+    </div>
+    @if (!isSized() && product().basePrice != null) {
+      <div>
+        <dt>{{ 'products.basePrice' | t }}</dt>
+        <dd>{{ formatIqd(product().basePrice!) }}</dd>
+      </div>
+    }
+    <div>
+      <dt>{{ 'catalog.displayOrder' | t }}</dt>
+      <dd>{{ product().displayOrder }}</dd>
+    </div>
+    <div>
+      <dt>{{ 'geo.createdAt' | t }}</dt>
+      <dd>{{ formatDate(product().createdAt) }}</dd>
+    </div>
+    <div>
+      <dt>{{ 'catalog.updatedAt' | t }}</dt>
+      <dd>{{ formatDate(product().updatedAt) }}</dd>
+    </div>
+    @if (product().archivedAt) {
+      <div>
+        <dt>{{ 'catalog.archivedAt' | t }}</dt>
+        <dd>{{ formatDate(product().archivedAt) }}</dd>
+      </div>
+    }
+  </dl>
+
+  @if (isSized()) {
+    <h3>{{ 'products.sizes' | t }}</h3>
+    <ul class="product-sizes">
+      @for (size of visibleSizes(); track size.id) {
+        <li>
+          <strong>{{ size.name }}</strong>
+          <span>{{ formatIqd(size.price) }}</span>
+          <span class="badge" [class.badge-success]="size.status === 'ACTIVE'" [class.badge-default]="size.status !== 'ACTIVE'">
+            {{ statusLabel(size.status) }}
+          </span>
+          <span>{{ (size.isAvailable ? 'products.available' : 'products.unavailable') | t }}</span>
+          @if (size.isDefault) {
+            <span class="badge badge-success">{{ 'products.defaultSize' | t }}</span>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  <h3>{{ 'products.availabilityWindows' | t }}</h3>
+  @if (windowsByDay().length === 0) {
+    <p class="hint">{{ 'products.noAvailabilityWindows' | t }}</p>
+  } @else {
+    <ul class="product-windows">
+      @for (group of windowsByDay(); track group.day) {
+        <li>
+          <strong>{{ weekdayLabel(group.day) }}</strong>
+          <span>
+            @for (window of group.windows; track window.id) {
+              {{ windowLabel(window) }}
+            }
+          </span>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (product().status !== 'ARCHIVED' && !mutationsDisabled()) {
+    <div class="details-actions">
+      @if (product().status === 'ACTIVE') {
+        <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="statusChange.emit('INACTIVE')">
+          {{ 'catalog.deactivate' | t }}
+        </button>
+      }
+      @if (product().status === 'INACTIVE') {
+        <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="statusChange.emit('ACTIVE')">
+          {{ 'catalog.activate' | t }}
+        </button>
+      }
+      <button
+        class="ghost-btn"
+        type="button"
+        [disabled]="mutating()"
+        (click)="availabilityChange.emit(!product().isAvailable)"
+      >
+        {{ (product().isAvailable ? 'products.markUnavailable' : 'products.markAvailable') | t }}
+      </button>
+      <button class="danger-btn" type="button" [disabled]="mutating()" (click)="archive.emit()">
+        {{ 'catalog.archive' | t }}
+      </button>
+    </div>
+  } @else if (product().status === 'ARCHIVED') {
+    <p class="hint">{{ 'products.archivedViewOnly' | t }}</p>
+  }
+</aside>

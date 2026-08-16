@@ -7,6 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TableComponent } from '../../../shared/components/table/table';
 import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog/confirmation-dialog';
@@ -62,6 +63,7 @@ export class StoresComponent implements OnInit, OnDestroy {
   private language = inject(LanguageService);
   private notify = inject(NotificationService);
   private auth = inject(AuthService);
+  private router = inject(Router);
 
   readonly stores = signal<StoreRow[]>([]);
   readonly pagination = signal<PaginationConfig | null>(null);
@@ -234,6 +236,12 @@ export class StoresComponent implements OnInit, OnDestroy {
     if (!store || store.status === 'ARCHIVED') return;
     this.editingStore.set(store);
     this.editorOpen.set(true);
+  }
+
+  openProducts() {
+    const store = this.selectedStore();
+    if (!store || store.status === 'ARCHIVED') return;
+    void this.router.navigate(['/products'], { queryParams: { storeId: store.id } });
   }
 
   closeEditor() {

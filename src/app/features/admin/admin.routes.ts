@@ -21,7 +21,11 @@ export const ADMIN_ROUTES: Routes = [
   { path: 'orders', ...page('nav.ordersList') },
   { path: 'orders-stats', ...page('nav.ordersStats') },
   { path: 'delegates', ...page('nav.delegatesActive') },
-  { path: 'products', ...page('nav.productsList') },
+  {
+    path: 'products',
+    loadComponent: () => import('./products/products').then((m) => m.ProductsComponent),
+    data: { titleKey: 'nav.productsList' },
+  },
   { path: 'drivers-credit', ...page('nav.driversCredit') },
   { path: 'drivers-credit-history', ...page('nav.driversCreditHistory') },
   { path: 'drivers-outside-orders', ...page('nav.driversOutside') },

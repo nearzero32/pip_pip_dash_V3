@@ -1,0 +1,151 @@
+<div class="page-toolbar">
+  <div class="page-toolbar__actions">
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'catalog.search' | t }}</span>
+      <input
+        class="cat-search"
+        type="search"
+        [value]="search()"
+        (input)="onSearchInput($any($event.target).value)"
+        [attr.aria-label]="'catalog.search' | t"
+      />
+    </label>
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'geo.status' | t }}</span>
+      <select class="city-picker" [ngModel]="statusFilter()" (ngModelChange)="onStatusChange($event)">
+        <option value="">{{ 'catalog.statusAll' | t }}</option>
+        <option value="ACTIVE">{{ 'status.ACTIVE' | t }}</option>
+        <option value="INACTIVE">{{ 'status.INACTIVE' | t }}</option>
+        <option value="ARCHIVED">{{ 'status.ARCHIVED' | t }}</option>
+      </select>
+    </label>
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'products.parentFilter' | t }}</span>
+      <select class="city-picker" [ngModel]="parentFilter()" (ngModelChange)="onParentChange($event)">
+        <option value="">{{ 'products.parentFilterAll' | t }}</option>
+        <option value="roots">{{ 'products.parentFilterRoots' | t }}</option>
+        @for (root of roots(); track root.id) {
+          <option [value]="root.id">{{ root.name }}</option>
+        }
+      </select>
+    </label>
+    <button
+      class="add-btn"
+      type="button"
+      [disabled]="blocked() || mutationsDisabled()"
+      (click)="openCreate()"
+    >
+      {{ 'products.addCategory' | t }}
+    </button>
+  </div>
+</div>
+
+@if (blocked()) {
+  <div class="state-panel state-panel--warning">
+    <h2 class="state-panel__title">{{ 'products.categoriesBlockedTitle' | t }}</h2>
+    <p class="state-panel__message">{{ blockedMessage() }}</p>
+  </div>
+} @else {
+  <app-table
+    [data]="rows()"
+    [columns]="columns"
+    [pagination]="pagination()"
+    [isLoading]="isLoading()"
+    [allowDelete]="false"
+    [allowEdit]="false"
+    [allowView]="true"
+    rowKey="id"
+    (pageChange)="onPageChange($event)"
+    (onView)="onView($event)"
+  ></app-table>
+}
+
+@if (selected(); as row) {
+  <div class="backdrop" (click)="closeDetails()"></div>
+  <aside class="details" aria-labelledby="store-cat-details-title">
+    <header>
+      <h2 id="store-cat-details-title">{{ row.name }}</h2>
+      <button type="button" (click)="closeDetails()">{{ 'common.close' | t }}</button>
+    </header>
+    @if (archiveChildrenError()) {
+      <p class="cat-editor__error">{{ 'products.categoryHasChildren' | t }}</p>
+    }
+    <dl>
+      <div>
+        <dt>{{ 'products.hierarchy' | t }}</dt>
+        <dd>{{ (row.parentCategoryId ? 'products.storeChild' : 'products.storeRoot') | t }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'geo.status' | t }}</dt>
+        <dd>
+          <span
+            class="badge"
+            [class.badge-success]="row.status === 'ACTIVE'"
+            [class.badge-default]="row.status === 'INACTIVE'"
+            [class.badge-danger]="row.status === 'ARCHIVED'"
+          >{{ statusLabel(row.status) }}</span>
+        </dd>
+      </div>
+      <div>
+        <dt>{{ 'catalog.displayOrder' | t }}</dt>
+        <dd>{{ row.displayOrder }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'geo.createdAt' | t }}</dt>
+        <dd>{{ formatDate(row.createdAt) }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'catalog.updatedAt' | t }}</dt>
+        <dd>{{ formatDate(row.updatedAt) }}</dd>
+      </div>
+      @if (row.archivedAt) {
+        <div>
+          <dt>{{ 'catalog.archivedAt' | t }}</dt>
+          <dd>{{ formatDate(row.archivedAt) }}</dd>
+        </div>
+      }
+    </dl>
+    @if (row.status !== 'ARCHIVED' && !mutationsDisabled()) {
+      <div class="details-actions">
+        <button class="add-btn" type="button" (click)="openEdit()">{{ 'products.editCategory' | t }}</button>
+        @if (row.status === 'ACTIVE') {
+          <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="setStatus('INACTIVE')">
+            {{ 'catalog.deactivate' | t }}
+          </button>
+        }
+        @if (row.status === 'INACTIVE') {
+          <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="setStatus('ACTIVE')">
+            {{ 'catalog.activate' | t }}
+          </button>
+        }
+        <button class="danger-btn" type="button" (click)="confirmArchive.set(true)">
+          {{ 'catalog.archive' | t }}
+        </button>
+      </div>
+    } @else if (row.status === 'ARCHIVED') {
+      <p class="hint">{{ 'products.categoryArchivedViewOnly' | t }}</p>
+    }
+  </aside>
+}
+
+@if (confirmArchive()) {
+  <app-confirmation-dialog
+    [type]="'danger'"
+    [title]="'products.archiveCategoryTitle' | t"
+    [message]="'products.archiveCategoryMessage' | t"
+    (confirm)="runArchive()"
+    (cancel)="confirmArchive.set(false)"
+  ></app-confirmation-dialog>
+}
+
+@if (editorOpen()) {
+  <app-store-category-editor
+    [storeId]="storeId()"
+    [category]="editing()"
+    [roots]="roots()"
+    [hasNonArchivedChildren]="selectedHasChildren()"
+    (closed)="editorOpen.set(false)"
+    (saved)="onSaved($event)"
+    (storeArchived)="storeArchived.emit()"
+  ></app-store-category-editor>
+}

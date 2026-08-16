@@ -1,0 +1,178 @@
+<section class="feature-page">
+  <div class="page-toolbar">
+    <div class="page-toolbar__context">
+      <p class="hint">{{ 'products.hint' | t }}</p>
+      @if (selectedStore(); as store) {
+        <div class="store-context">
+          @if (store.logo?.url; as logo) {
+            <img class="store-context__logo" [src]="logo" [alt]="store.name" />
+          }
+          <div>
+            <strong>{{ store.name }}</strong>
+            <span
+              class="badge"
+              [class.badge-success]="store.status === 'ACTIVE'"
+              [class.badge-default]="store.status === 'DRAFT' || store.status === 'INACTIVE'"
+              [class.badge-danger]="store.status === 'ARCHIVED'"
+            >{{ ('status.' + store.status) | t }}</span>
+          </div>
+        </div>
+      }
+    </div>
+    <div class="page-toolbar__actions">
+      <label class="filter-field">
+        <span class="filter-field__label">{{ 'products.store' | t }}</span>
+        <select
+          class="city-picker"
+          [disabled]="storesLoading() || storesBlocked()"
+          [ngModel]="selectedStoreId()"
+          (ngModelChange)="onStoreChange($event)"
+        >
+          <option value="">{{ 'products.selectStore' | t }}</option>
+          @for (store of stores(); track store.id) {
+            <option [value]="store.id">{{ store.name }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  </div>
+
+  @if (storesBlocked()) {
+    <div class="state-panel state-panel--warning">
+      <h2 class="state-panel__title">{{ 'products.storesBlockedTitle' | t }}</h2>
+      <p class="state-panel__message">{{ storesBlockedMessage() }}</p>
+    </div>
+  } @else if (!storesLoading() && stores().length === 0) {
+    <div class="state-panel">
+      <h2 class="state-panel__title">{{ 'products.noStoresTitle' | t }}</h2>
+      <p class="state-panel__message">{{ 'products.noStores' | t }}</p>
+      <a class="add-btn" routerLink="/stores">{{ 'products.goToStores' | t }}</a>
+    </div>
+  } @else if (storeUnavailable()) {
+    <div class="state-panel state-panel--warning">
+      <h2 class="state-panel__title">{{ 'products.storeUnavailableTitle' | t }}</h2>
+      <p class="state-panel__message">{{ 'products.storeUnavailable' | t }}</p>
+    </div>
+  } @else if (!selectedStoreId()) {
+    <div class="state-panel">
+      <h2 class="state-panel__title">{{ 'products.chooseStoreTitle' | t }}</h2>
+      <p class="state-panel__message">{{ 'products.chooseStore' | t }}</p>
+    </div>
+  } @else {
+    @if (storeArchived()) {
+      <p class="hint">{{ 'products.storeArchived' | t }}</p>
+    }
+
+    <div class="catalog-tabs" role="tablist" [attr.aria-label]="'products.tabs' | t">
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'products'"
+        [class.catalog-tabs__tab--active]="activeTab() === 'products'"
+        (click)="setTab('products')"
+      >
+        {{ 'products.tabProducts' | t }}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'categories'"
+        [class.catalog-tabs__tab--active]="activeTab() === 'categories'"
+        (click)="setTab('categories')"
+      >
+        {{ 'products.tabCategories' | t }}
+      </button>
+    </div>
+
+    @if (activeTab() === 'products') {
+      @if (productsBlocked()) {
+        <div class="state-panel state-panel--warning">
+          <h2 class="state-panel__title">{{ 'products.productsBlockedTitle' | t }}</h2>
+          <p class="state-panel__message">{{ productsBlockedMessage() }}</p>
+        </div>
+      } @else {
+        <div class="page-toolbar">
+          <div class="page-toolbar__actions">
+            <label class="filter-field">
+              <span class="filter-field__label">{{ 'catalog.search' | t }}</span>
+              <input
+                class="cat-search"
+                type="search"
+                [value]="search()"
+                (input)="onSearchInput($any($event.target).value)"
+                [attr.aria-label]="'catalog.search' | t"
+              />
+            </label>
+            <label class="filter-field">
+              <span class="filter-field__label">{{ 'geo.status' | t }}</span>
+              <select class="city-picker" [ngModel]="statusFilter()" (ngModelChange)="onStatusChange($event)">
+                <option value="">{{ 'catalog.statusAll' | t }}</option>
+                <option value="ACTIVE">{{ 'status.ACTIVE' | t }}</option>
+                <option value="INACTIVE">{{ 'status.INACTIVE' | t }}</option>
+                <option value="ARCHIVED">{{ 'status.ARCHIVED' | t }}</option>
+              </select>
+            </label>
+            <label class="filter-field">
+              <span class="filter-field__label">{{ 'products.storeCategory' | t }}</span>
+              <select
+                class="city-picker"
+                [ngModel]="categoryFilter()"
+                (ngModelChange)="onCategoryFilterChange($event)"
+              >
+                <option value="">{{ 'products.categoryAll' | t }}</option>
+                <option value="uncategorized">{{ 'products.uncategorized' | t }}</option>
+                @for (category of categoryOptions(); track category.id) {
+                  <option [value]="category.id">{{ category.name }}</option>
+                }
+              </select>
+            </label>
+          </div>
+        </div>
+        <app-table
+          [data]="products()"
+          [columns]="columns"
+          [pagination]="pagination()"
+          [isLoading]="isLoading()"
+          [allowDelete]="false"
+          [allowEdit]="false"
+          [allowView]="true"
+          rowKey="id"
+          (pageChange)="onPageChange($event)"
+          (onView)="onView($event)"
+        ></app-table>
+      }
+    } @else {
+      <app-store-categories
+        [storeId]="selectedStoreId()"
+        [mutationsDisabled]="storeArchived()"
+        [reloadToken]="categoryReload()"
+        (archivedCascade)="onCategoryArchived()"
+        (storeArchived)="onStoreArchived()"
+        (contextChanged)="onCategoryContext($event)"
+      ></app-store-categories>
+    }
+  }
+</section>
+
+@if (selectedProduct(); as product) {
+  <app-product-details
+    [product]="product"
+    [categories]="categoryContext()"
+    [mutationsDisabled]="storeArchived()"
+    [mutating]="mutating()"
+    (closed)="closeDetails()"
+    (statusChange)="setProductStatus($event)"
+    (availabilityChange)="setProductAvailable($event)"
+    (archive)="confirmArchive.set(true)"
+  ></app-product-details>
+}
+
+@if (confirmArchive()) {
+  <app-confirmation-dialog
+    [type]="'danger'"
+    [title]="'products.archiveProductTitle' | t"
+    [message]="'products.archiveProductMessage' | t"
+    (confirm)="runArchive()"
+    (cancel)="confirmArchive.set(false)"
+  ></app-confirmation-dialog>
+}

@@ -75,4 +75,18 @@ export class StoresService {
     );
     return response.data;
   }
+
+  async listAllNonArchived(): Promise<Store[]> {
+    const collected: Store[] = [];
+    let page = 1;
+    const limit = 100;
+    for (;;) {
+      const result = await this.list({ page, limit });
+      collected.push(...result.data.filter((store) => store.status !== 'ARCHIVED'));
+      if (result.data.length < limit || collected.length >= result.total) break;
+      page += 1;
+      if (page > 50) break;
+    }
+    return collected;
+  }
 }

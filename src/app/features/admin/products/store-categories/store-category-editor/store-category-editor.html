@@ -1,0 +1,92 @@
+<div class="cat-editor" role="dialog" aria-modal="true" [attr.aria-labelledby]="'store-cat-editor-title'">
+  <div class="cat-editor__panel">
+    <header class="cat-editor__header">
+      <h2 id="store-cat-editor-title">
+        {{ isCreate() ? ('products.addCategory' | t) : ('products.editCategory' | t) }}
+      </h2>
+      <button class="ghost-btn" type="button" [disabled]="saving()" (click)="requestClose()">
+        {{ 'common.cancel' | t }}
+      </button>
+    </header>
+
+    @if (error()) {
+      <p class="cat-editor__error">{{ error() }}</p>
+    }
+    @if (nameError()) {
+      <p class="cat-editor__error">{{ nameError() }}</p>
+    }
+    @if (parentError()) {
+      <p class="cat-editor__error">{{ parentError() }}</p>
+    }
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'catalog.name' | t }}</span>
+      <input
+        class="cat-editor__input"
+        type="text"
+        maxlength="100"
+        [ngModel]="name()"
+        (ngModelChange)="name.set($event)"
+      />
+    </label>
+    <p class="hint">{{ 'catalog.nameHint' | t }}</p>
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'products.parentCategory' | t }}</span>
+      <select
+        #parentSelect
+        class="city-picker"
+        [disabled]="parentLocked()"
+        [ngModel]="parentCategoryId()"
+        (ngModelChange)="setParent($event)"
+      >
+        <option value="">{{ 'products.parentNone' | t }}</option>
+        @for (root of parentChoices(); track root.id) {
+          <option [value]="root.id">{{ root.name }}</option>
+        }
+      </select>
+    </label>
+    @if (parentLocked()) {
+      <p class="hint">{{ 'products.cannotDemoteRoot' | t }}</p>
+    } @else {
+      <p class="hint">{{ 'products.parentHint' | t }}</p>
+    }
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'geo.status' | t }}</span>
+      <select class="city-picker" [ngModel]="status()" (ngModelChange)="setStatus($event)">
+        <option value="ACTIVE">{{ 'status.ACTIVE' | t }}</option>
+        <option value="INACTIVE">{{ 'status.INACTIVE' | t }}</option>
+      </select>
+    </label>
+    <p class="hint">{{ 'products.inactiveCategoryHint' | t }}</p>
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'catalog.displayOrder' | t }}</span>
+      <input
+        class="cat-editor__input"
+        type="number"
+        min="0"
+        step="1"
+        [ngModel]="displayOrder()"
+        (ngModelChange)="setDisplayOrder($event)"
+      />
+    </label>
+
+    <div class="cat-editor__footer">
+      <button class="add-btn" type="button" [disabled]="saving()" (click)="submit()">
+        {{ 'common.save' | t }}
+      </button>
+    </div>
+  </div>
+</div>
+
+@if (confirmDiscard()) {
+  <app-confirmation-dialog
+    [type]="'warning'"
+    [title]="'catalog.discardTitle' | t"
+    [message]="'catalog.discardMessage' | t"
+    (confirm)="closed.emit()"
+    (cancel)="confirmDiscard.set(false)"
+  ></app-confirmation-dialog>
+}
