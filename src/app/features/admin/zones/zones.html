@@ -1,0 +1,153 @@
+<section class="feature-page">
+  <div class="page-toolbar">
+    <div class="page-toolbar__context">
+      <p class="hint">{{ 'zones.hint' | t }}</p>
+      @if (usedIraqFallback()) {
+        <p class="hint">{{ 'zones.iraqFallback' | t }}</p>
+      }
+    </div>
+    <div class="page-toolbar__actions">
+      <label class="filter-field">
+        <span class="filter-field__label">{{ 'zones.search' | t }}</span>
+        <input
+          class="zone-search"
+          type="search"
+          [value]="search()"
+          (input)="onSearchInput($any($event.target).value)"
+          [attr.aria-label]="'zones.search' | t"
+        />
+      </label>
+      <label class="filter-field">
+        <span class="filter-field__label">{{ 'geo.status' | t }}</span>
+        <select
+          class="city-picker"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="onStatusChange($event)"
+        >
+          <option value="">{{ 'zones.statusAll' | t }}</option>
+          <option value="ACTIVE">{{ 'status.ACTIVE' | t }}</option>
+          <option value="INACTIVE">{{ 'status.INACTIVE' | t }}</option>
+          <option value="ARCHIVED">{{ 'status.ARCHIVED' | t }}</option>
+        </select>
+      </label>
+      <button class="add-btn" type="button" [disabled]="mapError() || blocked()" (click)="openCreate()">
+        {{ 'zones.create' | t }}
+      </button>
+    </div>
+  </div>
+
+  @if (blocked()) {
+    <div class="state-panel state-panel--warning">
+      <h2 class="state-panel__title">{{ 'zones.blockedTitle' | t }}</h2>
+      <p class="state-panel__message">{{ blockedMessage() }}</p>
+    </div>
+  } @else {
+    @if (mapError()) {
+      <p class="info-callout">{{ 'zones.mapContextError' | t }}</p>
+    }
+
+    <app-zone-map
+      [zones]="mapZones()"
+      [selectedId]="selected()?.id ?? null"
+      [previewZone]="previewZone()"
+      [loading]="mapLoading()"
+      [error]="mapError()"
+      [fallbackCenter]="mapCenter()"
+      (selectZone)="onMapSelect($event)"
+    ></app-zone-map>
+
+    <app-table
+      [data]="data()"
+      [columns]="columns"
+      [pagination]="pagination()"
+      [isLoading]="isLoading()"
+      [allowDelete]="false"
+      [allowEdit]="false"
+      [allowView]="true"
+      rowKey="id"
+      (pageChange)="onPageChange($event)"
+      (onView)="onView($event)"
+    ></app-table>
+  }
+</section>
+
+@if (selected(); as zone) {
+  <div class="backdrop" (click)="closeDetails()"></div>
+  <aside class="details" aria-labelledby="zone-details-title">
+    <header>
+      <h2 id="zone-details-title">{{ zone.name }}</h2>
+      <button type="button" (click)="closeDetails()">{{ 'common.close' | t }}</button>
+    </header>
+    <dl>
+      <div>
+        <dt>{{ 'zones.name' | t }}</dt>
+        <dd>{{ zone.name }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'geo.status' | t }}</dt>
+        <dd>
+          <span
+            class="badge"
+            [class.badge-success]="zone.status === 'ACTIVE'"
+            [class.badge-default]="zone.status === 'INACTIVE'"
+            [class.badge-danger]="zone.status === 'ARCHIVED'"
+          >{{ statusLabel(zone.status) }}</span>
+        </dd>
+      </div>
+      <div>
+        <dt>{{ 'geo.createdAt' | t }}</dt>
+        <dd>{{ formatDate(zone.createdAt) }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'zones.updatedAt' | t }}</dt>
+        <dd>{{ formatDate(zone.updatedAt) }}</dd>
+      </div>
+      @if (zone.archivedAt) {
+        <div>
+          <dt>{{ 'zones.archivedAt' | t }}</dt>
+          <dd>{{ formatDate(zone.archivedAt) }}</dd>
+        </div>
+      }
+    </dl>
+    @if (zone.status !== 'ARCHIVED') {
+      <div class="details-actions">
+        <button class="add-btn" type="button" [disabled]="mapError()" (click)="openEdit()">
+          {{ 'zones.edit' | t }}
+        </button>
+        @if (zone.status === 'ACTIVE') {
+          <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="setStatus('INACTIVE')">
+            {{ 'zones.deactivate' | t }}
+          </button>
+        }
+        @if (zone.status === 'INACTIVE') {
+          <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="setStatus('ACTIVE')">
+            {{ 'zones.activate' | t }}
+          </button>
+        }
+        <button class="danger-btn" type="button" (click)="confirmArchive.set(true)">
+          {{ 'zones.archive' | t }}
+        </button>
+      </div>
+    }
+  </aside>
+}
+
+@if (confirmArchive()) {
+  <app-confirmation-dialog
+    [type]="'danger'"
+    [title]="'zones.archiveTitle' | t"
+    [message]="'zones.archiveMessage' | t"
+    (confirm)="runArchive()"
+    (cancel)="confirmArchive.set(false)"
+  ></app-confirmation-dialog>
+}
+
+@if (editorOpen()) {
+  <app-zone-editor
+    [zone]="editingZone()"
+    [references]="mapZones()"
+    [fallbackCenter]="mapCenter()"
+    (closed)="closeEditor()"
+    (saved)="onEditorSaved($event)"
+  ></app-zone-editor>
+}

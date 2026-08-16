@@ -5,6 +5,7 @@
 
 @import './styles/tokens.css';
 @import './styles/base.css';
+@import 'maplibre-gl/dist/maplibre-gl.css';
 
 /* Readex Pro variable font — loaded via <link> in index.html */
 /* No @import here to avoid render-blocking duplicate load    */

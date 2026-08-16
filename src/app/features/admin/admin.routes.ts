@@ -8,6 +8,11 @@ const page = (titleKey: string): Route => ({
 
 export const ADMIN_ROUTES: Routes = [
   {
+    path: 'zones',
+    loadComponent: () => import('./zones/zones').then((m) => m.ZonesComponent),
+    data: { titleKey: 'nav.zones' },
+  },
+  {
     path: 'drivers',
     loadComponent: () =>
       import('./drivers/drivers').then((m) => m.DriversComponent),
@@ -27,7 +32,11 @@ export const ADMIN_ROUTES: Routes = [
   { path: 'customers-deleted', ...page('nav.customersDeleted') },
   { path: 'customers-otp', ...page('nav.customersOtp') },
   { path: 'customers-forget', ...page('nav.customersForget') },
-  { path: 'stores', ...page('nav.storesActive') },
+  {
+    path: 'stores',
+    loadComponent: () => import('./stores/stores').then((m) => m.StoresComponent),
+    data: { titleKey: 'nav.storesActive' },
+  },
   { path: 'stores-percentage', ...page('nav.storesPercentage') },
   { path: 'notifications', ...page('nav.notificationsAll') },
   { path: 'categories', ...page('nav.categoriesMain') },

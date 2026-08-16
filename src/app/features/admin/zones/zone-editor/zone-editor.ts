@@ -1,0 +1,291 @@
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  OnDestroy,
+  inject,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import maplibregl, { Map as MapLibreMap } from 'maplibre-gl';
+import {
+  TerraDraw,
+  TerraDrawPolygonMode,
+  TerraDrawSelectMode,
+} from 'terra-draw';
+import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter';
+import { TranslatePipe } from '../../../../i18n/translate.pipe';
+import { LanguageService } from '../../../../i18n/language.service';
+import { NotificationService } from '../../../../shared/services/notification.service';
+import { environment } from '../../../../core/config/environment';
+import { ZonesService } from '../zones.service';
+import {
+  GeoJsonPolygon,
+  IRAQ_MAP_FALLBACK,
+  MapCenter,
+  Zone,
+  boundsOfZones,
+  toApiPolygon,
+  zoneToFeature,
+} from '../zones.models';
+import {
+  getApiErrorMessage,
+  isApiErrorCode,
+} from '../../../../core/http/api-error';
+
+type EditorTool = 'idle' | 'drawing' | 'editing';
+
+const REF_SOURCE = 'pip-zone-refs';
+const REF_FILL = 'pip-zone-refs-fill';
+const REF_LINE = 'pip-zone-refs-line';
+
+@Component({
+  selector: 'app-zone-editor',
+  standalone: true,
+  imports: [FormsModule, TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  templateUrl: './zone-editor.html',
+  styleUrl: './zone-editor.css',
+})
+export class ZoneEditorComponent implements AfterViewInit, OnDestroy {
+  private language = inject(LanguageService);
+  private notify = inject(NotificationService);
+  private zonesApi = inject(ZonesService);
+
+  readonly zone = input<Zone | null>(null);
+  readonly references = input<Zone[]>([]);
+  readonly fallbackCenter = input<MapCenter>(IRAQ_MAP_FALLBACK);
+
+  readonly closed = output<void>();
+  readonly saved = output<Zone>();
+
+  readonly name = signal('');
+  readonly tool = signal<EditorTool>('idle');
+  readonly saving = signal(false);
+  readonly fieldError = signal<string | null>(null);
+  readonly nameInvalid = signal(false);
+
+  private readonly mapHost = viewChild.required<ElementRef<HTMLDivElement>>('editorMap');
+  private map: MapLibreMap | null = null;
+  private draw: TerraDraw | null = null;
+  private resizeObserver: ResizeObserver | null = null;
+  private originalBoundary: GeoJsonPolygon | null = null;
+
+  ngAfterViewInit() {
+    const existing = this.zone();
+    this.name.set(existing?.name ?? '');
+    this.originalBoundary = existing?.boundary ?? null;
+
+    const host = this.mapHost().nativeElement;
+    const center = this.fallbackCenter();
+    this.map = new maplibregl.Map({
+      container: host,
+      style: environment.mapStyleUrl,
+      center: [center.longitude, center.latitude],
+      zoom: center.zoom,
+      attributionControl: {},
+    });
+    this.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    this.map.on('load', () => {
+      this.addReferenceLayers();
+      this.startDraw();
+      this.fitContext();
+    });
+    this.resizeObserver = new ResizeObserver(() => this.map?.resize());
+    this.resizeObserver.observe(host);
+  }
+
+  ngOnDestroy() {
+    this.resizeObserver?.disconnect();
+    this.draw?.stop();
+    this.draw = null;
+    this.map?.remove();
+    this.map = null;
+  }
+
+  startDrawPolygon() {
+    if (!this.draw) return;
+    this.draw.clear();
+    this.draw.setMode('polygon');
+    this.tool.set('drawing');
+    this.fieldError.set(null);
+  }
+
+  startEditVertices() {
+    if (!this.draw) return;
+    const snapshot = this.draw.getSnapshot().filter((f) => f.geometry.type === 'Polygon');
+    if (snapshot.length === 0) {
+      this.fieldError.set(this.language.t('zones.needBoundary'));
+      return;
+    }
+    this.draw.setMode('select');
+    const id = snapshot[0].id;
+    if (id !== undefined) this.draw.selectFeature(id);
+    this.tool.set('editing');
+  }
+
+  resetBoundary() {
+    if (!this.draw) return;
+    this.draw.clear();
+    const original = this.originalBoundary;
+    if (original) {
+      this.addEditablePolygon(original);
+      this.draw.setMode('select');
+      this.tool.set('editing');
+    } else {
+      this.tool.set('idle');
+    }
+    this.fieldError.set(null);
+  }
+
+  cancel() {
+    this.closed.emit();
+  }
+
+  async save() {
+    const name = this.name().trim();
+    this.nameInvalid.set(!name);
+    const polygon = this.readPolygon();
+    if (!name) {
+      this.fieldError.set(this.language.t('zones.nameRequired'));
+      return;
+    }
+    if (!polygon) {
+      this.fieldError.set(this.language.t('zones.needBoundary'));
+      return;
+    }
+    this.saving.set(true);
+    this.fieldError.set(null);
+    try {
+      const existing = this.zone();
+      const result = existing
+        ? await this.zonesApi.update(existing.id, { name, boundary: polygon })
+        : await this.zonesApi.create({ name, boundary: polygon });
+      this.notify.success(
+        this.language.t(existing ? 'zones.updated' : 'zones.created')
+      );
+      this.saved.emit(result);
+    } catch (err) {
+      if (isApiErrorCode(err, 'ZONE_BOUNDARY_OVERLAP')) {
+        this.fieldError.set(this.language.t('zones.overlapError'));
+      } else if (isApiErrorCode(err, 'ZONE_NAME_CONFLICT')) {
+        this.fieldError.set(this.language.t('zones.nameConflict'));
+        this.nameInvalid.set(true);
+      } else if (isApiErrorCode(err, 'INVALID_ZONE_BOUNDARY')) {
+        this.fieldError.set(this.language.t('zones.invalidBoundary'));
+      } else if (isApiErrorCode(err, 'ZONE_ARCHIVED')) {
+        this.fieldError.set(this.language.t('zones.archivedError'));
+        this.notify.error(this.language.t('zones.archivedError'));
+      } else {
+        this.notify.error(
+          getApiErrorMessage(err, this.language.t('common.unexpectedError'))
+        );
+      }
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  private startDraw() {
+    if (!this.map || this.draw) return;
+    this.draw = new TerraDraw({
+      adapter: new TerraDrawMapLibreGLAdapter({ map: this.map }),
+      modes: [
+        new TerraDrawPolygonMode(),
+        new TerraDrawSelectMode({
+          flags: {
+            polygon: {
+              feature: {
+                draggable: false,
+                coordinates: {
+                  midpoints: true,
+                  draggable: true,
+                  deletable: true,
+                },
+              },
+            },
+          },
+        }),
+      ],
+    });
+    this.draw.start();
+    this.draw.on('finish', () => {
+      this.keepSinglePolygon();
+      this.draw?.setMode('select');
+      this.tool.set('editing');
+    });
+    const existing = this.zone();
+    if (existing) {
+      this.addEditablePolygon(existing.boundary);
+      this.draw.setMode('select');
+      this.tool.set('editing');
+    }
+  }
+
+  private addEditablePolygon(boundary: GeoJsonPolygon) {
+    if (!this.draw) return;
+    const id = this.draw.getFeatureId();
+    this.draw.addFeatures([
+      {
+        id,
+        type: 'Feature',
+        geometry: { type: 'Polygon', coordinates: boundary.coordinates },
+        properties: { mode: 'polygon' },
+      },
+    ]);
+    this.draw.selectFeature(id);
+  }
+
+  private keepSinglePolygon() {
+    if (!this.draw) return;
+    const polygons = this.draw.getSnapshot().filter((f) => f.geometry.type === 'Polygon');
+    if (polygons.length <= 1) return;
+    const extras = polygons.slice(1).map((f) => f.id).filter((id): id is string | number => id != null);
+    if (extras.length) this.draw.removeFeatures(extras);
+  }
+
+  private readPolygon(): GeoJsonPolygon | null {
+    if (!this.draw) return null;
+    const feature = this.draw.getSnapshot().find((item) => item.geometry.type === 'Polygon');
+    if (!feature || feature.geometry.type !== 'Polygon') return null;
+    return toApiPolygon(feature.geometry.coordinates);
+  }
+
+  private addReferenceLayers() {
+    if (!this.map || this.map.getSource(REF_SOURCE)) return;
+    const editingId = this.zone()?.id;
+    const refs = this.references().filter((z) => z.id !== editingId);
+    this.map.addSource(REF_SOURCE, {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: refs.map(zoneToFeature),
+      },
+    });
+    this.map.addLayer({
+      id: REF_FILL,
+      type: 'fill',
+      source: REF_SOURCE,
+      paint: { 'fill-color': 'rgba(51, 33, 95, 0.12)' },
+    });
+    this.map.addLayer({
+      id: REF_LINE,
+      type: 'line',
+      source: REF_SOURCE,
+      paint: { 'line-color': '#33215F', 'line-width': 1.5, 'line-dasharray': [2, 2] },
+    });
+  }
+
+  private fitContext() {
+    const editing = this.zone();
+    const refs = this.references();
+    const bounds = boundsOfZones(editing ? [editing, ...refs] : refs);
+    if (bounds && this.map) {
+      this.map.fitBounds(bounds, { padding: 48, maxZoom: 14, duration: 0 });
+    }
+  }
+}

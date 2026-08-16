@@ -1,0 +1,64 @@
+<div class="zone-assign" role="dialog" aria-modal="true" [attr.aria-labelledby]="'store-zone-assign-title'">
+  <div class="zone-assign__panel">
+    <header class="zone-assign__header">
+      <h2 id="store-zone-assign-title">{{ 'stores.editServiceZones' | t }}</h2>
+      <button class="ghost-btn" type="button" (click)="closed.emit()">{{ 'common.cancel' | t }}</button>
+    </header>
+
+    <p class="hint">{{ 'stores.assignmentHint' | t }}</p>
+    <p class="hint">{{ 'stores.selectedCount' | t }} {{ selectedCount() }}</p>
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'stores.searchZones' | t }}</span>
+      <input
+        class="zone-assign__search"
+        type="search"
+        [ngModel]="query()"
+        (ngModelChange)="query.set($event)"
+      />
+    </label>
+
+    @if (fieldError()) {
+      <p class="zone-assign__error">{{ fieldError() }}</p>
+    }
+    @if (selectedIds().length < 1) {
+      <p class="zone-assign__error">{{ 'stores.needZone' | t }}</p>
+    }
+
+    <div class="zone-assign__body">
+      <ul class="zone-assign__list">
+        @for (zone of filteredZones(); track zone.id) {
+          <li>
+            <label class="zone-assign__item">
+              <input
+                type="checkbox"
+                [checked]="isChecked(zone.id)"
+                (change)="toggle(zone.id)"
+              />
+              <span>{{ zone.name }}</span>
+              <span
+                class="badge"
+                [class.badge-success]="zone.status === 'ACTIVE'"
+                [class.badge-default]="zone.status === 'INACTIVE'"
+              >{{ ('status.' + zone.status) | t }}</span>
+            </label>
+          </li>
+        }
+      </ul>
+      <app-store-map
+        [zones]="mapZones()"
+        [serviceZoneIds]="selectedIds()"
+        [location]="location()"
+        [error]="mapError()"
+        [fallbackCenter]="fallbackCenter()"
+      ></app-store-map>
+    </div>
+
+    <footer class="zone-assign__footer">
+      <button class="ghost-btn" type="button" (click)="closed.emit()">{{ 'common.cancel' | t }}</button>
+      <button class="add-btn" type="button" [disabled]="!canSave()" (click)="onSave()">
+        {{ saving() ? ('common.saving' | t) : ('common.save' | t) }}
+      </button>
+    </footer>
+  </div>
+</div>

@@ -54,7 +54,8 @@
               "src/styles.css"
             ],
             "allowedCommonJsDependencies": [
-              "crypto-js"
+              "crypto-js",
+              "maplibre-gl"
             ]
           },
           "configurations": {

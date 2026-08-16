@@ -1,0 +1,44 @@
+<div class="zone-editor" role="dialog" aria-modal="true" [attr.aria-labelledby]="'zone-editor-title'">
+  <div class="zone-editor__panel">
+    <header class="zone-editor__header">
+      <h2 id="zone-editor-title">
+        {{ zone() ? ('zones.edit' | t) : ('zones.create' | t) }}
+      </h2>
+      <button class="ghost-btn" type="button" (click)="cancel()">{{ 'common.cancel' | t }}</button>
+    </header>
+
+    <p class="hint">{{ 'zones.drawHint' | t }}</p>
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'zones.name' | t }}</span>
+      <input
+        class="zone-name-input"
+        type="text"
+        maxlength="200"
+        [class.invalid]="nameInvalid()"
+        [ngModel]="name()"
+        (ngModelChange)="name.set($event)"
+      />
+    </label>
+
+    @if (fieldError()) {
+      <p class="zone-editor__error">{{ fieldError() }}</p>
+    }
+
+    <div class="zone-editor__tools">
+      <button class="ghost-btn" type="button" (click)="startDrawPolygon()">{{ 'zones.drawBoundary' | t }}</button>
+      <button class="ghost-btn" type="button" (click)="startEditVertices()">{{ 'zones.editBoundary' | t }}</button>
+      <button class="ghost-btn" type="button" (click)="resetBoundary()">{{ 'zones.resetBoundary' | t }}</button>
+      <span class="zone-editor__mode">{{ ('zones.tool.' + tool()) | t }}</span>
+    </div>
+
+    <div class="zone-editor__map" #editorMap role="application" [attr.aria-label]="'zones.mapLabel' | t"></div>
+
+    <footer class="zone-editor__footer">
+      <button class="ghost-btn" type="button" (click)="cancel()">{{ 'common.cancel' | t }}</button>
+      <button class="add-btn" type="button" [disabled]="saving()" (click)="save()">
+        {{ saving() ? ('common.saving' | t) : ('common.save' | t) }}
+      </button>
+    </footer>
+  </div>
+</div>

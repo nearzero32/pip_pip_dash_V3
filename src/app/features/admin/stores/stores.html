@@ -1,0 +1,291 @@
+<section class="feature-page">
+  <div class="page-toolbar">
+    <div class="page-toolbar__context">
+      <p class="hint">{{ 'stores.hint' | t }}</p>
+    </div>
+    <div class="page-toolbar__actions">
+      <label class="filter-field">
+        <span class="filter-field__label">{{ 'stores.search' | t }}</span>
+        <input
+          class="store-search"
+          type="search"
+          [value]="search()"
+          (input)="onSearchInput($any($event.target).value)"
+          [attr.aria-label]="'stores.search' | t"
+        />
+      </label>
+      <label class="filter-field">
+        <span class="filter-field__label">{{ 'geo.status' | t }}</span>
+        <select
+          class="city-picker"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="onStatusChange($event)"
+        >
+          <option value="">{{ 'stores.statusAll' | t }}</option>
+          <option value="DRAFT">{{ 'status.DRAFT' | t }}</option>
+          <option value="ACTIVE">{{ 'status.ACTIVE' | t }}</option>
+          <option value="INACTIVE">{{ 'status.INACTIVE' | t }}</option>
+          <option value="ARCHIVED">{{ 'status.ARCHIVED' | t }}</option>
+        </select>
+      </label>
+      <label class="filter-field">
+        <span class="filter-field__label">{{ 'stores.zoneFilter' | t }}</span>
+        <select
+          class="city-picker"
+          [ngModel]="zoneFilter()"
+          (ngModelChange)="onZoneFilterChange($event)"
+        >
+          <option value="">{{ 'stores.zoneAll' | t }}</option>
+          @for (zone of filterZones(); track zone.id) {
+            <option [value]="zone.id">{{ zone.name }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  </div>
+
+  @if (blocked()) {
+    <div class="state-panel state-panel--warning">
+      <h2 class="state-panel__title">{{ 'stores.blockedTitle' | t }}</h2>
+      <p class="state-panel__message">{{ blockedMessage() }}</p>
+    </div>
+  } @else {
+    <app-table
+      [data]="stores()"
+      [columns]="columns"
+      [pagination]="pagination()"
+      [isLoading]="isLoading()"
+      [allowDelete]="false"
+      [allowEdit]="false"
+      [allowView]="true"
+      rowKey="id"
+      (pageChange)="onPageChange($event)"
+      (onView)="onView($event)"
+    ></app-table>
+  }
+</section>
+
+@if (selectedStore(); as store) {
+  <div class="backdrop" (click)="closeDetails()"></div>
+  <aside class="details store-details" aria-labelledby="store-details-title">
+    <header>
+      <h2 id="store-details-title">{{ store.name }}</h2>
+      <button type="button" (click)="closeDetails()">{{ 'common.close' | t }}</button>
+    </header>
+
+    @if (detailsLoading()) {
+      <p class="hint">{{ 'stores.detailsLoading' | t }}</p>
+    }
+
+    <div class="store-media">
+      @if (store.logo?.url; as logoUrl) {
+        <img [src]="logoUrl" [alt]="'stores.logo' | t" class="store-media__logo" />
+      }
+      @if (store.cover?.url; as coverUrl) {
+        <img [src]="coverUrl" [alt]="'stores.cover' | t" class="store-media__cover" />
+      }
+    </div>
+
+    <dl>
+      <div>
+        <dt>{{ 'stores.name' | t }}</dt>
+        <dd>{{ store.name }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'stores.mainCategory' | t }}</dt>
+        <dd>{{ store.mainCategory.name }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'geo.status' | t }}</dt>
+        <dd>
+          <span
+            class="badge"
+            [class.badge-success]="store.status === 'ACTIVE'"
+            [class.badge-default]="store.status === 'DRAFT' || store.status === 'INACTIVE'"
+            [class.badge-danger]="store.status === 'ARCHIVED'"
+          >{{ statusLabel(store.status) }}</span>
+        </dd>
+      </div>
+      <div>
+        <dt>{{ 'stores.orderAcceptance' | t }}</dt>
+        <dd>
+          <span
+            class="badge"
+            [class.badge-success]="store.orderAcceptanceStatus === 'ACCEPTING'"
+            [class.badge-default]="store.orderAcceptanceStatus === 'PAUSED'"
+          >{{ acceptanceLabel(store.orderAcceptanceStatus) }}</span>
+        </dd>
+      </div>
+      <div>
+        <dt>{{ 'stores.phone' | t }}</dt>
+        <dd>{{ store.phone }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'stores.address' | t }}</dt>
+        <dd>{{ store.address }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'stores.physicalLocation' | t }}</dt>
+        <dd>{{ store.location.latitude }}, {{ store.location.longitude }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'stores.displayOrder' | t }}</dt>
+        <dd>{{ store.displayOrder }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'stores.scheduleAvailability' | t }}</dt>
+        <dd>
+          {{ store.availability.isOpen ? ('stores.scheduleOpen' | t) : ('stores.scheduleClosed' | t) }}
+        </dd>
+      </div>
+      <div>
+        <dt>{{ 'stores.computedAccepting' | t }}</dt>
+        <dd>
+          {{ store.availability.isAcceptingOrders ? ('stores.yes' | t) : ('stores.no' | t) }}
+        </dd>
+      </div>
+      <div>
+        <dt>{{ 'stores.nextOpening' | t }}</dt>
+        <dd>{{ formatDate(store.availability.nextOpeningAt) }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'stores.nextClosing' | t }}</dt>
+        <dd>{{ formatDate(store.availability.nextClosingAt) }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'geo.createdAt' | t }}</dt>
+        <dd>{{ formatDate(store.createdAt) }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'stores.updatedAt' | t }}</dt>
+        <dd>{{ formatDate(store.updatedAt) }}</dd>
+      </div>
+      @if (store.archivedAt) {
+        <div>
+          <dt>{{ 'stores.archivedAt' | t }}</dt>
+          <dd>{{ formatDate(store.archivedAt) }}</dd>
+        </div>
+      }
+    </dl>
+
+    <h3 class="store-section-title">{{ 'stores.serviceZones' | t }}</h3>
+    <ul class="store-zone-list">
+      @for (zoneId of store.zoneIds; track zoneId) {
+        <li>
+          <span>{{ zoneName(zoneId) }}</span>
+          <span class="hint">{{ zoneStatus(zoneId) }}</span>
+        </li>
+      }
+    </ul>
+
+    <h3 class="store-section-title">{{ 'stores.mapTitle' | t }}</h3>
+    <p class="hint">{{ 'stores.mapHint' | t }}</p>
+    <app-store-map
+      [zones]="mapZonesForStore()"
+      [serviceZoneIds]="store.zoneIds"
+      [location]="store.location"
+      [loading]="zonesLoading()"
+      [error]="zonesError()"
+      [fallbackCenter]="mapCenter()"
+    ></app-store-map>
+
+    <h3 class="store-section-title">{{ 'stores.workingHours' | t }}</h3>
+    @if (store.workingHours.length === 0) {
+      <p class="hint">{{ 'stores.noSchedule' | t }}</p>
+    } @else {
+      <ul class="store-hours">
+        @for (group of hoursByDay(); track group.day) {
+          <li>
+            <strong>{{ weekdayLabel(group.day) }}</strong>
+            @if (group.periods.length === 0) {
+              <span class="hint">{{ 'stores.dayClosed' | t }}</span>
+            } @else {
+              @for (period of group.periods; track $index) {
+                <span>
+                  {{ period.opensAt }} → {{ period.closesAt }}
+                  @if (overnight(period)) {
+                    <em>{{ 'stores.overnight' | t }}</em>
+                  }
+                </span>
+              }
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    @if (store.status !== 'ARCHIVED') {
+      <div class="details-actions">
+        <button class="add-btn" type="button" (click)="openAssignment()">
+          {{ 'stores.editServiceZones' | t }}
+        </button>
+        @if (store.orderAcceptanceStatus === 'ACCEPTING') {
+          <button
+            class="ghost-btn"
+            type="button"
+            [disabled]="acceptanceUpdating()"
+            (click)="setAcceptance('PAUSED')"
+          >
+            {{ 'stores.pauseOrders' | t }}
+          </button>
+        }
+        @if (store.orderAcceptanceStatus === 'PAUSED') {
+          <button
+            class="ghost-btn"
+            type="button"
+            [disabled]="acceptanceUpdating()"
+            (click)="setAcceptance('ACCEPTING')"
+          >
+            {{ 'stores.resumeOrders' | t }}
+          </button>
+        }
+        @if (store.status !== 'ACTIVE') {
+          <button class="ghost-btn" type="button" [disabled]="statusUpdating()" (click)="setStatus('ACTIVE')">
+            {{ 'stores.setActive' | t }}
+          </button>
+        }
+        @if (store.status !== 'INACTIVE') {
+          <button class="ghost-btn" type="button" [disabled]="statusUpdating()" (click)="setStatus('INACTIVE')">
+            {{ 'stores.setInactive' | t }}
+          </button>
+        }
+        @if (store.status !== 'DRAFT') {
+          <button class="ghost-btn" type="button" [disabled]="statusUpdating()" (click)="setStatus('DRAFT')">
+            {{ 'stores.setDraft' | t }}
+          </button>
+        }
+        <button class="danger-btn" type="button" [disabled]="archiving()" (click)="confirmArchive.set(true)">
+          {{ 'stores.archive' | t }}
+        </button>
+      </div>
+    } @else {
+      <p class="hint">{{ 'stores.archivedViewOnly' | t }}</p>
+    }
+  </aside>
+}
+
+@if (confirmArchive()) {
+  <app-confirmation-dialog
+    [type]="'danger'"
+    [title]="'stores.archiveTitle' | t"
+    [message]="'stores.archiveMessage' | t"
+    (confirm)="runArchive()"
+    (cancel)="confirmArchive.set(false)"
+  ></app-confirmation-dialog>
+}
+
+@if (assignmentOpen() && selectedStore(); as store) {
+  <app-store-zone-assignment
+    [assignableZones]="assignableZones()"
+    [selectedIds]="selectedZoneIds()"
+    [location]="store.location"
+    [fallbackCenter]="mapCenter()"
+    [mapZones]="mapZonesForStore()"
+    [mapError]="zonesError()"
+    [saving]="savingAssignment()"
+    [fieldError]="assignmentError()"
+    (closed)="closeAssignment()"
+    (save)="saveAssignment($event)"
+    (selectedChange)="onAssignmentSelection($event)"
+  ></app-store-zone-assignment>
+}

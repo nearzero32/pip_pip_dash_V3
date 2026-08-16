@@ -1,0 +1,14 @@
+<div class="store-map-shell">
+  @if (loading()) {
+    <div class="store-map-banner">{{ 'stores.mapLoading' | t }}</div>
+  }
+  @if (error()) {
+    <div class="store-map-banner store-map-banner--error">{{ 'stores.mapError' | t }}</div>
+  }
+  <div class="store-map-host" #mapHost role="application" [attr.aria-label]="'stores.mapLabel' | t"></div>
+  <ul class="store-map-legend">
+    <li><span class="swatch swatch-marker"></span>{{ 'stores.physicalLocation' | t }}</li>
+    <li><span class="swatch swatch-service"></span>{{ 'stores.serviceZones' | t }}</li>
+    <li><span class="swatch swatch-context"></span>{{ 'stores.cityZonesContext' | t }}</li>
+  </ul>
+</div>

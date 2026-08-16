@@ -14,7 +14,7 @@ export type HomeIcon =
   | 'stores'
   | 'customers'
   | 'products'
-  | 'notifications';
+  | 'zones';
 
 export interface HomeAction {
   readonly id: string;
@@ -123,11 +123,11 @@ const CITY_GROUPS: readonly HomeActionGroup[] = [
         icon: 'products',
       },
       {
-        id: 'notifications',
-        labelKey: 'nav.notificationsAll',
-        descriptionKey: 'home.action.notifications',
-        route: '/notifications',
-        icon: 'notifications',
+        id: 'zones',
+        labelKey: 'nav.zones',
+        descriptionKey: 'home.action.zones',
+        route: '/zones',
+        icon: 'zones',
       },
     ],
   },
