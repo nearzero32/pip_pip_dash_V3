@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, HostListener, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar';
@@ -13,18 +13,18 @@ import { filter } from 'rxjs/operators';
   standalone: true,
   imports: [RouterOutlet, SidebarComponent, TranslatePipe],
   templateUrl: './dashboard-layout.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './dashboard-layout.css',
 })
 export class DashboardLayoutComponent {
-  public layoutService = inject(LayoutService);
-  public language = inject(LanguageService);
-  public auth = inject(AuthService);
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
+  readonly layoutService = inject(LayoutService);
+  readonly language = inject(LanguageService);
+  readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
-  titleKey = signal(this.readTitleKey());
-  menuOpen = signal(false);
+  readonly titleKey = signal(this.readTitleKey());
+  readonly menuOpen = signal(false);
 
   constructor() {
     this.router.events
@@ -32,7 +32,28 @@ export class DashboardLayoutComponent {
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
         takeUntilDestroyed()
       )
-      .subscribe(() => this.titleKey.set(this.readTitleKey()));
+      .subscribe(() => {
+        this.titleKey.set(this.readTitleKey());
+        this.menuOpen.set(false);
+        this.layoutService.closeMobileSidebar();
+      });
+  }
+
+  toggleProfileMenu() {
+    this.menuOpen.update((open) => !open);
+  }
+
+  closeProfileMenu() {
+    this.menuOpen.set(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    if (this.menuOpen()) {
+      this.menuOpen.set(false);
+      return;
+    }
+    this.layoutService.closeMobileSidebar();
   }
 
   private readTitleKey(): string {

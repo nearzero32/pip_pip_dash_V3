@@ -1,30 +1,59 @@
+<a class="skip-link" href="#main-content">{{ 'skipToContent' | t }}</a>
+
 <div class="dashboard-wrapper">
   <app-sidebar></app-sidebar>
 
-  <main class="dashboard-content"
-    [class.collapsed]="!layoutService.isSidebarExpanded() && !layoutService.isMobile()">
+  <main
+    class="dashboard-content"
+    [class.collapsed]="layoutService.isSidebarCollapsed() && !layoutService.isMobile()"
+  >
     <header class="dashboard-header">
       <div class="header-left">
         @if (layoutService.isMobile()) {
-          <button class="mobile-menu-btn" (click)="layoutService.toggleSidebar()" [attr.aria-label]="'openMenu' | t">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          <button
+            class="mobile-menu-btn"
+            type="button"
+            (click)="layoutService.toggleSidebar()"
+            [attr.aria-expanded]="layoutService.isMobileDrawerOpen()"
+            [attr.aria-label]="'openMenu' | t"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
           </button>
         }
         <h1 class="page-title">{{ titleKey() | t }}</h1>
       </div>
 
       <div class="header-right">
-        <button class="lang-btn" (click)="language.toggle()" [attr.aria-label]="'language' | t">
+        <button
+          class="lang-btn"
+          type="button"
+          (click)="language.toggle()"
+          [attr.aria-label]="'language' | t"
+        >
           {{ language.lang() === 'en' ? 'AR' : 'EN' }}
         </button>
+
         <div class="profile-menu-container">
-          <button class="profile-btn" type="button" (click)="menuOpen.set(!menuOpen())">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <button
+            class="profile-btn"
+            type="button"
+            (click)="toggleProfileMenu()"
+            [attr.aria-expanded]="menuOpen()"
+            aria-haspopup="menu"
+            aria-controls="profile-menu"
+            [attr.aria-label]="'profile' | t"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </button>
           @if (menuOpen()) {
-            <div class="menu-backdrop" (click)="menuOpen.set(false)"></div>
-            <div class="profile-dropdown">
-              <button class="dropdown-item danger" type="button" (click)="auth.logout()">
+            <div class="menu-backdrop" (click)="closeProfileMenu()" aria-hidden="true"></div>
+            <div class="profile-dropdown" id="profile-menu" role="menu">
+              <div class="profile-meta">
+                <span class="profile-role">
+                  {{ auth.isSuperAdmin() ? ('roleSuperAdmin' | t) : ('roleCityStaff' | t) }}
+                </span>
+              </div>
+              <button class="dropdown-item danger" type="button" role="menuitem" (click)="auth.logout()">
                 {{ 'logout' | t }}
               </button>
             </div>
@@ -33,7 +62,7 @@
       </div>
     </header>
 
-    <div class="content-scrollable">
+    <div class="content-scrollable" id="main-content" tabindex="-1">
       <router-outlet></router-outlet>
     </div>
   </main>

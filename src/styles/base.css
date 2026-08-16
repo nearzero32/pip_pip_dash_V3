@@ -15,6 +15,10 @@ html {
   color-scheme: light;
 }
 
+body.nav-drawer-open {
+  overflow: hidden;
+}
+
 body {
   margin: 0;
   padding: 0;

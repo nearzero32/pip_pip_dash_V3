@@ -1,29 +1,39 @@
-@if (layoutService.isMobile() && layoutService.isSidebarOpen()) {
-  <div class="sidebar-backdrop fade-in" (click)="layoutService.closeMobileSidebar()"></div>
+@if (layoutService.isMobileDrawerOpen()) {
+  <div
+    class="sidebar-backdrop"
+    (click)="layoutService.closeMobileSidebar()"
+    aria-hidden="true"
+  ></div>
 }
 
-<aside class="sidebar"
+<aside
+  class="sidebar"
   [class.mobile]="layoutService.isMobile()"
-  [class.mobile-open]="layoutService.isSidebarOpen()"
-  [class.collapsed]="!layoutService.isSidebarExpanded() && !layoutService.isMobile()"
+  [class.mobile-open]="layoutService.isMobileDrawerOpen()"
+  [class.collapsed]="layoutService.isSidebarCollapsed() && !layoutService.isMobile()"
   [class.pinned]="layoutService.isSidebarPinned()"
+  [attr.aria-hidden]="layoutService.isMobile() && !layoutService.isMobileDrawerOpen() ? true : null"
   (mouseenter)="onMouseEnter()"
-  (mouseleave)="onMouseLeave()">
-
+  (mouseleave)="onMouseLeave()"
+>
   <div class="sidebar-header">
     <div class="logo-area">
       <img src="/logo.png" alt="Pip Pip" class="sidebar-logo">
       @if (layoutService.isSidebarExpanded() || layoutService.isMobile()) {
-        <h2 class="sidebar-title fade-in">{{ 'appName' | t }}</h2>
+        <h2 class="sidebar-title">{{ 'appName' | t }}</h2>
       }
     </div>
 
     @if (!layoutService.isMobile()) {
-      <button class="toggle-btn pin-btn"
-              (click)="toggle()"
-              [class.active]="layoutService.isSidebarPinned()"
-              [attr.aria-label]="layoutService.isSidebarPinned() ? ('unpinSidebar' | t) : ('pinSidebar' | t)">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="pin-icon">
+      <button
+        class="toggle-btn pin-btn"
+        type="button"
+        (click)="toggle()"
+        [class.active]="layoutService.isSidebarPinned()"
+        [attr.aria-pressed]="layoutService.isSidebarPinned()"
+        [attr.aria-label]="layoutService.isSidebarPinned() ? ('unpinSidebar' | t) : ('pinSidebar' | t)"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="pin-icon" aria-hidden="true">
           <line x1="12" y1="17" x2="12" y2="22"></line>
           <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path>
         </svg>
@@ -31,68 +41,74 @@
     }
 
     @if (layoutService.isMobile()) {
-      <button class="toggle-btn" (click)="layoutService.closeMobileSidebar()" [attr.aria-label]="'closeSidebar' | t">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      <button class="toggle-btn close-btn" type="button" (click)="layoutService.closeMobileSidebar()" [attr.aria-label]="'closeSidebar' | t">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     }
   </div>
 
-  <nav class="sidebar-nav" role="navigation" aria-label="Main Navigation">
-    @for (item of menuItems; track item.labelKey) {
+  <nav class="sidebar-nav" aria-label="Main">
+    @for (item of menuItems(); track item.id) {
       @if (item.children && item.children.length > 0) {
         <div class="nav-item-wrapper">
-          <div class="nav-item dropdown-trigger"
-               [class.active]="item.isOpen"
-               (click)="toggleDropdown(item)"
-               [attr.aria-label]="item.labelKey | t">
-            <div class="icon-container">
+          <button
+            type="button"
+            class="nav-item dropdown-trigger"
+            [class.open]="isGroupOpen(item)"
+            [class.group-active]="isGroupActive(item)"
+            (click)="toggleGroup(item)"
+            [attr.aria-expanded]="isGroupOpen(item)"
+            [attr.aria-controls]="submenuId(item)"
+          >
+            <span class="icon-container" aria-hidden="true">
               <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" [innerHTML]="getIcon(item.svgPath)"></svg>
-            </div>
+            </span>
 
             @if (layoutService.isSidebarExpanded() || layoutService.isMobile()) {
-              <span class="nav-label fade-in">{{ item.labelKey | t }}</span>
-              <svg class="dropdown-arrow" [class.open]="item.isOpen" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              <span class="nav-label">{{ item.labelKey | t }}</span>
+              <svg class="dropdown-arrow" [class.open]="isGroupOpen(item)" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
             }
 
-            @if (!layoutService.isSidebarExpanded() && !layoutService.isMobile()) {
-              <div class="tooltip">{{ item.labelKey | t }}</div>
+            @if (layoutService.isSidebarCollapsed() && !layoutService.isMobile()) {
+              <span class="tooltip">{{ item.labelKey | t }}</span>
             }
-          </div>
+          </button>
 
-          @if (item.isOpen && (layoutService.isSidebarExpanded() || layoutService.isMobile())) {
-            <div class="dropdown-content">
-              @for (child of item.children; track child.labelKey) {
-                <a [routerLink]="child.route"
-                   routerLinkActive="active"
-                   class="nav-item submenu-item"
-                   (click)="layoutService.closeMobileSidebar()"
-                   [attr.aria-label]="child.labelKey | t">
-                  <div class="icon-container">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" [innerHTML]="getIcon(child.svgPath)"></svg>
-                  </div>
-                  <span class="nav-label fade-in">{{ child.labelKey | t }}</span>
+          @if (isGroupOpen(item) && (layoutService.isSidebarExpanded() || layoutService.isMobile())) {
+            <div class="dropdown-content" [id]="submenuId(item)" role="group">
+              @for (child of item.children; track child.id) {
+                <a
+                  [routerLink]="child.route"
+                  routerLinkActive="active"
+                  [routerLinkActiveOptions]="{ exact: true }"
+                  class="nav-item submenu-item"
+                  (click)="layoutService.closeMobileSidebar()"
+                >
+                  <span class="submenu-marker" aria-hidden="true"></span>
+                  <span class="nav-label">{{ child.labelKey | t }}</span>
                 </a>
               }
             </div>
           }
         </div>
       } @else {
-        <a [routerLink]="item.route"
-           routerLinkActive="active"
-           class="nav-item"
-           (click)="layoutService.closeMobileSidebar()"
-           [attr.aria-label]="item.labelKey | t">
-
-          <div class="icon-container">
-             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" [innerHTML]="getIcon(item.svgPath)"></svg>
-          </div>
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          class="nav-item"
+          (click)="layoutService.closeMobileSidebar()"
+        >
+          <span class="icon-container" aria-hidden="true">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" [innerHTML]="getIcon(item.svgPath)"></svg>
+          </span>
 
           @if (layoutService.isSidebarExpanded() || layoutService.isMobile()) {
-            <span class="nav-label fade-in">{{ item.labelKey | t }}</span>
+            <span class="nav-label">{{ item.labelKey | t }}</span>
           }
 
-          @if (!layoutService.isSidebarExpanded() && !layoutService.isMobile()) {
-             <div class="tooltip">{{ item.labelKey | t }}</div>
+          @if (layoutService.isSidebarCollapsed() && !layoutService.isMobile()) {
+            <span class="tooltip">{{ item.labelKey | t }}</span>
           }
         </a>
       }
