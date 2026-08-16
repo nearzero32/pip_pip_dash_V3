@@ -26,7 +26,7 @@ export class ModifierCatalogService {
 
   async listGroups(
     storeId: string,
-    query: ModifierGroupListQuery = {}
+    query: ModifierGroupListQuery = {},
   ): Promise<CatalogListPage<ModifierGroup>> {
     const response = await this.api.client.get<DashboardListBody<ModifierGroup>>(
       `/api/v1/dashboard/stores/${storeId}/modifier-groups`,
@@ -37,7 +37,7 @@ export class ModifierCatalogService {
           ...(query.search ? { search: query.search } : {}),
           ...(query.status ? { status: query.status } : {}),
         },
-      }
+      },
     );
     const body = response.data;
     return {
@@ -64,7 +64,7 @@ export class ModifierCatalogService {
 
   async getGroup(storeId: string, groupId: string): Promise<ModifierGroup> {
     const response = await this.api.client.get<ModifierGroup>(
-      `/api/v1/dashboard/stores/${storeId}/modifier-groups/${groupId}`
+      `/api/v1/dashboard/stores/${storeId}/modifier-groups/${groupId}`,
     );
     return response.data;
   }
@@ -72,7 +72,7 @@ export class ModifierCatalogService {
   async createGroup(storeId: string, body: ModifierGroupCreateBody): Promise<ModifierGroup> {
     const response = await this.api.client.post<ModifierGroup>(
       `/api/v1/dashboard/stores/${storeId}/modifier-groups`,
-      body
+      body,
     );
     return response.data;
   }
@@ -80,25 +80,25 @@ export class ModifierCatalogService {
   async updateGroup(
     storeId: string,
     groupId: string,
-    patch: ModifierGroupPatch
+    patch: ModifierGroupPatch,
   ): Promise<ModifierGroup> {
     const response = await this.api.client.patch<ModifierGroup>(
       `/api/v1/dashboard/stores/${storeId}/modifier-groups/${groupId}`,
-      patch
+      patch,
     );
     return response.data;
   }
 
   async archiveGroup(storeId: string, groupId: string): Promise<ModifierGroup> {
     const response = await this.api.client.delete<ModifierGroup>(
-      `/api/v1/dashboard/stores/${storeId}/modifier-groups/${groupId}`
+      `/api/v1/dashboard/stores/${storeId}/modifier-groups/${groupId}`,
     );
     return response.data;
   }
 
   async restoreGroup(storeId: string, groupId: string): Promise<ModifierGroup> {
     const response = await this.api.client.post<ModifierGroup>(
-      `/api/v1/dashboard/stores/${storeId}/modifier-groups/${groupId}/restore`
+      `/api/v1/dashboard/stores/${storeId}/modifier-groups/${groupId}/restore`,
     );
     return response.data;
   }
@@ -106,11 +106,11 @@ export class ModifierCatalogService {
   async addOption(
     storeId: string,
     groupId: string,
-    body: ModifierOptionInput
+    body: ModifierOptionInput,
   ): Promise<ModifierGroup> {
     const response = await this.api.client.post<ModifierGroup>(
       `/api/v1/dashboard/stores/${storeId}/modifier-groups/${groupId}/options`,
-      body
+      body,
     );
     return response.data;
   }
@@ -119,32 +119,32 @@ export class ModifierCatalogService {
     storeId: string,
     groupId: string,
     optionId: string,
-    patch: ModifierOptionPatch
+    patch: ModifierOptionPatch,
   ): Promise<ModifierGroup> {
     const response = await this.api.client.patch<ModifierGroup>(
       `/api/v1/dashboard/stores/${storeId}/modifier-groups/${groupId}/options/${optionId}`,
-      patch
+      patch,
     );
     return response.data;
   }
 
   async archiveOption(storeId: string, groupId: string, optionId: string): Promise<ModifierGroup> {
     const response = await this.api.client.delete<ModifierGroup>(
-      `/api/v1/dashboard/stores/${storeId}/modifier-groups/${groupId}/options/${optionId}`
+      `/api/v1/dashboard/stores/${storeId}/modifier-groups/${groupId}/options/${optionId}`,
     );
     return response.data;
   }
 
   async restoreOption(storeId: string, groupId: string, optionId: string): Promise<ModifierGroup> {
     const response = await this.api.client.post<ModifierGroup>(
-      `/api/v1/dashboard/stores/${storeId}/modifier-groups/${groupId}/options/${optionId}/restore`
+      `/api/v1/dashboard/stores/${storeId}/modifier-groups/${groupId}/options/${optionId}/restore`,
     );
     return response.data;
   }
 
   async getProductModifiers(storeId: string, productId: string): Promise<ProductModifiers> {
     const response = await this.api.client.get<ProductModifiers>(
-      `/api/v1/dashboard/stores/${storeId}/products/${productId}/modifiers`
+      `/api/v1/dashboard/stores/${storeId}/products/${productId}/modifiers`,
     );
     return response.data;
   }
@@ -153,11 +153,11 @@ export class ModifierCatalogService {
     storeId: string,
     productId: string,
     optionId: string,
-    body: ProductModifierUpsert
+    body: ProductModifierUpsert,
   ): Promise<ProductModifiers> {
     const response = await this.api.client.put<ProductModifiers>(
       `/api/v1/dashboard/stores/${storeId}/products/${productId}/modifiers/${optionId}`,
-      body
+      body,
     );
     return response.data;
   }
@@ -165,10 +165,10 @@ export class ModifierCatalogService {
   async removeProductModifier(
     storeId: string,
     productId: string,
-    optionId: string
+    optionId: string,
   ): Promise<ProductModifiers> {
     const response = await this.api.client.delete<ProductModifiers>(
-      `/api/v1/dashboard/stores/${storeId}/products/${productId}/modifiers/${optionId}`
+      `/api/v1/dashboard/stores/${storeId}/products/${productId}/modifiers/${optionId}`,
     );
     return response.data;
   }
