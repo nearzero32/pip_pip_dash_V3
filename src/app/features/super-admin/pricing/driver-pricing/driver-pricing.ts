@@ -19,6 +19,7 @@ import { apiErrorMessage, getApiErrorStatus, isApiErrorCode } from '../../../../
   imports: [CommonModule, FormsModule, FormDialogComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './driver-pricing.html',
+  styleUrl: './driver-pricing.css',
 })
 export class DriverPricingComponent implements OnInit {
   private geography = inject(GeographyService);

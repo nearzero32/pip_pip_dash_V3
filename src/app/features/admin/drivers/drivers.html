@@ -1,11 +1,18 @@
-<section class="page">
-  <div class="toolbar">
-    <p class="hint">{{ 'drivers.hint' | t }}</p>
-    <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
+<section class="feature-page">
+  <div class="page-toolbar">
+    <div class="page-toolbar__context">
+      <p class="hint">{{ 'drivers.hint' | t }}</p>
+    </div>
+    <div class="page-toolbar__actions">
+      <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
+    </div>
   </div>
 
   @if (blocked()) {
-    <div class="blocked">{{ blockedMessage() }}</div>
+    <div class="state-panel state-panel--warning">
+      <h2 class="state-panel__title">{{ 'drivers.blockedTitle' | t }}</h2>
+      <p class="state-panel__message">{{ blockedMessage() }}</p>
+    </div>
   } @else {
     <app-table
       [data]="data()"
@@ -24,19 +31,19 @@
 
 @if (selected(); as driver) {
   <div class="backdrop" (click)="closeDetails()"></div>
-  <aside class="details">
+  <aside class="details" aria-labelledby="driver-details-title">
     <header>
-      <h2>{{ driver.driverName }}</h2>
+      <h2 id="driver-details-title">{{ driver.driverName }}</h2>
       <button type="button" (click)="closeDetails()">{{ 'common.close' | t }}</button>
     </header>
     <dl>
       <div>
         <dt>{{ 'drivers.workStatus' | t }}</dt>
-        <dd>{{ driver.workStatus }}</dd>
+        <dd>{{ workStatusLabel(driver.workStatus) }}</dd>
       </div>
       <div>
         <dt>{{ 'drivers.eligibility' | t }}</dt>
-        <dd>{{ driver.eligibilityStatus }}</dd>
+        <dd>{{ eligibilityLabel(driver.eligibilityStatus) }}</dd>
       </div>
       <div>
         <dt>{{ 'drivers.activeOrders' | t }}</dt>

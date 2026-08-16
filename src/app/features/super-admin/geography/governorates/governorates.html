@@ -1,16 +1,24 @@
-<div class="page-toolbar">
-  <p class="hint">{{ 'geo.govHint' | t }}</p>
-  <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
-</div>
-<app-table
-  [data]="data()"
-  [columns]="columns"
-  [pagination]="pagination()"
-  [isLoading]="isLoading()"
-  [allowDelete]="false"
-  (pageChange)="load($event)"
-  (onEdit)="onEdit($event)"
-></app-table>
+<section class="feature-page">
+  <div class="page-toolbar">
+    <div class="page-toolbar__context">
+      <p class="hint">{{ 'geo.govHint' | t }}</p>
+    </div>
+    <div class="page-toolbar__actions">
+      <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
+    </div>
+  </div>
+
+  <app-table
+    [data]="data()"
+    [columns]="columns"
+    [pagination]="pagination()"
+    [isLoading]="isLoading()"
+    [allowDelete]="false"
+    (pageChange)="load($event)"
+    (onEdit)="onEdit($event)"
+  ></app-table>
+</section>
+
 @if (showForm()) {
   <app-form-dialog
     [title]="'geo.editGovernorate' | t"

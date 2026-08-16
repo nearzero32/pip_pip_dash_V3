@@ -66,6 +66,12 @@ export class CitiesComponent implements OnInit {
           SUSPENDED: 'badge-warning',
           ARCHIVED: 'badge-danger',
         },
+        valueMap: {
+          DRAFT: this.language.t('status.DRAFT'),
+          ACTIVE: this.language.t('status.ACTIVE'),
+          SUSPENDED: this.language.t('status.SUSPENDED'),
+          ARCHIVED: this.language.t('status.ARCHIVED'),
+        },
       },
     ];
     this.load();
@@ -213,5 +219,25 @@ export class CitiesComponent implements OnInit {
     } finally {
       this.exporting.set(false);
     }
+  }
+
+  statusLabel(status: City['status']): string {
+    return this.language.t(`status.${status}`);
+  }
+
+  statusBadgeClass(status: City['status']): string {
+    const map: Record<City['status'], string> = {
+      DRAFT: 'badge-default',
+      ACTIVE: 'badge-success',
+      SUSPENDED: 'badge-warning',
+      ARCHIVED: 'badge-danger',
+    };
+    return map[status];
+  }
+
+  formatDate(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString(this.language.lang() === 'ar' ? 'ar' : 'en-GB');
   }
 }

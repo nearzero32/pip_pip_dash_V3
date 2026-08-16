@@ -1,22 +1,37 @@
-<div class="page-toolbar">
-  <p class="hint">{{ 'pricing.deliveryHint' | t }}</p>
-  <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
-    <select class="city-picker" [ngModel]="cityId()" (ngModelChange)="onCityChange($event)">
-      @for (city of cities(); track city.id) {
-        <option [value]="city.id">{{ city.nameEn }}</option>
-      }
-    </select>
-    <button class="add-btn" type="button" (click)="showForm.set(true)">{{ 'pricing.newDraft' | t }}</button>
+<section class="feature-page">
+  <div class="page-toolbar">
+    <div class="page-toolbar__context">
+      <p class="hint">{{ 'pricing.deliveryHint' | t }}</p>
+    </div>
+    <div class="page-toolbar__actions">
+      <label class="filter-field">
+        <span class="filter-field__label">{{ 'common.city' | t }}</span>
+        <select
+          class="city-picker"
+          [ngModel]="cityId()"
+          (ngModelChange)="onCityChange($event)"
+          [attr.aria-label]="'common.city' | t"
+        >
+          @for (city of cities(); track city.id) {
+            <option [value]="city.id">{{ city.nameEn }}</option>
+          }
+        </select>
+      </label>
+      <button class="add-btn" type="button" (click)="showForm.set(true)">{{ 'pricing.newDraft' | t }}</button>
+    </div>
   </div>
-</div>
-<app-table
-  [data]="data()"
-  [columns]="columns"
-  [isLoading]="isLoading()"
-  [allowDelete]="false"
-  (onEdit)="onEdit($event)"
-></app-table>
-<p class="hint">{{ 'pricing.activateHint' | t }}</p>
+
+  <app-table
+    [data]="data()"
+    [columns]="columns"
+    [isLoading]="isLoading()"
+    [allowDelete]="false"
+    (onEdit)="onEdit($event)"
+  ></app-table>
+
+  <p class="info-callout">{{ 'pricing.activateHint' | t }}</p>
+</section>
+
 @if (showForm()) {
   <app-form-dialog
     [title]="'pricing.newDraft' | t"
@@ -26,6 +41,7 @@
     (onSubmit)="save($event)"
   ></app-form-dialog>
 }
+
 @if (activateId()) {
   <app-confirmation-dialog
     [type]="'warning'"

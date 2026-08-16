@@ -46,6 +46,10 @@ export class GovernoratesComponent implements OnInit {
         label: this.language.t('geo.status'),
         type: 'badge',
         badgeClassMap: { ACTIVE: 'badge-success', INACTIVE: 'badge-default' },
+        valueMap: {
+          ACTIVE: this.language.t('status.ACTIVE'),
+          INACTIVE: this.language.t('status.INACTIVE'),
+        },
       },
       { key: 'displayOrder', label: this.language.t('geo.displayOrder') },
     ];

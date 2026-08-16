@@ -151,4 +151,21 @@ export class DriversComponent implements OnInit {
       this.exporting.set(false);
     }
   }
+
+  workStatusLabel(status: DriverCandidate['workStatus']): string {
+    const map: Record<DriverCandidate['workStatus'], string> = {
+      AVAILABLE: this.language.t('drivers.available'),
+      BUSY: this.language.t('drivers.busy'),
+      OFFLINE: this.language.t('drivers.offline'),
+    };
+    return map[status] ?? status;
+  }
+
+  eligibilityLabel(status: DriverCandidate['eligibilityStatus']): string {
+    const map: Record<DriverCandidate['eligibilityStatus'], string> = {
+      ELIGIBLE: this.language.t('drivers.eligible'),
+      INELIGIBLE: this.language.t('drivers.ineligible'),
+    };
+    return map[status] ?? status;
+  }
 }

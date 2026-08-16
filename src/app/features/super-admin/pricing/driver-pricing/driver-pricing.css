@@ -1,0 +1,96 @@
+.pricing-summary {
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  padding: var(--space-5);
+}
+
+.pricing-summary__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-brand-secondary);
+  margin-bottom: var(--space-4);
+}
+
+.pricing-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.pricing-meta dt {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-1);
+}
+
+.pricing-meta dd {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-strong);
+}
+
+.pricing-stages-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-3);
+}
+
+.pricing-stages {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pricing-stage {
+  display: grid;
+  grid-template-columns: minmax(6rem, 8rem) 1fr 1fr;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-subtle);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.pricing-stage__label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-strong);
+}
+
+.pricing-skeleton .skel {
+  height: 14px;
+  border-radius: var(--radius-sm);
+  background: var(--skeleton-base);
+}
+
+.skel-title {
+  width: 12rem;
+  height: 18px;
+  margin-bottom: var(--space-4);
+}
+
+.skel-wide {
+  height: 40px;
+  margin-top: var(--space-2);
+}
+
+@media (max-width: 1024px) {
+  .pricing-meta,
+  .pricing-stage {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pricing-skeleton .skel {
+    animation: none;
+  }
+}

@@ -54,6 +54,11 @@ export class DeliveryPricingComponent implements OnInit {
         label: this.language.t('geo.status'),
         type: 'badge',
         badgeClassMap: { DRAFT: 'badge-warning', ACTIVE: 'badge-success', INACTIVE: 'badge-default' },
+        valueMap: {
+          DRAFT: this.language.t('status.DRAFT'),
+          ACTIVE: this.language.t('status.ACTIVE'),
+          INACTIVE: this.language.t('status.INACTIVE'),
+        },
       },
       { key: 'baseFee', label: this.language.t('pricing.baseFee') },
       { key: 'pricePerKm', label: this.language.t('pricing.pricePerKm') },

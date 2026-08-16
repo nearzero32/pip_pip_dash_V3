@@ -1,26 +1,81 @@
-<div class="page-toolbar">
-  <p class="hint">{{ 'pricing.driverHint' | t }}</p>
-  <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center">
-    <select class="city-picker" [ngModel]="cityId()" (ngModelChange)="onCityChange($event)">
-      @for (city of cities(); track city.id) {
-        <option [value]="city.id">{{ city.nameEn }}</option>
+<section class="feature-page">
+  <div class="page-toolbar">
+    <div class="page-toolbar__context">
+      <p class="hint">{{ 'pricing.driverHint' | t }}</p>
+    </div>
+    <div class="page-toolbar__actions">
+      <label class="filter-field">
+        <span class="filter-field__label">{{ 'common.city' | t }}</span>
+        <select
+          class="city-picker"
+          [ngModel]="cityId()"
+          (ngModelChange)="onCityChange($event)"
+          [attr.aria-label]="'common.city' | t"
+        >
+          @for (city of cities(); track city.id) {
+            <option [value]="city.id">{{ city.nameEn }}</option>
+          }
+        </select>
+      </label>
+      <button class="add-btn" type="button" (click)="openForm()">{{ 'pricing.savePricing' | t }}</button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="pricing-summary pricing-skeleton" aria-busy="true" aria-live="polite">
+      <div class="skel skel-title"></div>
+      <div class="pricing-meta">
+        <div class="skel"></div>
+        <div class="skel"></div>
+        <div class="skel"></div>
+      </div>
+      <div class="skel skel-wide"></div>
+      <div class="skel skel-wide"></div>
+    </div>
+  } @else if (current(); as currentVal) {
+    <article class="pricing-summary">
+      <h2 class="pricing-summary__title">{{ 'pricing.currentTitle' | t }}</h2>
+      <dl class="pricing-meta">
+        <div>
+          <dt>{{ 'pricing.version' | t }}</dt>
+          <dd>{{ currentVal.version }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'pricing.driverBase' | t }}</dt>
+          <dd>{{ currentVal.pricingBase }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'pricing.roundingUnit' | t }}</dt>
+          <dd>{{ currentVal.roundingUnit }}</dd>
+        </div>
+      </dl>
+
+      <h3 class="pricing-stages-title">{{ 'pricing.stagesHeading' | t }}</h3>
+      @if (currentVal.pricingStages.length === 0) {
+        <p class="hint">{{ 'pricing.noStages' | t }}</p>
+      } @else {
+        <ol class="pricing-stages">
+          @for (stage of currentVal.pricingStages; track $index) {
+            <li class="pricing-stage">
+              <span class="pricing-stage__label">{{ 'pricing.stage' | t: { n: $index + 1 } }}</span>
+              <span>{{ 'pricing.afterSeconds' | t: { seconds: stage.afterSeconds } }}</span>
+              <span>{{ 'pricing.increase' | t: { percent: stage.increasePercentage } }}</span>
+            </li>
+          }
+        </ol>
       }
-    </select>
-    <button class="add-btn" type="button" (click)="openForm()">{{ 'pricing.savePricing' | t }}</button>
-  </div>
-</div>
-@if (loading()) {
-  <p>{{ 'common.saving' | t }}</p>
-} @else if (current(); as currentVal) {
-  <div class="dash-card">
-    <p>{{ 'pricing.version' | t }}: {{ currentVal.version }}</p>
-    <p>{{ 'pricing.driverBase' | t }}: {{ currentVal.pricingBase }}</p>
-    <p>{{ 'pricing.roundingUnit' | t }}: {{ currentVal.roundingUnit }}</p>
-    <pre>{{ currentVal.pricingStages | json }}</pre>
-  </div>
-} @else if (missing()) {
-  <p class="hint">{{ 'pricing.noDriverPricing' | t }}</p>
-}
+    </article>
+  } @else if (missing()) {
+    <div class="state-panel">
+      <h2 class="state-panel__title">{{ 'pricing.noDriverPricing' | t }}</h2>
+      <p class="state-panel__message">{{ 'pricing.noDriverPricingHint' | t }}</p>
+      <div class="state-panel__actions">
+        <button class="add-btn" type="button" (click)="openForm()">{{ 'pricing.savePricing' | t }}</button>
+      </div>
+    </div>
+  }
+</section>
+
 @if (showForm()) {
   <app-form-dialog
     [title]="'pricing.savePricing' | t"

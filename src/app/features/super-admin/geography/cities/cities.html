@@ -1,21 +1,29 @@
-<div class="page-toolbar">
-  <p class="hint">{{ 'geo.cityHint' | t }}</p>
-  <div style="display:flex;gap:.75rem;flex-wrap:wrap">
-    <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
-    <button class="add-btn" type="button" [disabled]="isLoadingGovernorates()" (click)="openCreate()">{{ 'geo.addCity' | t }}</button>
+<section class="feature-page">
+  <div class="page-toolbar">
+    <div class="page-toolbar__context">
+      <p class="hint">{{ 'geo.cityHint' | t }}</p>
+    </div>
+    <div class="page-toolbar__actions">
+      <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
+      <button class="add-btn" type="button" [disabled]="isLoadingGovernorates()" (click)="openCreate()">
+        {{ 'geo.addCity' | t }}
+      </button>
+    </div>
   </div>
-</div>
-<app-table
-  [data]="data()"
-  [columns]="columns"
-  [pagination]="pagination()"
-  [isLoading]="isLoading()"
-  [allowDelete]="false"
-  [allowView]="true"
-  (pageChange)="load($event)"
-  (onEdit)="onEdit($event)"
-  (onView)="onView($event)"
-></app-table>
+
+  <app-table
+    [data]="data()"
+    [columns]="columns"
+    [pagination]="pagination()"
+    [isLoading]="isLoading()"
+    [allowDelete]="false"
+    [allowView]="true"
+    (pageChange)="load($event)"
+    (onEdit)="onEdit($event)"
+    (onView)="onView($event)"
+  ></app-table>
+</section>
+
 @if (showForm()) {
   <app-form-dialog
     [title]="(editing() ? 'geo.editCity' : 'geo.addCity') | t"
@@ -26,12 +34,47 @@
     (onSubmit)="save($event)"
   ></app-form-dialog>
 }
+
 @if (selected(); as city) {
   <div class="backdrop" (click)="selected.set(null)"></div>
-  <aside class="details">
-    <h2>{{ city.nameEn }}</h2>
-    <p>{{ city.nameAr }} · {{ city.status }}</p>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem">
+  <aside class="details" aria-labelledby="city-details-title">
+    <header>
+      <h2 id="city-details-title">{{ city.nameAr }}</h2>
+      <button type="button" (click)="selected.set(null)">{{ 'common.close' | t }}</button>
+    </header>
+    <dl>
+      <div>
+        <dt>{{ 'geo.nameAr' | t }}</dt>
+        <dd>{{ city.nameAr }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'geo.nameEn' | t }}</dt>
+        <dd>{{ city.nameEn }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'geo.status' | t }}</dt>
+        <dd>
+          <span [class]="'badge ' + statusBadgeClass(city.status)">{{ statusLabel(city.status) }}</span>
+        </dd>
+      </div>
+      <div>
+        <dt>{{ 'nav.governorates' | t }}</dt>
+        <dd>{{ city.governorate.nameAr }} · {{ city.governorate.nameEn }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'geo.coordinates' | t }}</dt>
+        <dd>{{ city.latitude }}, {{ city.longitude }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'geo.displayOrder' | t }}</dt>
+        <dd>{{ city.displayOrder }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'geo.createdAt' | t }}</dt>
+        <dd>{{ formatDate(city.createdAt) }}</dd>
+      </div>
+    </dl>
+    <div class="details-actions">
       @if (city.status === 'DRAFT' || city.status === 'SUSPENDED') {
         <button class="add-btn" type="button" (click)="confirmAction.set('activate')">{{ 'geo.activate' | t }}</button>
       }
@@ -39,14 +82,15 @@
         <button class="ghost-btn" type="button" (click)="confirmAction.set('suspend')">{{ 'geo.suspend' | t }}</button>
       }
       @if (city.status !== 'ARCHIVED') {
-        <button class="ghost-btn" type="button" (click)="confirmAction.set('archive')">{{ 'geo.archive' | t }}</button>
+        <button class="danger-btn" type="button" (click)="confirmAction.set('archive')">{{ 'geo.archive' | t }}</button>
       }
     </div>
   </aside>
 }
+
 @if (confirmAction()) {
   <app-confirmation-dialog
-    [type]="'warning'"
+    [type]="confirmAction() === 'archive' ? 'danger' : 'warning'"
     (confirm)="runTransition()"
     (cancel)="confirmAction.set(null)"
   ></app-confirmation-dialog>

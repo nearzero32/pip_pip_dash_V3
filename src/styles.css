@@ -15,19 +15,123 @@
    Component-specific styles live in their own .css files.
    ============================================================= */
 
-/* ── PAGE TOOLBAR ───────────────────────────────────────────── */
+/* ── FEATURE PAGE ANATOMY ───────────────────────────────────── */
+.feature-page {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
 .page-toolbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-4);
   flex-wrap: wrap;
-  margin-bottom: var(--space-5);
 }
 
+.page-toolbar__context {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.page-toolbar__context .hint,
 .page-toolbar .hint {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+  max-width: 42rem;
+  margin: 0;
+}
+
+.page-toolbar__actions {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.filter-field__label {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+}
+
+.info-callout {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-info-soft);
+  border: 1px solid color-mix(in srgb, var(--color-info) 22%, white);
+  color: var(--color-info-text);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  max-width: 46rem;
+}
+
+.state-panel {
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  max-width: 40rem;
+}
+
+.state-panel__title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-strong);
+  margin-bottom: var(--space-2);
+}
+
+.state-panel__message {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}
+
+.state-panel__actions {
+  margin-block-start: var(--space-4);
+}
+
+.state-panel--warning {
+  background: var(--color-warning-soft);
+  border-color: color-mix(in srgb, var(--color-warning) 35%, white);
+}
+
+.state-panel--warning .state-panel__title {
+  color: var(--color-warning-text);
+}
+
+.state-panel--warning .state-panel__message {
+  color: var(--color-warning-text);
+}
+
+.state-panel--danger {
+  background: var(--color-danger-soft);
+  border-color: color-mix(in srgb, var(--color-danger) 28%, white);
+}
+
+.state-panel--info {
+  background: var(--color-info-soft);
+  border-color: color-mix(in srgb, var(--color-info) 22%, white);
+}
+
+.details-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block-start: var(--space-6);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--color-border-subtle);
 }
 
 /* ── BUTTONS ────────────────────────────────────────────────── */

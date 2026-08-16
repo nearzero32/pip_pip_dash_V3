@@ -1,17 +1,25 @@
-<div class="page-toolbar">
-  <p class="hint">{{ 'staff.adminHint' | t }}</p>
-  <div style="display:flex;gap:.75rem;flex-wrap:wrap">
-    <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
-    <button class="add-btn" type="button" [disabled]="isLoadingCities()" (click)="openCreate()">{{ 'staff.addAdmin' | t }}</button>
+<section class="feature-page">
+  <div class="page-toolbar">
+    <div class="page-toolbar__context">
+      <p class="hint">{{ 'staff.adminHint' | t }}</p>
+    </div>
+    <div class="page-toolbar__actions">
+      <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
+      <button class="add-btn" type="button" [disabled]="isLoadingCities()" (click)="openCreate()">
+        {{ 'staff.addAdmin' | t }}
+      </button>
+    </div>
   </div>
-</div>
-<app-table
-  [data]="data()"
-  [columns]="columns"
-  [isLoading]="isLoading()"
-  [allowDelete]="false"
-  (onEdit)="onEdit($event)"
-></app-table>
+
+  <app-table
+    [data]="data()"
+    [columns]="columns"
+    [isLoading]="isLoading()"
+    [allowDelete]="false"
+    (onEdit)="onEdit($event)"
+  ></app-table>
+</section>
+
 @if (showForm()) {
   <app-form-dialog
     [title]="(editing() ? 'staff.editAdmin' : 'staff.addAdmin') | t"
