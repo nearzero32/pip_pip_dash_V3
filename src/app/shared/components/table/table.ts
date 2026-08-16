@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TableColumn, TableRow } from '../../models/table-column.interface';
+import { TableColumn } from '../../models/table-column.interface';
 import { PaginationConfig } from '../../models/pagination.interface';
 import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { LanguageService } from '../../../i18n/language.service';
@@ -13,10 +13,10 @@ import { LanguageService } from '../../../i18n/language.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './table.css'
 })
-export class TableComponent {
+export class TableComponent<T extends object = object> {
   language = inject(LanguageService);
 
-  @Input() data: TableRow[] = [];
+  @Input() data: T[] = [];
   @Input() columns: TableColumn[] = [];
   @Input() pagination: PaginationConfig | null = null;
   @Input() isLoading: boolean = false;
@@ -27,37 +27,48 @@ export class TableComponent {
   @Input() rowKey: string = '_id';
 
   @Output() pageChange = new EventEmitter<number>();
-  @Output() onEdit = new EventEmitter<TableRow>();
-  @Output() onDelete = new EventEmitter<TableRow>();
-  @Output() onView = new EventEmitter<TableRow>();
+  @Output() onEdit = new EventEmitter<T>();
+  @Output() onDelete = new EventEmitter<T>();
+  @Output() onView = new EventEmitter<T>();
 
-  resolveValue(row: TableRow, key: string): any {
+  /**
+   * Resolve a dot-notated key path against a row object.
+   * Uses `unknown` + runtime narrowing to avoid broad `any` in the public API.
+   * The internal cast is intentional: we are doing dynamic string-key traversal
+   * on objects whose shape is not statically known at the column-config level.
+   */
+  resolveValue(row: T, key: string): unknown {
     if (!row || !key) return undefined;
-    return key.split('.').reduce((acc: any, part: string) => acc && acc[part], row);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return key.split('.').reduce((acc: any, part: string) => (acc != null ? acc[part] : undefined), row);
   }
 
-  getCellValue(row: TableRow, column: TableColumn): any {
+  getCellValue(row: T, column: TableColumn): unknown {
     const value = this.resolveValue(row, column.key);
 
     if (value === null || value === undefined || value === '') {
       return '-';
     }
-    if (column.valueMap && column.valueMap[value]) {
-      return column.valueMap[value];
+    if (column.valueMap) {
+      const key = String(value);
+      if (column.valueMap[key]) {
+        return column.valueMap[key];
+      }
     }
     return value;
   }
 
-  getBadgeClass(row: TableRow, column: TableColumn): string {
+  getBadgeClass(row: T, column: TableColumn): string {
     if (!column.badgeClassMap) return '';
-    const val = this.resolveValue(row, column.key);
+    const val = String(this.resolveValue(row, column.key) ?? '');
     return column.badgeClassMap[val] || 'badge-default';
   }
 
   getRowNumber(index: number): number {
     if (!this.pagination) return index + 1;
     const { total, page, limit } = this.pagination;
-    return total - ((page - 1) * limit) - index;
+    const n = total - ((page - 1) * limit) - index;
+    return Number.isFinite(n) ? n : index + 1;
   }
 
   get pages(): (number | string)[] {
