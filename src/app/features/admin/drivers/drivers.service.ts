@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../../core/http/api.service';
 import { DriverCandidatePage } from './driver.models';
+import { HTTP_CONFIG } from '../../../core/http/http.config';
 
 @Injectable({ providedIn: 'root' })
 export class DriversService {
@@ -24,7 +25,10 @@ export class DriversService {
   async exportExcel(): Promise<Blob> {
     const response = await this.api.client.get<Blob>(
       '/api/v1/dashboard/drivers/assignment-candidates/export',
-      { responseType: 'blob' }
+      {
+        responseType: 'blob',
+        timeout: HTTP_CONFIG.LONG_TIMEOUT,
+      }
     );
     return response.data;
   }

@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { LanguageService } from '../../../i18n/language.service';
 import { TranslatePipe } from '../../../i18n/translate.pipe';
-import { ApiErrorBody } from '../../../core/auth/auth.models';
+import { getApiErrorStatus, getApiErrorCode, getApiErrorMessage } from '../../../core/http/api-error';
 
 @Component({
   selector: 'app-sign-in',
@@ -42,17 +42,17 @@ export class SignInComponent {
       await this.auth.login(email, password);
       await this.router.navigate(['/home']);
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: ApiErrorBody; status?: number } };
-      const code = axiosErr.response?.data?.error?.code;
+      const code = getApiErrorCode(err);
+      const status = getApiErrorStatus(err);
       if (code === 'INVALID_CREDENTIALS') {
         this.errorMessage.set(this.language.t('auth.invalidCredentials'));
-      } else if (code === 'RATE_LIMITED' || axiosErr.response?.status === 429) {
+      } else if (code === 'RATE_LIMITED' || status === 429) {
         this.errorMessage.set(this.language.t('auth.rateLimited'));
-      } else if (axiosErr.response?.status === 422) {
+      } else if (status === 422) {
         this.errorMessage.set(this.language.t('auth.invalidForm'));
       } else {
         this.errorMessage.set(
-          axiosErr.response?.data?.error?.message || this.language.t('common.unexpectedError')
+          getApiErrorMessage(err, this.language.t('common.unexpectedError'))
         );
       }
     } finally {

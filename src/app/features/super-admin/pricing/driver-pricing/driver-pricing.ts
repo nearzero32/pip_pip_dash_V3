@@ -9,8 +9,7 @@ import { PricingService } from '../pricing.service';
 import { LanguageService } from '../../../../i18n/language.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { TranslatePipe } from '../../../../i18n/translate.pipe';
-import { apiErrorMessage } from '../../../../core/http/api-error';
-import { ApiErrorBody } from '../../../../core/auth/auth.models';
+import { apiErrorMessage, getApiErrorStatus, isApiErrorCode } from '../../../../core/http/api-error';
 
 
 @Component({
@@ -88,10 +87,9 @@ export class DriverPricingComponent implements OnInit {
       if (this.cityId() !== currentCityId) {
         return;
       }
-      const axiosErr = err as { response?: { status?: number; data?: ApiErrorBody } };
       if (
-        axiosErr.response?.status === 404 &&
-        axiosErr.response?.data?.error?.code === 'CITY_DRIVER_PRICING_NOT_FOUND'
+        getApiErrorStatus(err) === 404 &&
+        isApiErrorCode(err, 'CITY_DRIVER_PRICING_NOT_FOUND')
       ) {
         this.current.set(null);
         this.missing.set(true);

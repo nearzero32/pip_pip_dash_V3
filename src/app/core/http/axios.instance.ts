@@ -1,20 +1,32 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { environment } from '../config/environment';
 import { clearTokens, readTokens, writeTokens } from '../auth/session';
+import { HTTP_CONFIG } from './http.config';
+import { TokenRefreshResponse } from '../auth/auth.models';
 
 export const axiosInstance = axios.create({
   baseURL: environment.apiBaseUrl,
-  timeout: 100000,
+  timeout: HTTP_CONFIG.NORMAL_TIMEOUT,
 });
 
 const refreshClient = axios.create({
   baseURL: environment.apiBaseUrl,
-  timeout: 100000,
+  timeout: HTTP_CONFIG.REFRESH_TIMEOUT,
 });
 
 type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 let refreshInFlight: Promise<string | null> | null = null;
+let isRedirecting = false;
+
+function redirectToSignInOnce() {
+  if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/')) {
+    if (!isRedirecting) {
+      isRedirecting = true;
+      window.location.href = '/auth/sign-in';
+    }
+  }
+}
 
 async function refreshAccessToken(): Promise<string | null> {
   const tokens = readTokens();
@@ -25,11 +37,7 @@ async function refreshAccessToken(): Promise<string | null> {
         refresh_token: tokens.refreshToken,
       })
       .then((response) => {
-        const data = response.data as {
-          access_token: string;
-          refresh_token: string;
-          session_id: string;
-        };
+        const data = response.data as TokenRefreshResponse;
         writeTokens({
           accessToken: data.access_token,
           refreshToken: data.refresh_token,
@@ -80,9 +88,7 @@ axiosInstance.interceptors.response.use(
         original.headers.Authorization = `Bearer ${nextToken}`;
         return axiosInstance(original);
       }
-      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth/')) {
-        window.location.href = '/auth/sign-in';
-      }
+      redirectToSignInOnce();
     }
     return Promise.reject(error);
   }

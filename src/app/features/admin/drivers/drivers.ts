@@ -9,7 +9,7 @@ import { DriversService } from './drivers.service';
 import { LanguageService } from '../../../i18n/language.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { TranslatePipe } from '../../../i18n/translate.pipe';
-import { ApiErrorBody } from '../../../core/auth/auth.models';
+import { getApiErrorStatus, getApiErrorMessage } from '../../../core/http/api-error';
 
 @Component({
   selector: 'app-drivers',
@@ -104,17 +104,16 @@ export class DriversComponent implements OnInit {
         hasPrev: result.page > 1,
       });
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: ApiErrorBody; status?: number } };
       this.data.set([]);
       this.pagination.set(null);
-      if (axiosErr.response?.status === 403) {
+      if (getApiErrorStatus(err) === 403) {
         this.blocked.set(true);
         this.blockedMessage.set(
-          axiosErr.response.data?.error?.message || this.language.t('drivers.forbidden')
+          getApiErrorMessage(err, this.language.t('drivers.forbidden'))
         );
       } else {
         this.notify.error(
-          axiosErr.response?.data?.error?.message || this.language.t('common.unexpectedError')
+          getApiErrorMessage(err, this.language.t('common.unexpectedError'))
         );
       }
     } finally {
@@ -145,9 +144,8 @@ export class DriversComponent implements OnInit {
       link.click();
       URL.revokeObjectURL(url);
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: ApiErrorBody } };
       this.notify.error(
-        axiosErr.response?.data?.error?.message || this.language.t('common.unexpectedError')
+        getApiErrorMessage(err, this.language.t('common.unexpectedError'))
       );
     } finally {
       this.exporting.set(false);

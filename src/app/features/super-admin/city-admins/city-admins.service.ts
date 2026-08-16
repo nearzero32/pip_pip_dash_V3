@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../../core/http/api.service';
 import { CityAdmin } from './city-admin.models';
+import { HTTP_CONFIG } from '../../../core/http/http.config';
 
 const withId = (row: CityAdmin): CityAdmin => ({ ...row, _id: row.accountId });
 
@@ -39,6 +40,7 @@ export class CityAdminsService {
   async exportAdmins() {
     const response = await this.api.client.get<Blob>('/api/v1/dashboard/admins/export', {
       responseType: 'blob',
+      timeout: HTTP_CONFIG.LONG_TIMEOUT,
     });
     return response.data;
   }

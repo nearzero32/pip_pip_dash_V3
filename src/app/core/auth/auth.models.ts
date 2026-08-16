@@ -13,3 +13,10 @@ export interface ApiErrorBody {
   };
   request_id?: string;
 }
+
+export interface TokenRefreshResponse {
+  access_token: string;
+  refresh_token: string;
+  session_id: string;
+}
+

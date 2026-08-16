@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../../core/http/api.service';
 import { City, Governorate, Paginated } from './geography.models';
+import { HTTP_CONFIG } from '../../../core/http/http.config';
 
 const withId = <T extends { id: string }>(row: T): T & { _id: string } => ({
   ...row,
@@ -36,6 +37,7 @@ export class GeographyService {
   async exportGovernorates() {
     const response = await this.api.client.get<Blob>('/api/v1/dashboard/governorates/export', {
       responseType: 'blob',
+      timeout: HTTP_CONFIG.LONG_TIMEOUT,
     });
     return response.data;
   }
@@ -90,6 +92,7 @@ export class GeographyService {
   async exportCities() {
     const response = await this.api.client.get<Blob>('/api/v1/dashboard/cities/export', {
       responseType: 'blob',
+      timeout: HTTP_CONFIG.LONG_TIMEOUT,
     });
     return response.data;
   }
