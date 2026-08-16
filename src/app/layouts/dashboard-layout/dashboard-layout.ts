@@ -1,10 +1,10 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { SidebarComponent } from '../../components/sidebar/sidebar';
-import { LayoutService } from '../../services/layout.service';
-import { LanguageService } from '../../services/language.service';
-import { AuthService } from '../../services/auth.service';
+import { SidebarComponent } from '../../shared/components/sidebar/sidebar';
+import { LayoutService } from '../layout.service';
+import { LanguageService } from '../../i18n/language.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { TranslatePipe } from '../../i18n/translate.pipe';
 import { filter } from 'rxjs/operators';
 

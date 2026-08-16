@@ -1,12 +1,12 @@
 import { Routes, Route } from '@angular/router';
 import { DashboardLayoutComponent } from './layouts/dashboard-layout/dashboard-layout';
-import { authGuard, guestGuard } from './core/auth.guard';
-import { SUPER_ADMIN_ROUTES } from './pages/super-admin/super-admin.routes';
-import { ADMIN_ROUTES } from './pages/admin/admin.routes';
+import { authGuard, guestGuard } from './core/auth/auth.guard';
+import { SUPER_ADMIN_ROUTES } from './features/super-admin/super-admin.routes';
+import { ADMIN_ROUTES } from './features/admin/admin.routes';
 
 const page = (titleKey: string): Route => ({
   loadComponent: () =>
-    import('./pages/placeholder/placeholder').then((m) => m.PlaceholderComponent),
+    import('./shared/components/placeholder/placeholder').then((m) => m.PlaceholderComponent),
   data: { titleKey },
 });
 

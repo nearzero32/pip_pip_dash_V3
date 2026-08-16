@@ -2,10 +2,10 @@ import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { AuthService } from '../../../services/auth.service';
-import { LanguageService } from '../../../services/language.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { LanguageService } from '../../../i18n/language.service';
 import { TranslatePipe } from '../../../i18n/translate.pipe';
-import { ApiErrorBody } from '../../../interfaces/auth.interface';
+import { ApiErrorBody } from '../../../core/auth/auth.models';
 
 @Component({
   selector: 'app-sign-in',

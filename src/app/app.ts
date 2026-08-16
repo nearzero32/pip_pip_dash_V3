@@ -1,7 +1,7 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { NotificationToastComponent } from './components/notification-toast/notification-toast';
-import { LanguageService } from './services/language.service';
+import { NotificationToastComponent } from './shared/components/notification-toast/notification-toast';
+import { LanguageService } from './i18n/language.service';
 
 @Component({
   selector: 'app-root',
