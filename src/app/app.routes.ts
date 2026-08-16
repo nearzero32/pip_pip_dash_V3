@@ -23,6 +23,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
+      {
+        path: 'home',
+        loadComponent: () =>
+          import('./features/home/home').then((m) => m.HomeComponent),
+        data: { titleKey: 'nav.home' },
+      },
       ...SUPER_ADMIN_ROUTES,
       ...ADMIN_ROUTES,
       // Ambiguous placeholders retained directly in root routes:

@@ -8,12 +8,6 @@ const page = (titleKey: string): Route => ({
 
 export const ADMIN_ROUTES: Routes = [
   {
-    path: 'home',
-    loadComponent: () =>
-      import('./home/home').then((m) => m.HomeComponent),
-    data: { titleKey: 'nav.home' },
-  },
-  {
     path: 'drivers',
     loadComponent: () =>
       import('./drivers/drivers').then((m) => m.DriversComponent),
