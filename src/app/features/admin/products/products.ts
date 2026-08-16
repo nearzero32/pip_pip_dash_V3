@@ -34,11 +34,13 @@ import {
 import { StoreCategoriesComponent } from './store-categories/store-categories';
 import { ProductDetailsComponent } from './product-details/product-details';
 import { ProductEditorComponent } from './product-editor/product-editor';
+import { ModifierGroupsComponent } from './modifiers/modifier-groups/modifier-groups';
+import { ProductModifiersComponent } from './modifiers/product-modifiers/product-modifiers';
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export type CatalogTab = 'products' | 'categories';
+export type CatalogTab = 'products' | 'categories' | 'modifiers';
 
 @Component({
   selector: 'app-products',
@@ -52,6 +54,8 @@ export type CatalogTab = 'products' | 'categories';
     StoreCategoriesComponent,
     ProductDetailsComponent,
     ProductEditorComponent,
+    ModifierGroupsComponent,
+    ProductModifiersComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './products.html',
@@ -79,6 +83,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   readonly activeTab = signal<CatalogTab>('products');
   readonly categoryReload = signal(0);
+  readonly modifierReload = signal(0);
   readonly categoryContext = signal<StoreCategory[]>([]);
 
   readonly products = signal<ProductRow[]>([]);
@@ -95,6 +100,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   readonly confirmArchive = signal(false);
   readonly editorOpen = signal(false);
   readonly editingProduct = signal<Product | null>(null);
+  readonly modifiersOpen = signal(false);
 
   columns: TableColumn[] = [];
   private listSeq = 0;
@@ -210,9 +216,22 @@ export class ProductsComponent implements OnInit, OnDestroy {
     await this.loadProducts(this.page());
   }
 
+  openModifiers() {
+    if (!this.selectedProduct()) return;
+    this.modifiersOpen.set(true);
+  }
+
+  closeModifiers() {
+    this.modifiersOpen.set(false);
+  }
+
   closeEditor() {
     this.editorOpen.set(false);
     this.editingProduct.set(null);
+  }
+
+  onModifiersChanged() {
+    this.modifierReload.update((n) => n + 1);
   }
 
   onCategoryContext(categories: StoreCategory[]) {
@@ -290,6 +309,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.selectedProduct.set(null);
     this.editorOpen.set(false);
     this.editingProduct.set(null);
+    this.modifiersOpen.set(false);
     this.page.set(1);
     this.search.set('');
     this.statusFilter.set('');
@@ -313,6 +333,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     void this.loadCategoryContext(storeId);
     void this.loadProducts(1);
     this.categoryReload.update((n) => n + 1);
+    this.modifierReload.update((n) => n + 1);
   }
 
   private async loadStores() {

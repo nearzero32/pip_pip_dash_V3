@@ -14,7 +14,11 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
 import { TranslatePipe } from '../../../../i18n/translate.pipe';
 import { LanguageService } from '../../../../i18n/language.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
-import { getApiErrorMessage, getApiErrorStatus, isApiErrorCode } from '../../../../core/http/api-error';
+import {
+  getApiErrorMessage,
+  getApiErrorStatus,
+  isApiErrorCode,
+} from '../../../../core/http/api-error';
 import { MediaApiService } from '../../../../core/media/media-api.service';
 import { MediaClientError } from '../../../../core/media/media.models';
 import { validateArabicCatalogName } from '../../catalog/catalog.models';
@@ -96,7 +100,7 @@ export class ProductEditorComponent implements OnInit, OnDestroy {
     this.categories()
       .filter((item) => item.status !== 'ARCHIVED')
       .slice()
-      .sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name))
+      .sort((a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name)),
   );
 
   private original: Product | null = null;
@@ -124,14 +128,14 @@ export class ProductEditorComponent implements OnInit, OnDestroy {
             previewUrl: image.url,
             isPrimary: image.isPrimary,
             isNew: false,
-          }))
+          })),
       );
       this.windows.set(
         product.availability.map((window) => ({
           dayOfWeek: window.dayOfWeek,
           opensAt: window.opensAt,
           closesAt: window.closesAt,
-        }))
+        })),
       );
     }
   }
@@ -273,7 +277,7 @@ export class ProductEditorComponent implements OnInit, OnDestroy {
           previewUrl: image.url,
           isPrimary: image.isPrimary,
           isNew: false,
-        }))
+        })),
       );
       this.onProductUpdated(product);
       this.notify.success(this.language.t('products.imagesSaved'));
@@ -299,7 +303,11 @@ export class ProductEditorComponent implements OnInit, OnDestroy {
     this.submitError.set('');
     const gen = ++this.generation;
     try {
-      const product = await this.api.replaceProductAvailability(this.storeId(), original.id, windows);
+      const product = await this.api.replaceProductAvailability(
+        this.storeId(),
+        original.id,
+        windows,
+      );
       if (gen !== this.generation) return;
       this.windows.set(windows);
       this.onProductUpdated(product);
@@ -391,7 +399,7 @@ export class ProductEditorComponent implements OnInit, OnDestroy {
           isAvailable: size.isAvailable,
           status: size.status,
           displayOrder: size.displayOrder || index,
-        })
+        }),
       );
     }
     return body;
@@ -456,7 +464,7 @@ export class ProductEditorComponent implements OnInit, OnDestroy {
     }
     if (getApiErrorStatus(err) === 403) {
       this.submitError.set(
-        this.language.t(section === 'images' ? 'products.mediaDenied' : 'products.updateDenied')
+        this.language.t(section === 'images' ? 'products.mediaDenied' : 'products.updateDenied'),
       );
       return;
     }
@@ -497,10 +505,10 @@ export class ProductEditorComponent implements OnInit, OnDestroy {
     if (this.isCreate()) {
       return Boolean(
         this.name().trim() ||
-          this.description().trim() ||
-          this.images().length ||
-          this.sizeDrafts().length ||
-          this.windows().length
+        this.description().trim() ||
+        this.images().length ||
+        this.sizeDrafts().length ||
+        this.windows().length,
       );
     }
     return true;

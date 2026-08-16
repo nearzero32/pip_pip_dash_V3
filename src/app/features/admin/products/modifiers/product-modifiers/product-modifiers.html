@@ -1,0 +1,190 @@
+<div class="mod-editor" role="dialog" aria-modal="true" aria-labelledby="product-mods-title">
+  <div class="mod-editor__panel">
+    <header class="mod-editor__header">
+      <h2 id="product-mods-title">{{ 'mods.manage' | t }}</h2>
+      <button class="ghost-btn" type="button" (click)="closed.emit()">{{ 'common.close' | t }}</button>
+    </header>
+
+    @if (loading()) {
+      <p class="hint">{{ 'common.loading' | t }}</p>
+    } @else {
+      @if (product(); as item) {
+        <p><strong>{{ item.name }}</strong></p>
+        @if (item.status === 'ARCHIVED') {
+          <p class="hint">{{ 'products.archivedViewOnly' | t }}</p>
+        }
+      }
+
+      <section>
+        <h3>{{ 'mods.assignedGroup' | t }}</h3>
+        @if (config()?.group; as group) {
+          <p>
+            {{ group.name }}
+            <span
+              class="badge"
+              [class.badge-success]="group.status === 'ACTIVE'"
+              [class.badge-default]="group.status === 'INACTIVE'"
+              [class.badge-danger]="group.status === 'ARCHIVED'"
+            >{{ statusLabel(group.status) }}</span>
+          </p>
+          <p class="hint">{{ 'mods.selectionRule' | t }}: {{ group.minSelect }}–{{ group.maxSelect }}</p>
+          <p class="hint">{{ 'mods.selectHint' | t }}</p>
+          @if (group.status === 'INACTIVE') {
+            <p class="hint">{{ 'mods.inactiveGroupHint' | t }}</p>
+          }
+          @if (group.status === 'ARCHIVED') {
+            <p class="hint">{{ 'mods.assignedArchived' | t }}</p>
+            @if (!groupsLookupDenied() && !mutationsDisabled()) {
+              <button class="add-btn" type="button" [disabled]="saving()" (click)="restoreAssignedGroup()">
+                {{ 'mods.restore' | t }}
+              </button>
+            }
+          }
+        } @else {
+          <p class="hint">{{ 'mods.noGroup' | t }}</p>
+        }
+
+        @if (groupsLookupDenied()) {
+          <p class="hint">{{ 'mods.switchDenied' | t }}</p>
+        } @else if (!mutationsDisabled() && product()?.status !== 'ARCHIVED') {
+          <label class="filter-field">
+            <span class="filter-field__label">{{ 'mods.chooseGroup' | t }}</span>
+            <select class="city-picker" [ngModel]="pendingGroupId()" (ngModelChange)="pendingGroupId.set($event)">
+              <option value="">{{ 'mods.noGroupOption' | t }}</option>
+              @for (group of groups(); track group.id) {
+                <option [value]="group.id">{{ group.name }} ({{ statusLabel(group.status) }})</option>
+              }
+            </select>
+          </label>
+          <div class="details-actions">
+            <button class="add-btn" type="button" [disabled]="saving()" (click)="requestAssign()">
+              {{ 'mods.assignGroup' | t }}
+            </button>
+            @if (config()?.modifierGroupId) {
+              <button class="ghost-btn" type="button" [disabled]="saving()" (click)="requestClear()">
+                {{ 'mods.clearGroup' | t }}
+              </button>
+            }
+          </div>
+        }
+      </section>
+
+      <section>
+        <h3>{{ 'mods.productOptions' | t }}</h3>
+        <p class="hint">{{ 'mods.maxQtyHint' | t }}</p>
+        @if (!config()?.group) {
+          <p class="hint">{{ 'mods.noGroup' | t }}</p>
+        } @else {
+          <ul class="mod-config-list">
+            @for (row of rows(); track row.option.id) {
+              <li class="mod-config-row">
+                <div class="mod-config-row__head">
+                  <strong>{{ row.option.name }}</strong>
+                  <span
+                    class="badge"
+                    [class.badge-success]="row.option.status === 'ACTIVE'"
+                    [class.badge-default]="row.option.status === 'INACTIVE'"
+                    [class.badge-danger]="row.option.status === 'ARCHIVED'"
+                  >{{ statusLabel(row.option.status) }}</span>
+                </div>
+                <p>
+                  {{ 'mods.globalAvailable' | t }}:
+                  {{ (row.option.isAvailable ? 'products.available' : 'products.unavailable') | t }}
+                </p>
+                @if (row.config) {
+                  <p>
+                    {{ 'mods.productAvailable' | t }}:
+                    {{ (row.config.isAvailable ? 'products.available' : 'products.unavailable') | t }}
+                  </p>
+                  <p>{{ 'mods.price' | t }}: {{ formatExtra(row.config.price) }}</p>
+                  <p>{{ row.config.isDefault ? ('mods.isDefault' | t) : ('mods.notDefault' | t) }}</p>
+                  <p>{{ 'mods.maxQuantity' | t }}: {{ row.config.maxQuantity }}</p>
+                } @else {
+                  <p class="hint">{{ 'mods.unconfigured' | t }}</p>
+                }
+                <p class="hint">{{ effectiveHint(row) }}</p>
+                @if (row.option.status === 'INACTIVE') {
+                  <p class="hint">{{ 'mods.inactiveOptionHint' | t }}</p>
+                }
+                @if (!mutationsDisabled() && product()?.status !== 'ARCHIVED' && row.option.status !== 'ARCHIVED' && config()?.group?.status !== 'ARCHIVED') {
+                  <div class="details-actions">
+                    <button class="ghost-btn" type="button" (click)="startConfigure(row)">
+                      {{ row.config ? ('mods.editConfig' | t) : ('mods.configure' | t) }}
+                    </button>
+                    @if (row.config) {
+                      <button class="ghost-btn" type="button" (click)="confirmRemove.set(row.option.id)">
+                        {{ 'mods.removeConfig' | t }}
+                      </button>
+                    }
+                  </div>
+                }
+                @if (editingOptionId() === row.option.id) {
+                  <div class="mod-config-form">
+                    <label class="filter-field">
+                      <span class="filter-field__label">{{ 'mods.price' | t }} ({{ 'products.iqd' | t }})</span>
+                      <input [ngModel]="price()" (ngModelChange)="price.set($event)" inputmode="numeric" [disabled]="isDefault()" />
+                    </label>
+                    <label class="check">
+                      <input type="checkbox" [ngModel]="productAvailable()" (ngModelChange)="productAvailable.set($event)" />
+                      {{ 'mods.productAvailable' | t }}
+                    </label>
+                    <label class="check">
+                      <input type="checkbox" [ngModel]="isDefault()" (ngModelChange)="onDefaultChange($event)" />
+                      {{ 'mods.default' | t }}
+                    </label>
+                    <label class="filter-field">
+                      <span class="filter-field__label">{{ 'mods.maxQuantity' | t }}</span>
+                      <input type="number" min="1" [ngModel]="maxQuantity()" (ngModelChange)="maxQuantity.set($event)" />
+                    </label>
+                    <p class="hint">{{ 'mods.defaultHint' | t }}</p>
+                    @if (rowError()) {
+                      <p class="mod-editor__error">{{ rowError() }}</p>
+                    }
+                    <button
+                      class="add-btn"
+                      type="button"
+                      [disabled]="savingOptionId() === row.option.id"
+                      (click)="saveRow(row.option.id)"
+                    >
+                      {{ 'common.save' | t }}
+                    </button>
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  </div>
+</div>
+
+@if (confirmSwitch()) {
+  <app-confirmation-dialog
+    [type]="'info'"
+    [title]="'mods.switchGroupTitle' | t"
+    [message]="'mods.switchGroupMessage' | t"
+    (confirm)="assignGroup(pendingGroupId())"
+    (cancel)="confirmSwitch.set(false)"
+  ></app-confirmation-dialog>
+}
+
+@if (confirmClear()) {
+  <app-confirmation-dialog
+    [type]="'warning'"
+    [title]="'mods.clearGroupTitle' | t"
+    [message]="'mods.clearGroupMessage' | t"
+    (confirm)="assignGroup(null)"
+    (cancel)="confirmClear.set(false)"
+  ></app-confirmation-dialog>
+}
+
+@if (confirmRemove()) {
+  <app-confirmation-dialog
+    [type]="'warning'"
+    [title]="'mods.removeConfigTitle' | t"
+    [message]="'mods.removeConfigMessage' | t"
+    (confirm)="removeConfig()"
+    (cancel)="confirmRemove.set(null)"
+  ></app-confirmation-dialog>
+}

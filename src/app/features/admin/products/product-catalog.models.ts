@@ -172,6 +172,10 @@ export interface ProductCorePatch {
   displayOrder?: number;
 }
 
+export interface ProductModifierGroupPatch {
+  modifierGroupId: string | null;
+}
+
 export type ProductPricingMode = 'base' | 'sizes';
 
 export interface ProductImageDraft {

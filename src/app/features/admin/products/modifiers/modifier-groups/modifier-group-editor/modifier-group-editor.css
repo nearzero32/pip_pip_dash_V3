@@ -1,0 +1,62 @@
+.mod-editor {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  background: var(--color-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.mod-editor__panel {
+  width: min(640px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.mod-editor__header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.mod-editor__header h2 {
+  color: var(--color-brand-secondary);
+}
+
+.mod-editor__input {
+  height: var(--control-height-md);
+  width: min(20rem, 100%);
+  border: 1.5px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-3);
+  font-family: inherit;
+}
+
+.mod-editor__error {
+  color: var(--color-danger-text);
+  background: var(--color-danger-soft);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  margin: 0;
+}
+
+.option-draft {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.mod-editor__footer {
+  display: flex;
+  justify-content: flex-end;
+}

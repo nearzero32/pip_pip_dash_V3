@@ -9,6 +9,7 @@ import {
   ProductCreateBody,
   ProductImageInput,
   ProductListQuery,
+  ProductModifierGroupPatch,
   ProductSizeArchiveBody,
   ProductSizeCreateInput,
   ProductSizePatch,
@@ -149,6 +150,14 @@ export class ProductCatalogService {
     return this.patchProduct(storeId, productId, patch);
   }
 
+  async updateProductModifierGroup(
+    storeId: string,
+    productId: string,
+    patch: ProductModifierGroupPatch
+  ): Promise<Product> {
+    return this.patchProduct(storeId, productId, patch);
+  }
+
   async replaceProductImages(
     storeId: string,
     productId: string,
@@ -221,7 +230,7 @@ export class ProductCatalogService {
   private async patchProduct(
     storeId: string,
     productId: string,
-    patch: ProductCorePatch | ProductStatusPatch | ProductAvailabilityFlagPatch
+    patch: ProductCorePatch | ProductStatusPatch | ProductAvailabilityFlagPatch | ProductModifierGroupPatch
   ): Promise<Product> {
     const response = await this.api.client.patch<Product>(
       `/api/v1/dashboard/stores/${storeId}/products/${productId}`,

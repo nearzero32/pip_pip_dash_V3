@@ -11,6 +11,10 @@ import {
 import { TranslatePipe } from '../../../../i18n/translate.pipe';
 import { LanguageService } from '../../../../i18n/language.service';
 import {
+  getApiErrorMessage,
+  getApiErrorStatus,
+} from '../../../../core/http/api-error';
+import {
   PRODUCT_WEEKDAYS,
   Product,
   ProductAvailabilityWindow,
@@ -18,6 +22,8 @@ import {
   StoreCategory,
   StoreCategoryStatus,
 } from '../product-catalog.models';
+import { ModifierCatalogService } from '../modifiers/modifier.service';
+import { ProductModifiers } from '../modifiers/modifier.models';
 
 @Component({
   selector: 'app-product-details',
@@ -29,19 +35,26 @@ import {
 })
 export class ProductDetailsComponent {
   private language = inject(LanguageService);
+  private modifiersApi = inject(ModifierCatalogService);
 
   readonly product = input.required<Product>();
+  readonly storeId = input.required<string>();
   readonly categories = input<StoreCategory[]>([]);
   readonly mutationsDisabled = input(false);
   readonly mutating = input(false);
+  readonly modifierReload = input(0);
 
   readonly closed = output<void>();
   readonly statusChange = output<'ACTIVE' | 'INACTIVE'>();
   readonly availabilityChange = output<boolean>();
   readonly archive = output<void>();
   readonly edit = output<void>();
+  readonly manageModifiers = output<void>();
 
   readonly selectedImageId = signal<string | null>(null);
+  readonly modifierSummary = signal<ProductModifiers | null>(null);
+  readonly modifierSummaryError = signal('');
+  private summarySeq = 0;
 
   readonly activeImage = computed(() => {
     const product = this.product();
@@ -62,6 +75,36 @@ export class ProductDetailsComponent {
       const primary = product.images.find((image) => image.isPrimary);
       this.selectedImageId.set(primary?.id ?? product.images[0]?.id ?? null);
     });
+    effect(() => {
+      const product = this.product();
+      const storeId = this.storeId();
+      this.modifierReload();
+      if (storeId && product.id) void this.loadModifierSummary(storeId, product.id);
+    });
+  }
+
+  configuredCount(): number {
+    return this.modifierSummary()?.options.length ?? 0;
+  }
+
+  private async loadModifierSummary(storeId: string, productId: string) {
+    const seq = ++this.summarySeq;
+    try {
+      const summary = await this.modifiersApi.getProductModifiers(storeId, productId);
+      if (seq !== this.summarySeq) return;
+      this.modifierSummary.set(summary);
+      this.modifierSummaryError.set('');
+    } catch (err) {
+      if (seq !== this.summarySeq) return;
+      this.modifierSummary.set(null);
+      if (getApiErrorStatus(err) === 403) {
+        this.modifierSummaryError.set('');
+        return;
+      }
+      this.modifierSummaryError.set(
+        getApiErrorMessage(err, this.language.t('common.unexpectedError'))
+      );
+    }
   }
 
   selectImage(id: string) {

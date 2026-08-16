@@ -1,0 +1,212 @@
+<div class="page-toolbar">
+  <div class="page-toolbar__actions">
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'catalog.search' | t }}</span>
+      <input
+        class="cat-search"
+        type="search"
+        [value]="search()"
+        (input)="onSearchInput($any($event.target).value)"
+        [attr.aria-label]="'catalog.search' | t"
+      />
+    </label>
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'geo.status' | t }}</span>
+      <select class="city-picker" [ngModel]="statusFilter()" (ngModelChange)="onStatusChange($event)">
+        <option value="">{{ 'catalog.statusAll' | t }}</option>
+        <option value="ACTIVE">{{ 'status.ACTIVE' | t }}</option>
+        <option value="INACTIVE">{{ 'status.INACTIVE' | t }}</option>
+        <option value="ARCHIVED">{{ 'status.ARCHIVED' | t }}</option>
+      </select>
+    </label>
+    <button class="add-btn" type="button" [disabled]="blocked() || mutationsDisabled()" (click)="openCreate()">
+      {{ 'mods.addGroup' | t }}
+    </button>
+  </div>
+</div>
+<p class="hint">{{ 'mods.listHint' | t }}</p>
+
+@if (blocked()) {
+  <div class="state-panel state-panel--warning">
+    <h2 class="state-panel__title">{{ 'mods.blockedTitle' | t }}</h2>
+    <p class="state-panel__message">{{ blockedMessage() }}</p>
+  </div>
+} @else {
+  <app-table
+    [data]="rows()"
+    [columns]="columns"
+    [pagination]="pagination()"
+    [isLoading]="isLoading()"
+    [allowDelete]="false"
+    [allowEdit]="false"
+    [allowView]="true"
+    rowKey="id"
+    (pageChange)="onPageChange($event)"
+    (onView)="onView($event)"
+  ></app-table>
+}
+
+@if (selected(); as group) {
+  <div class="backdrop" (click)="closeDetails()"></div>
+  <aside class="details" aria-labelledby="mod-group-details-title">
+    <header>
+      <h2 id="mod-group-details-title">{{ group.name }}</h2>
+      <button type="button" (click)="closeDetails()">{{ 'common.close' | t }}</button>
+    </header>
+    <dl>
+      <div>
+        <dt>{{ 'geo.status' | t }}</dt>
+        <dd>
+          <span
+            class="badge"
+            [class.badge-success]="group.status === 'ACTIVE'"
+            [class.badge-default]="group.status === 'INACTIVE'"
+            [class.badge-danger]="group.status === 'ARCHIVED'"
+          >{{ statusLabel(group.status) }}</span>
+        </dd>
+      </div>
+      <div>
+        <dt>{{ 'mods.selectionRule' | t }}</dt>
+        <dd>{{ group.minSelect }}–{{ group.maxSelect }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'geo.createdAt' | t }}</dt>
+        <dd>{{ formatDate(group.createdAt) }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'catalog.updatedAt' | t }}</dt>
+        <dd>{{ formatDate(group.updatedAt) }}</dd>
+      </div>
+      @if (group.archivedAt) {
+        <div>
+          <dt>{{ 'catalog.archivedAt' | t }}</dt>
+          <dd>{{ formatDate(group.archivedAt) }}</dd>
+        </div>
+      }
+    </dl>
+    <p class="hint">{{ 'mods.selectHint' | t }}</p>
+    @if (group.status === 'INACTIVE') {
+      <p class="hint">{{ 'mods.inactiveGroupHint' | t }}</p>
+    }
+
+    @if (group.status !== 'ARCHIVED' && !mutationsDisabled()) {
+      <div class="details-actions">
+        <button class="add-btn" type="button" (click)="openEdit()">{{ 'mods.editGroup' | t }}</button>
+        @if (group.status === 'ACTIVE') {
+          <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="setStatus('INACTIVE')">
+            {{ 'catalog.deactivate' | t }}
+          </button>
+        }
+        @if (group.status === 'INACTIVE') {
+          <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="setStatus('ACTIVE')">
+            {{ 'catalog.activate' | t }}
+          </button>
+        }
+        <button class="danger-btn" type="button" [attr.aria-label]="'mods.archiveGroup' | t" (click)="confirmArchive.set(true)">
+          {{ 'catalog.archive' | t }}
+        </button>
+      </div>
+    } @else if (group.status === 'ARCHIVED') {
+      <p class="hint">{{ 'mods.archivedGroupHint' | t }}</p>
+      @if (!mutationsDisabled()) {
+        <button class="add-btn" type="button" [disabled]="mutating()" [attr.aria-label]="'mods.restoreGroup' | t" (click)="restoreGroup()">
+          {{ 'mods.restore' | t }}
+        </button>
+      }
+    }
+
+    <h3>{{ 'mods.options' | t }}</h3>
+    <ul class="mod-options">
+      @for (option of group.options; track option.id) {
+        <li class="mod-option">
+          <div class="mod-option__meta">
+            <strong>{{ option.name }}</strong>
+            <span
+              class="badge"
+              [class.badge-success]="option.status === 'ACTIVE'"
+              [class.badge-default]="option.status === 'INACTIVE'"
+              [class.badge-danger]="option.status === 'ARCHIVED'"
+            >{{ statusLabel(option.status) }}</span>
+            <span>{{ (option.isAvailable ? 'mods.globalAvailable' : 'mods.globalUnavailable') | t }}</span>
+          </div>
+          @if (option.status !== 'ARCHIVED' && group.status !== 'ARCHIVED' && !mutationsDisabled()) {
+            <div class="mod-option__edit">
+              <input
+                [ngModel]="optionDrafts()[option.id]?.name"
+                (ngModelChange)="patchDraft(option.id, { name: $event })"
+                maxlength="100"
+                [attr.aria-label]="'mods.optionName' | t"
+              />
+              <input
+                type="number"
+                [ngModel]="optionDrafts()[option.id]?.order"
+                (ngModelChange)="patchDraft(option.id, { order: $event })"
+                [attr.aria-label]="'catalog.displayOrder' | t"
+              />
+              <button class="ghost-btn" type="button" [disabled]="savingOptionId() === option.id" (click)="saveOption(option)">
+                {{ 'common.save' | t }}
+              </button>
+              <button class="ghost-btn" type="button" [disabled]="savingOptionId() === option.id" (click)="toggleOptionAvailable(option)">
+                {{ (option.isAvailable ? 'mods.markGlobalUnavailable' : 'mods.markGlobalAvailable') | t }}
+              </button>
+              <button class="ghost-btn" type="button" [disabled]="savingOptionId() === option.id" (click)="toggleOptionStatus(option)">
+                {{ option.status === 'ACTIVE' ? ('catalog.deactivate' | t) : ('catalog.activate' | t) }}
+              </button>
+              <button class="danger-btn" type="button" [attr.aria-label]="'mods.archiveOption' | t" (click)="confirmOptionArchive.set(option)">
+                {{ 'catalog.archive' | t }}
+              </button>
+            </div>
+          } @else if (option.status === 'ARCHIVED' && !mutationsDisabled()) {
+            <button class="ghost-btn" type="button" [disabled]="savingOptionId() === option.id" [attr.aria-label]="'mods.restoreOption' | t" (click)="restoreOption(option)">
+              {{ 'mods.restore' | t }}
+            </button>
+          }
+        </li>
+      }
+    </ul>
+
+    @if (group.status !== 'ARCHIVED' && !mutationsDisabled()) {
+      <div class="mod-add-option">
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'mods.addOption' | t }}</span>
+          <input class="cat-search" [ngModel]="optionName()" (ngModelChange)="optionName.set($event)" maxlength="100" />
+        </label>
+        <button class="add-btn" type="button" [disabled]="mutating()" (click)="addOption()">{{ 'mods.addOption' | t }}</button>
+      </div>
+      <p class="hint">{{ 'mods.addOptionHint' | t }}</p>
+    }
+    @if (optionError()) {
+      <p class="cat-editor__error">{{ optionError() }}</p>
+    }
+  </aside>
+}
+
+@if (confirmArchive()) {
+  <app-confirmation-dialog
+    [type]="'danger'"
+    [title]="'mods.archiveGroupTitle' | t"
+    [message]="'mods.archiveGroupMessage' | t"
+    (confirm)="runArchive()"
+    (cancel)="confirmArchive.set(false)"
+  ></app-confirmation-dialog>
+}
+
+@if (confirmOptionArchive(); as option) {
+  <app-confirmation-dialog
+    [type]="'danger'"
+    [title]="'mods.archiveOptionTitle' | t"
+    [message]="'mods.archiveOptionMessage' | t"
+    (confirm)="archiveOption()"
+    (cancel)="confirmOptionArchive.set(null)"
+  ></app-confirmation-dialog>
+}
+
+@if (editorOpen()) {
+  <app-modifier-group-editor
+    [storeId]="storeId()"
+    [group]="editing()"
+    (closed)="editorOpen.set(false)"
+    (saved)="onSaved($event)"
+    (storeArchived)="storeArchived.emit()"
+  ></app-modifier-group-editor>
+}

@@ -116,6 +116,29 @@
     </ul>
   }
 
+  <h3>{{ 'mods.section' | t }}</h3>
+  @if (modifierSummary(); as summary) {
+    @if (!summary.group) {
+      <p class="hint">{{ 'mods.noGroup' | t }}</p>
+    } @else {
+      <p>
+        {{ summary.group.name }}
+        <span
+          class="badge"
+          [class.badge-success]="summary.group.status === 'ACTIVE'"
+          [class.badge-default]="summary.group.status === 'INACTIVE'"
+          [class.badge-danger]="summary.group.status === 'ARCHIVED'"
+        >{{ statusLabel(summary.group.status) }}</span>
+      </p>
+      <p class="hint">{{ summary.group.minSelect }}–{{ summary.group.maxSelect }} · {{ configuredCount() }}</p>
+    }
+  } @else if (modifierSummaryError()) {
+    <p class="hint">{{ modifierSummaryError() }}</p>
+  }
+  <button class="ghost-btn" type="button" (click)="manageModifiers.emit()">
+    {{ 'mods.manage' | t }}
+  </button>
+
   <h3>{{ 'products.availabilityWindows' | t }}</h3>
   @if (windowsByDay().length === 0) {
     <p class="hint">{{ 'products.noAvailabilityWindows' | t }}</p>

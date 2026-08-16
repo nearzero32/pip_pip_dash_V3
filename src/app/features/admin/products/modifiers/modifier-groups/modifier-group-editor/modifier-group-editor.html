@@ -1,0 +1,68 @@
+<div class="mod-editor" role="dialog" aria-modal="true" [attr.aria-labelledby]="'mod-group-title'">
+  <div class="mod-editor__panel">
+    <header class="mod-editor__header">
+      <h2 id="mod-group-title">{{ isCreate() ? ('mods.addGroup' | t) : ('mods.editGroup' | t) }}</h2>
+      <button class="ghost-btn" type="button" [disabled]="saving()" (click)="requestClose()">{{ 'common.cancel' | t }}</button>
+    </header>
+    @if (error()) { <p class="mod-editor__error">{{ error() }}</p> }
+    @if (nameError()) { <p class="mod-editor__error">{{ nameError() }}</p> }
+    @if (limitsError()) { <p class="mod-editor__error">{{ limitsError() }}</p> }
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'catalog.name' | t }}</span>
+      <input class="mod-editor__input" maxlength="100" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+    </label>
+    <p class="hint">{{ 'catalog.nameHint' | t }}</p>
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'mods.minSelect' | t }}</span>
+      <input class="mod-editor__input" type="number" min="0" [ngModel]="minSelect()" (ngModelChange)="minSelect.set(+$event || 0)" />
+    </label>
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'mods.maxSelect' | t }}</span>
+      <input class="mod-editor__input" type="number" min="1" [ngModel]="maxSelect()" (ngModelChange)="maxSelect.set(+$event || 1)" />
+    </label>
+    <p class="hint">{{ 'mods.selectHint' | t }}</p>
+    @if (!isCreate()) {
+      <p class="hint">{{ 'mods.maxHint' | t }}</p>
+    }
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'geo.status' | t }}</span>
+      <select class="city-picker" [ngModel]="status()" (ngModelChange)="setMutableStatus($event)">
+        <option value="ACTIVE">{{ 'status.ACTIVE' | t }}</option>
+        <option value="INACTIVE">{{ 'status.INACTIVE' | t }}</option>
+      </select>
+    </label>
+
+    @if (isCreate()) {
+      <h3>{{ 'mods.initialOptions' | t }}</h3>
+      <button class="ghost-btn" type="button" (click)="addOption()">{{ 'mods.addOption' | t }}</button>
+      @for (option of options(); track option.key; let i = $index) {
+        <div class="option-draft">
+          <input [ngModel]="option.name" (ngModelChange)="patchOption(option.key, { name: $event })" maxlength="100" [attr.aria-label]="'mods.optionName' | t" />
+          <label>
+            <input type="checkbox" [ngModel]="option.isAvailable" (ngModelChange)="patchOption(option.key, { isAvailable: $event })" />
+            {{ 'mods.globalAvailable' | t }}
+          </label>
+          <button class="ghost-btn" type="button" [disabled]="i === 0" (click)="moveOption(option.key, -1)">{{ 'products.moveEarlier' | t }}</button>
+          <button class="ghost-btn" type="button" [disabled]="i === options().length - 1" (click)="moveOption(option.key, 1)">{{ 'products.moveLater' | t }}</button>
+          <button class="ghost-btn" type="button" [disabled]="options().length <= 1" (click)="removeOption(option.key)">{{ 'common.delete' | t }}</button>
+        </div>
+      }
+    }
+
+    <div class="mod-editor__footer">
+      <button class="add-btn" type="button" [disabled]="saving()" (click)="submit()">{{ 'common.save' | t }}</button>
+    </div>
+  </div>
+</div>
+@if (confirmDiscard()) {
+  <app-confirmation-dialog
+    [type]="'warning'"
+    [title]="'catalog.discardTitle' | t"
+    [message]="'catalog.discardMessage' | t"
+    (confirm)="closed.emit()"
+    (cancel)="confirmDiscard.set(false)"
+  ></app-confirmation-dialog>
+}
