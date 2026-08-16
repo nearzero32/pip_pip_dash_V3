@@ -14,11 +14,14 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: 'drivers',
-    loadComponent: () =>
-      import('./drivers/drivers').then((m) => m.DriversComponent),
+    loadComponent: () => import('./drivers/drivers').then((m) => m.DriversComponent),
     data: { titleKey: 'nav.driversActive' },
   },
-  { path: 'orders', ...page('nav.ordersList') },
+  {
+    path: 'orders',
+    loadComponent: () => import('./orders/orders').then((m) => m.OrdersComponent),
+    data: { titleKey: 'nav.ordersList' },
+  },
   { path: 'orders-stats', ...page('nav.ordersStats') },
   { path: 'delegates', ...page('nav.delegatesActive') },
   {

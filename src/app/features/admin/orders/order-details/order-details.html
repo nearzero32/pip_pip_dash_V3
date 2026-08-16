@@ -1,0 +1,307 @@
+<div class="backdrop" (click)="closed.emit()"></div>
+<aside class="details order-details" aria-labelledby="order-details-title">
+  <header>
+    <h2 id="order-details-title">
+      <span dir="ltr">{{ order().orderNumber }}</span>
+    </h2>
+    <button type="button" (click)="closed.emit()">{{ 'common.close' | t }}</button>
+  </header>
+
+  <div class="order-head">
+    <span class="badge" [class]="statusClass(order().status)">{{ statusLabel(order().status) }}</span>
+    <strong>{{ formatIqd(order().total) }}</strong>
+    <span>{{ formatDate(order().createdAt) }}</span>
+  </div>
+  <div class="order-badges">
+    <span class="badge badge-default">{{ custodyLabel(order().custodyStatus) }}</span>
+    <span class="badge badge-default">{{ paymentMethodLabel(order().paymentMethod) }}</span>
+    <span class="badge badge-default">{{ paymentStatusLabel(order().paymentStatus) }}</span>
+  </div>
+
+  @if (canApproveOrder() || canCancelOrder()) {
+    <div class="details-actions">
+      @if (canApproveOrder()) {
+        <button class="add-btn" type="button" [disabled]="mutating()" [attr.aria-label]="'orders.approve' | t" (click)="approve.emit()">
+          {{ 'orders.approve' | t }}
+        </button>
+      }
+      @if (canCancelOrder()) {
+        <button class="danger-btn" type="button" [disabled]="mutating()" [attr.aria-label]="'orders.cancel' | t" (click)="cancel.emit()">
+          {{ 'orders.cancel' | t }}
+        </button>
+      }
+    </div>
+  }
+
+  <section>
+    <h3>{{ 'orders.overview' | t }}</h3>
+    <dl>
+      <div>
+        <dt>{{ 'orders.store' | t }}</dt>
+        <dd>{{ storeLabel() }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'orders.subtotal' | t }}</dt>
+        <dd>{{ formatIqd(order().productsSubtotal) }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'orders.deliveryFee' | t }}</dt>
+        <dd>{{ formatIqd(order().deliveryFee) }}</dd>
+      </div>
+      <div>
+        <dt>{{ 'orders.total' | t }}</dt>
+        <dd>{{ formatIqd(order().total) }}</dd>
+      </div>
+      @if (order().storeCommissionRateSnapshot != null) {
+        <div>
+          <dt>{{ 'orders.commissionSnapshot' | t }}</dt>
+          <dd>{{ order().storeCommissionRateSnapshot }}%</dd>
+        </div>
+      }
+    </dl>
+  </section>
+
+  <section>
+    <h3>{{ 'orders.items' | t }}</h3>
+    <ul class="order-items">
+      @for (item of activeItems(); track item.id) {
+        <li>
+          <strong>{{ itemLine(item) }}</strong>
+          <span class="badge badge-success">{{ itemStateLabel(item.state) }}</span>
+          <span>{{ formatIqd(item.unitPrice) }}</span>
+          @if (item.modifiersPrice) {
+            <span>{{ extraPrice(item.modifiersPrice) }}</span>
+          }
+          <span>× {{ item.quantity }}</span>
+          <span>{{ formatIqd(item.lineTotal) }}</span>
+          @for (mod of item.modifierSelections; track $index) {
+            <small>{{ mod.name }} × {{ mod.quantity }} ({{ extraPrice(mod.unitPrice) }})</small>
+          }
+        </li>
+      }
+    </ul>
+    @if (historicalItems().length) {
+      <h4>{{ 'orders.itemHistory' | t }}</h4>
+      <ul class="order-items order-items--history">
+        @for (item of historicalItems(); track item.id) {
+          <li>
+            <strong>{{ itemLine(item) }}</strong>
+            <span class="badge badge-default">{{ itemStateLabel(item.state) }}</span>
+            <span>{{ formatIqd(item.lineTotal) }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section>
+    <h3>{{ 'orders.delivery' | t }}</h3>
+    @if (order().addressSnapshot; as addr) {
+      <dl>
+        <div>
+          <dt>{{ 'orders.recipient' | t }}</dt>
+          <dd>{{ addr.recipientName || '—' }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'orders.phone' | t }}</dt>
+          <dd dir="ltr">{{ addr.recipientPhone || '—' }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'orders.address' | t }}</dt>
+          <dd>{{ addr.addressDetails || addr.label || '—' }}</dd>
+        </div>
+        @if (addr.landmark) {
+          <div>
+            <dt>{{ 'orders.landmark' | t }}</dt>
+            <dd>{{ addr.landmark }}</dd>
+          </div>
+        }
+      </dl>
+    } @else {
+      <p class="hint">{{ 'orders.noAddress' | t }}</p>
+    }
+    @if (order().deliveryPricingSnapshot; as price) {
+      <p class="hint">{{ 'orders.pricingSnapshotHint' | t }}</p>
+      <dl>
+        <div>
+          <dt>{{ 'orders.pricingVersion' | t }}</dt>
+          <dd>{{ price.pricingVersionNumber ?? '—' }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'orders.distance' | t }}</dt>
+          <dd>{{ formatDistance(price.distanceMeters) }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'orders.duration' | t }}</dt>
+          <dd>{{ formatDuration(price.durationSeconds) }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'orders.lockedFee' | t }}</dt>
+          <dd>{{ formatIqd(price.deliveryFee) }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'orders.routing' | t }}</dt>
+          <dd>{{ price.routingProvider || '—' }} · {{ price.distanceSource || '—' }}</dd>
+        </div>
+        @if (price.fallbackReason) {
+          <div>
+            <dt>{{ 'orders.fallback' | t }}</dt>
+            <dd>{{ price.fallbackReason }}</dd>
+          </div>
+        }
+      </dl>
+      @if (showMap()) {
+        <app-order-map [origin]="price.origin" [destination]="price.destination"></app-order-map>
+      }
+    }
+  </section>
+
+  <section>
+    <h3>{{ 'orders.driverCustody' | t }}</h3>
+    <p>{{ custodyLabel(order().custodyStatus) }}</p>
+    @if (currentAssignment(); as current) {
+      <p class="hint">{{ 'orders.currentAssignment' | t }}</p>
+      <dl>
+        <div>
+          <dt>{{ 'orders.driverId' | t }}</dt>
+          <dd dir="ltr">{{ driverId(current) }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'geo.status' | t }}</dt>
+          <dd>{{ current.status || '—' }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'orders.driverFee' | t }}</dt>
+          <dd>{{ current.driverFee == null ? '—' : formatIqd(current.driverFee) }}</dd>
+        </div>
+      </dl>
+    }
+    @if (order().custodyHistory.length) {
+      <ol class="timeline">
+        @for (entry of order().custodyHistory; track entry.id) {
+          <li>
+            {{ custodyLabel(entry.fromStatus) }} → {{ custodyLabel(entry.toStatus) }}
+            · {{ formatDate(entry.createdAt) }}
+            · {{ actorLabel(entry.actorType) }} / {{ sourceLabel(entry.source) }}
+          </li>
+        }
+      </ol>
+    }
+    @if (pastAssignments().length) {
+      <h4>{{ 'orders.assignmentHistory' | t }}</h4>
+      <ul class="order-items order-items--history">
+        @for (row of pastAssignments(); track row.id) {
+          <li>
+            <span dir="ltr">{{ driverId(row) }}</span>
+            <span>{{ row.status }}</span>
+            <span>{{ formatDate(row.assignedAt) }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section>
+    <h3>{{ 'orders.timeline' | t }}</h3>
+    <ol class="timeline">
+      @for (entry of order().statusHistory; track entry.id) {
+        <li>
+          {{ statusLabel(entry.fromStatus) }} → {{ statusLabel(entry.toStatus) }}
+          · {{ formatDate(entry.enteredAt || entry.createdAt) }}
+          · {{ actorLabel(entry.actorType) }} / {{ sourceLabel(entry.source) }}
+          @if (entry.reason) {
+            <span>{{ entry.reason }}</span>
+          }
+        </li>
+      }
+    </ol>
+    <button class="ghost-btn" type="button" (click)="eventsOpen.set(!eventsOpen())">
+      {{ eventsOpen() ? ('orders.hideEvents' | t) : ('orders.showEvents' | t) }}
+    </button>
+    @if (eventsOpen()) {
+      <ol class="timeline timeline--events">
+        @for (event of order().events; track event.id) {
+          <li>
+            {{ event.eventType }}
+            · {{ formatDate(event.createdAt) }}
+            · {{ actorLabel(event.actorType) }} / {{ sourceLabel(event.source) }}
+            @if (event.reason) {
+              <span>{{ event.reason }}</span>
+            }
+          </li>
+        }
+      </ol>
+    }
+  </section>
+
+  @if (order().cancellation; as cancel) {
+    <section>
+      <h3>{{ 'orders.cancellation' | t }}</h3>
+      <dl>
+        <div>
+          <dt>{{ 'orders.previousStatus' | t }}</dt>
+          <dd>{{ statusLabel(cancel.previousStatus) }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'orders.actor' | t }}</dt>
+          <dd>{{ actorLabel(cancel.actorType) }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'orders.source' | t }}</dt>
+          <dd>{{ sourceLabel(cancel.source) }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'orders.cancelReason' | t }}</dt>
+          <dd>{{ cancel.reason || '—' }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'geo.createdAt' | t }}</dt>
+          <dd>{{ formatDate(cancel.createdAt) }}</dd>
+        </div>
+      </dl>
+    </section>
+  }
+
+  @if (order().collection; as col) {
+    <section>
+      <h3>{{ 'orders.collection' | t }}</h3>
+      <p class="hint">{{ 'orders.collectionHint' | t }}</p>
+      <dl>
+        <div>
+          <dt>{{ 'orders.expected' | t }}</dt>
+          <dd>{{ formatIqd(col.expectedAmount) }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'orders.collected' | t }}</dt>
+          <dd>{{ formatIqd(col.collectedAmount) }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'orders.difference' | t }}</dt>
+          <dd>{{ formatIqd(col.differenceAmount) }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'orders.collectedAt' | t }}</dt>
+          <dd>{{ formatDate(col.collectedAt) }}</dd>
+        </div>
+        <div>
+          <dt>{{ 'orders.collectingDriver' | t }}</dt>
+          <dd dir="ltr">{{ col.collectingDriverId }}</dd>
+        </div>
+      </dl>
+    </section>
+  }
+
+  @if (order().proofs.length) {
+    <section>
+      <h3>{{ 'orders.proofs' | t }}</h3>
+      <ul class="order-items">
+        @for (proof of order().proofs; track proof.id) {
+          <li>
+            <span>{{ proofLabel(proof.purpose) }}</span>
+            <span>{{ formatDate(proof.createdAt) }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</aside>

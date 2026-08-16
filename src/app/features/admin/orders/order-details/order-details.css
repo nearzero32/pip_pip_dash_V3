@@ -1,0 +1,71 @@
+.order-details {
+  width: min(560px, 100%);
+}
+
+.order-details h3 {
+  font-size: var(--font-size-md);
+  margin-block: var(--space-4) var(--space-2);
+  color: var(--color-brand-secondary);
+}
+
+.order-details h4 {
+  font-size: var(--font-size-sm);
+  margin-block: var(--space-3) var(--space-2);
+}
+
+.order-head,
+.order-badges,
+.order-items li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.order-head {
+  margin-block-end: var(--space-2);
+}
+
+.order-items {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.order-items li {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+}
+
+.order-items--history li {
+  opacity: 0.78;
+}
+
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.timeline li {
+  border-inline-start: 3px solid var(--color-border-default);
+  padding-inline-start: var(--space-3);
+}
+
+.timeline--events li {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 1024px) {
+  .order-details {
+    width: 100%;
+  }
+}

@@ -1,0 +1,149 @@
+<section class="feature-page">
+  <div class="page-toolbar">
+    <div class="page-toolbar__context">
+      <p class="hint">{{ 'orders.hint' | t }}</p>
+    </div>
+    <div class="page-toolbar__actions">
+      <button class="ghost-btn" type="button" [disabled]="blocked() || isLoading()" (click)="refresh()">
+        {{ 'orders.refresh' | t }}
+      </button>
+      <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
+    </div>
+  </div>
+
+  @if (blocked()) {
+    <div class="state-panel state-panel--warning">
+      <h2 class="state-panel__title">{{ 'orders.blockedTitle' | t }}</h2>
+      <p class="state-panel__message">{{ blockedMessage() }}</p>
+    </div>
+  } @else {
+    <div class="page-toolbar">
+      <div class="page-toolbar__actions order-filters">
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'catalog.search' | t }}</span>
+          <input
+            class="cat-search"
+            type="search"
+            [value]="search()"
+            (input)="onSearchInput($any($event.target).value)"
+            [attr.aria-label]="'orders.searchHint' | t"
+          />
+        </label>
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'geo.status' | t }}</span>
+          <select class="city-picker" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event); onFilterChange()">
+            <option value="">{{ 'catalog.statusAll' | t }}</option>
+            @for (status of statuses; track status) {
+              <option [value]="status">{{ ('orders.status.' + status) | t }}</option>
+            }
+          </select>
+        </label>
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'orders.store' | t }}</span>
+          <select class="city-picker" [ngModel]="storeFilter()" (ngModelChange)="storeFilter.set($event); onFilterChange()">
+            <option value="">{{ 'orders.allStores' | t }}</option>
+            @for (store of stores(); track store.id) {
+              <option [value]="store.id">{{ store.name }}</option>
+            }
+          </select>
+        </label>
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'orders.custody' | t }}</span>
+          <select class="city-picker" [ngModel]="custodyFilter()" (ngModelChange)="custodyFilter.set($event); onFilterChange()">
+            <option value="">{{ 'orders.allCustody' | t }}</option>
+            <option value="WITH_STORE">{{ 'orders.custody.WITH_STORE' | t }}</option>
+            <option value="WITH_DRIVER">{{ 'orders.custody.WITH_DRIVER' | t }}</option>
+            <option value="WITH_CUSTOMER">{{ 'orders.custody.WITH_CUSTOMER' | t }}</option>
+          </select>
+        </label>
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'orders.payMethod' | t }}</span>
+          <select class="city-picker" [ngModel]="payMethodFilter()" (ngModelChange)="payMethodFilter.set($event); onFilterChange()">
+            <option value="">{{ 'orders.allPayMethods' | t }}</option>
+            <option value="CASH">{{ 'orders.payMethod.CASH' | t }}</option>
+            <option value="ONLINE">{{ 'orders.payMethod.ONLINE' | t }}</option>
+          </select>
+        </label>
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'orders.payStatus' | t }}</span>
+          <select class="city-picker" [ngModel]="payStatusFilter()" (ngModelChange)="payStatusFilter.set($event); onFilterChange()">
+            <option value="">{{ 'orders.allPayStatus' | t }}</option>
+            <option value="UNPAID">{{ 'orders.payStatus.UNPAID' | t }}</option>
+            <option value="AWAITING_PAYMENT">{{ 'orders.payStatus.AWAITING_PAYMENT' | t }}</option>
+            <option value="PAID">{{ 'orders.payStatus.PAID' | t }}</option>
+            <option value="FAILED">{{ 'orders.payStatus.FAILED' | t }}</option>
+          </select>
+        </label>
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'orders.from' | t }}</span>
+          <input class="cat-search" type="date" [ngModel]="createdFrom()" (ngModelChange)="createdFrom.set($event); onFilterChange()" />
+        </label>
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'orders.to' | t }}</span>
+          <input class="cat-search" type="date" [ngModel]="createdTo()" (ngModelChange)="createdTo.set($event); onFilterChange()" />
+        </label>
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'orders.sort' | t }}</span>
+          <select class="city-picker" [ngModel]="sortPreset()" (ngModelChange)="onSortChange($event)">
+            <option value="newest">{{ 'orders.sortNewest' | t }}</option>
+            <option value="oldest">{{ 'orders.sortOldest' | t }}</option>
+            <option value="totalHigh">{{ 'orders.sortTotalHigh' | t }}</option>
+            <option value="totalLow">{{ 'orders.sortTotalLow' | t }}</option>
+            <option value="number">{{ 'orders.sortNumber' | t }}</option>
+          </select>
+        </label>
+        <label class="check">
+          <input type="checkbox" [ngModel]="hasHandoff()" (ngModelChange)="hasHandoff.set($event); onFilterChange()" />
+          {{ 'orders.hasHandoff' | t }}
+        </label>
+        <label class="check">
+          <input type="checkbox" [ngModel]="hasReturn()" (ngModelChange)="hasReturn.set($event); onFilterChange()" />
+          {{ 'orders.hasReturn' | t }}
+        </label>
+      </div>
+    </div>
+
+    <app-table
+      [data]="rows()"
+      [columns]="columns"
+      [pagination]="pagination()"
+      [isLoading]="isLoading()"
+      [allowDelete]="false"
+      [allowEdit]="false"
+      [allowView]="true"
+      rowKey="id"
+      (pageChange)="onPageChange($event)"
+      (onView)="onView($event)"
+    ></app-table>
+  }
+</section>
+
+@if (selected(); as order) {
+  <app-order-details
+    [order]="order"
+    [storeLabel]="storeLabelFor(order)"
+    [mutating]="mutating()"
+    (closed)="closeDetails()"
+    (approve)="requestApprove()"
+    (cancel)="requestCancel()"
+  ></app-order-details>
+}
+
+@if (confirmApprove()) {
+  <app-confirmation-dialog
+    [type]="'info'"
+    [title]="'orders.approveTitle' | t"
+    [message]="'orders.approveMessage' | t"
+    (confirm)="runApprove()"
+    (cancel)="confirmApprove.set(false)"
+  ></app-confirmation-dialog>
+}
+
+@if (cancelOpen() && selected(); as order) {
+  <app-order-cancel-dialog
+    [driverCustody]="order.custodyStatus === 'WITH_DRIVER'"
+    [submitting]="mutating()"
+    (closed)="cancelOpen.set(false)"
+    (confirmed)="runCancel($event)"
+  ></app-order-cancel-dialog>
+}
