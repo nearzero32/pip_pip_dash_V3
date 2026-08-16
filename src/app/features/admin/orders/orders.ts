@@ -19,6 +19,7 @@ import { downloadBlob } from '../../../core/utils/download';
 import {
   getApiErrorMessage,
   getApiErrorStatus,
+  getApiErrorDetails,
   isApiErrorCode,
 } from '../../../core/http/api-error';
 import { StoresService } from '../stores/stores.service';
@@ -26,11 +27,21 @@ import { Store } from '../stores/stores.models';
 import { OrdersService } from './orders.service';
 import { OrderDetailsComponent } from './order-details/order-details';
 import { OrderCancelDialogComponent } from './order-cancel-dialog/order-cancel-dialog';
+import { OrderItemEditorComponent } from './order-item-editor/order-item-editor';
+import { OrderItemQuantityDialogComponent } from './order-item-quantity-dialog/order-item-quantity-dialog';
+import { OrderItemRemoveDialogComponent } from './order-item-remove-dialog/order-item-remove-dialog';
+import { OrderLifecycleOverrideDialogComponent } from './order-lifecycle-override-dialog/order-lifecycle-override-dialog';
 import {
   CustodyStatus,
   ORDER_STATUSES,
+  OrderAddItemBody,
+  OrderCommandAction,
+  OrderCommandPayload,
   OrderDetail,
+  OrderItemSnapshot,
+  OrderLifecycleAction,
   OrderListQuery,
+  OrderReplaceItemBody,
   OrderRow,
   OrderStatus,
   OrderSummary,
@@ -53,6 +64,10 @@ type SortPreset = 'newest' | 'oldest' | 'totalHigh' | 'totalLow' | 'number';
     TranslatePipe,
     OrderDetailsComponent,
     OrderCancelDialogComponent,
+    OrderItemEditorComponent,
+    OrderItemQuantityDialogComponent,
+    OrderItemRemoveDialogComponent,
+    OrderLifecycleOverrideDialogComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './orders.html',
@@ -75,6 +90,16 @@ export class OrdersComponent implements OnInit, OnDestroy {
   readonly mutating = signal(false);
   readonly confirmApprove = signal(false);
   readonly cancelOpen = signal(false);
+  readonly editorOpen = signal<'add' | 'replace' | null>(null);
+  readonly editorItem = signal<OrderItemSnapshot | null>(null);
+  readonly quantityItem = signal<OrderItemSnapshot | null>(null);
+  readonly removeItemTarget = signal<OrderItemSnapshot | null>(null);
+  readonly overrideAction = signal<OrderLifecycleAction | null>(null);
+  readonly itemsMutateDenied = signal(false);
+  readonly itemsReplaceDenied = signal(false);
+  readonly lifecycleDenied = signal(false);
+  readonly catalogDenied = signal(false);
+  readonly uncertain = signal(false);
 
   readonly search = signal('');
   readonly statusFilter = signal<'' | OrderStatus>('');
@@ -176,6 +201,39 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.selected.set(null);
     this.confirmApprove.set(false);
     this.cancelOpen.set(false);
+    this.closeMutationDialogs();
+  }
+
+  closeMutationDialogs() {
+    if (this.mutating()) return;
+    this.editorOpen.set(null);
+    this.editorItem.set(null);
+    this.quantityItem.set(null);
+    this.removeItemTarget.set(null);
+    this.overrideAction.set(null);
+    this.uncertain.set(false);
+  }
+
+  openAdd() {
+    this.editorItem.set(null);
+    this.editorOpen.set('add');
+  }
+
+  openReplace(item: OrderItemSnapshot) {
+    this.editorItem.set(item);
+    this.editorOpen.set('replace');
+  }
+
+  openQuantity(item: OrderItemSnapshot) {
+    this.quantityItem.set(item);
+  }
+
+  openRemove(item: OrderItemSnapshot) {
+    this.removeItemTarget.set(item);
+  }
+
+  openLifecycle(action: OrderLifecycleAction) {
+    this.overrideAction.set(action);
   }
 
   requestApprove() {
@@ -225,6 +283,154 @@ export class OrdersComponent implements OnInit, OnDestroy {
       await this.loadList(this.page());
     } catch (err) {
       this.handleCommandError(err, 'cancel');
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  onEditorSubmit(body: OrderAddItemBody | OrderReplaceItemBody) {
+    if (this.editorOpen() === 'replace') {
+      void this.runReplace(body);
+      return;
+    }
+    void this.runAdd(body);
+  }
+
+  async runAdd(body: OrderAddItemBody) {
+    const order = this.selected();
+    if (!order) return;
+    const command = this.ensurePending('itemAdd', order.id, body);
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      await this.api.addItem(order.id, body, command.idempotencyKey);
+      this.pending = null;
+      this.editorOpen.set(null);
+      this.notify.success(this.language.t('orders.itemAdded'));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, 'itemAdd');
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  async runReplace(body: OrderAddItemBody | OrderReplaceItemBody) {
+    const order = this.selected();
+    const item = this.editorItem();
+    if (!order || !item) return;
+    const payload: OrderReplaceItemBody = { ...body, customerAgreedByPhone: true };
+    const command = this.ensurePending('itemReplace', order.id, payload, item.id);
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      await this.api.replaceItem(order.id, item.id, payload, command.idempotencyKey);
+      this.pending = null;
+      this.editorOpen.set(null);
+      this.editorItem.set(null);
+      this.notify.success(this.language.t('orders.itemReplaced'));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, 'itemReplace');
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  async runQuantity(body: { quantity: number; reason: string }) {
+    const order = this.selected();
+    const item = this.quantityItem();
+    if (!order || !item) return;
+    const command = this.ensurePending('itemQuantity', order.id, body, item.id);
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      await this.api.changeQuantity(order.id, item.id, body, command.idempotencyKey);
+      this.pending = null;
+      this.quantityItem.set(null);
+      this.notify.success(this.language.t('orders.quantityChanged'));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, 'itemQuantity');
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  async runRemove(body: { reason: string }) {
+    const order = this.selected();
+    const item = this.removeItemTarget();
+    if (!order || !item) return;
+    const command = this.ensurePending('itemRemove', order.id, body, item.id);
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      await this.api.removeItem(order.id, item.id, body, command.idempotencyKey);
+      this.pending = null;
+      this.removeItemTarget.set(null);
+      this.notify.success(this.language.t('orders.itemRemoved'));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, 'itemRemove');
+    } finally {
+      this.mutating.set(false);
+    }
+  }
+
+  async runLifecycle(body: { reason: string; note?: string; collectedAmount?: number }) {
+    const order = this.selected();
+    const action = this.overrideAction();
+    if (!order || !action) return;
+    this.mutating.set(true);
+    this.uncertain.set(false);
+    try {
+      if (action === 'markReady') {
+        const payload = {
+          reason: body.reason,
+          actedOnBehalfOf: 'STORE' as const,
+          ...(body.note ? { note: body.note } : {}),
+        };
+        const command = this.ensurePending(action, order.id, payload);
+        await this.api.markReady(order.id, payload, command.idempotencyKey);
+      } else if (action === 'arrivalAtStore') {
+        const payload = {
+          reason: body.reason,
+          ...(body.note ? { note: body.note } : {}),
+        };
+        const command = this.ensurePending(action, order.id, payload);
+        await this.api.confirmArrivalAtStore(order.id, payload, command.idempotencyKey);
+      } else if (action === 'pickup') {
+        const payload = {
+          reason: body.reason,
+          actedOnBehalfOf: 'DRIVER' as const,
+          ...(body.note ? { note: body.note } : {}),
+        };
+        const command = this.ensurePending(action, order.id, payload);
+        await this.api.confirmPickup(order.id, payload, command.idempotencyKey);
+      } else if (action === 'arrivalAtCustomer') {
+        const payload = {
+          reason: body.reason,
+          actedOnBehalfOf: 'DRIVER' as const,
+          ...(body.note ? { note: body.note } : {}),
+        };
+        const command = this.ensurePending(action, order.id, payload);
+        await this.api.confirmArrivalAtCustomer(order.id, payload, command.idempotencyKey);
+      } else {
+        const payload = {
+          collectedAmount: body.collectedAmount ?? order.expectedCollectionAmount ?? order.total,
+          reason: body.reason,
+          actedOnBehalfOf: 'DRIVER' as const,
+          ...(body.note ? { note: body.note } : {}),
+        };
+        const command = this.ensurePending(action, order.id, payload);
+        await this.api.confirmDelivery(order.id, payload, command.idempotencyKey);
+      }
+      this.pending = null;
+      this.overrideAction.set(null);
+      this.notify.success(this.language.t(`orders.lifecycle.${action}.done`));
+      await this.refreshAfterMutation(order.id);
+    } catch (err) {
+      this.handleCommandError(err, action);
     } finally {
       this.mutating.set(false);
     }
@@ -368,21 +574,33 @@ export class OrdersComponent implements OnInit, OnDestroy {
     return this.language.lang() === 'ar' ? `${formatted} د.ع` : `${formatted} IQD`;
   }
 
+  private async refreshAfterMutation(orderId: string) {
+    this.uncertain.set(false);
+    await this.openDetail(orderId);
+    await this.loadList(this.page());
+  }
+
   private ensurePending(
-    action: PendingOrderCommand['action'],
+    action: OrderCommandAction,
     orderId: string,
-    payload?: { reason: string; note?: string }
+    payload?: OrderCommandPayload,
+    itemId?: string
   ): PendingOrderCommand {
     const current = this.pending;
-    const samePayload =
-      !payload ||
-      (current?.payload?.reason === payload.reason && current?.payload?.note === payload.note);
-    if (current && current.action === action && current.orderId === orderId && samePayload) {
+    const samePayload = JSON.stringify(current?.payload ?? null) === JSON.stringify(payload ?? null);
+    if (
+      current &&
+      current.action === action &&
+      current.orderId === orderId &&
+      current.itemId === itemId &&
+      samePayload
+    ) {
       return current;
     }
     const next: PendingOrderCommand = {
       action,
       orderId,
+      itemId,
       idempotencyKey: createOrderCommandKey(),
       payload,
     };
@@ -390,23 +608,27 @@ export class OrdersComponent implements OnInit, OnDestroy {
     return next;
   }
 
-  private handleCommandError(err: unknown, action: 'approve' | 'cancel') {
+  private handleCommandError(err: unknown, action: OrderCommandAction) {
     const status = getApiErrorStatus(err);
     const keepPending =
       status === undefined || status >= 500 || isApiErrorCode(err, 'IDEMPOTENCY_IN_PROGRESS');
+    if (keepPending) this.uncertain.set(true);
     if (!keepPending && !isApiErrorCode(err, 'IDEMPOTENCY_KEY_REUSED')) {
       this.pending = null;
     }
+    const id = this.selected()?.id;
+    const refresh = () => {
+      if (id) void this.refreshAfterMutation(id);
+    };
     if (isApiErrorCode(err, 'ORDER_NOT_FOUND')) {
       this.selected.set(null);
       this.notify.error(this.language.t('orders.notFound'));
       void this.loadList(this.page());
       return;
     }
-    if (isApiErrorCode(err, 'ORDER_INVALID_TRANSITION')) {
-      this.notify.error(this.language.t('orders.approveStale'));
-      const id = this.selected()?.id;
-      if (id) void this.openDetail(id);
+    if (isApiErrorCode(err, 'ORDER_INVALID_TRANSITION') || isApiErrorCode(err, 'ORDER_INVALID_STATE')) {
+      this.notify.error(this.language.t(action === 'approve' ? 'orders.approveStale' : 'orders.stateStale'));
+      refresh();
       this.confirmApprove.set(false);
       return;
     }
@@ -415,32 +637,111 @@ export class OrdersComponent implements OnInit, OnDestroy {
       isApiErrorCode(err, 'ORDER_ALREADY_CANCELLED')
     ) {
       this.notify.error(this.language.t('orders.cancelStale'));
-      const id = this.selected()?.id;
-      if (id) void this.openDetail(id);
+      refresh();
       return;
     }
     if (isApiErrorCode(err, 'ORDER_ONLINE_PAYMENT_NOT_CONFIRMED')) {
-      this.notify.error(this.language.t('orders.onlineUnconfirmed'));
+      this.notify.error(this.language.t('orders.itemsNeedPayment'));
+      refresh();
+      return;
+    }
+    if (isApiErrorCode(err, 'ORDER_ITEMS_LOCKED') || isApiErrorCode(err, 'ORDER_ITEM_NOT_ACTIVE')) {
+      this.notify.error(this.language.t('orders.itemsLocked'));
+      refresh();
+      return;
+    }
+    if (isApiErrorCode(err, 'ORDER_ITEM_NOT_FOUND') || isApiErrorCode(err, 'ORDER_ITEM_ALREADY_REPLACED')) {
+      this.notify.error(this.language.t('orders.itemGone'));
+      refresh();
+      return;
+    }
+    if (isApiErrorCode(err, 'ORDER_ITEM_UNAVAILABLE')) {
+      this.notify.error(this.language.t('orders.itemUnavailable'));
+      return;
+    }
+    if (isApiErrorCode(err, 'INVALID_MODIFIER_SELECTION')) {
+      this.notify.error(this.language.t('orders.invalidModifiers'));
+      return;
+    }
+    if (isApiErrorCode(err, 'PRODUCT_SIZE_REQUIRED')) {
+      this.notify.error(this.language.t('orders.sizeRequired'));
+      return;
+    }
+    if (isApiErrorCode(err, 'PRODUCT_SIZE_NOT_FOUND')) {
+      this.notify.error(this.language.t('orders.sizeNotFound'));
+      return;
+    }
+    if (isApiErrorCode(err, 'PRODUCT_SIZE_NOT_APPLICABLE')) {
+      this.notify.error(this.language.t('orders.sizeNotApplicable'));
+      return;
+    }
+    if (isApiErrorCode(err, 'STORE_NOT_FOUND') || isApiErrorCode(err, 'STORE_NOT_ACCEPTING_ORDERS')) {
+      this.notify.error(this.language.t('orders.storeNotAccepting'));
       return;
     }
     if (isApiErrorCode(err, 'DRIVER_ASSIGNMENT_REQUIRED')) {
       this.notify.error(this.language.t('orders.driverRequired'));
-      const id = this.selected()?.id;
-      if (id) void this.openDetail(id);
+      refresh();
       return;
     }
     if (isApiErrorCode(err, 'DRIVER_HANDOFF_ALREADY_ACTIVE')) {
       this.notify.error(this.language.t('orders.handoffActive'));
+      refresh();
       return;
     }
     if (isApiErrorCode(err, 'RETURN_WORKFLOW_ALREADY_ACTIVE')) {
       this.notify.error(this.language.t('orders.returnActive'));
-      const id = this.selected()?.id;
-      if (id) void this.openDetail(id);
+      refresh();
+      return;
+    }
+    if (isApiErrorCode(err, 'ORDER_NOT_READY_FOR_PICKUP')) {
+      this.notify.error(this.language.t('orders.notReadyPickup'));
+      refresh();
+      return;
+    }
+    if (isApiErrorCode(err, 'DRIVER_HAS_NOT_ARRIVED_AT_STORE')) {
+      this.notify.error(this.language.t('orders.driverNotArrived'));
+      refresh();
+      return;
+    }
+    if (isApiErrorCode(err, 'ORDER_DELIVERY_REQUIRES_ACTIVE_DRIVER_CUSTODY')) {
+      this.notify.error(this.language.t('orders.deliveryNeedsCustody'));
+      refresh();
+      return;
+    }
+    if (isApiErrorCode(err, 'DRIVER_NOT_CUSTODY_HOLDER')) {
+      this.notify.error(this.language.t('orders.driverNotCustody'));
+      refresh();
+      return;
+    }
+    if (isApiErrorCode(err, 'COLLECTED_AMOUNT_BELOW_EXPECTED')) {
+      this.notify.error(this.collectionError(err));
+      return;
+    }
+    if (
+      isApiErrorCode(err, 'COLLECTED_AMOUNT_REQUIRED') ||
+      isApiErrorCode(err, 'COLLECTED_AMOUNT_INVALID')
+    ) {
+      this.notify.error(this.language.t('orders.collectedInvalid'));
+      return;
+    }
+    if (isApiErrorCode(err, 'ORDER_EXPECTED_COLLECTION_UNAVAILABLE')) {
+      this.notify.error(this.language.t('orders.expectedUnavailable'));
+      refresh();
+      return;
+    }
+    if (isApiErrorCode(err, 'ORDER_COLLECTION_ALREADY_RECORDED')) {
+      this.notify.error(this.language.t('orders.collectionExists'));
+      refresh();
+      return;
+    }
+    if (isApiErrorCode(err, 'ORDER_COLLECTION_ASSIGNMENT_MISMATCH')) {
+      this.notify.error(this.language.t('orders.collectionMismatch'));
+      refresh();
       return;
     }
     if (isApiErrorCode(err, 'IDEMPOTENCY_KEY_REUSED')) {
-      this.notify.error(this.language.t('orders.idempotencyReused'));
+      this.notify.error(this.language.t('orders.idempotencyReused16b'));
       this.pending = null;
       return;
     }
@@ -449,12 +750,29 @@ export class OrdersComponent implements OnInit, OnDestroy {
       return;
     }
     if (getApiErrorStatus(err) === 403) {
-      this.notify.error(
-        getApiErrorMessage(
-          err,
-          this.language.t(action === 'approve' ? 'orders.approveDenied' : 'orders.cancelDenied')
-        )
-      );
+      if (action === 'itemAdd' || action === 'itemQuantity' || action === 'itemRemove') {
+        this.itemsMutateDenied.set(true);
+        this.notify.error(this.language.t('orders.itemsMutateDenied'));
+      } else if (action === 'itemReplace') {
+        this.itemsReplaceDenied.set(true);
+        this.notify.error(this.language.t('orders.itemsReplaceDenied'));
+      } else if (
+        action === 'markReady' ||
+        action === 'arrivalAtStore' ||
+        action === 'pickup' ||
+        action === 'arrivalAtCustomer' ||
+        action === 'delivery'
+      ) {
+        this.lifecycleDenied.set(true);
+        this.notify.error(this.language.t('orders.lifecycleDenied'));
+      } else {
+        this.notify.error(
+          getApiErrorMessage(
+            err,
+            this.language.t(action === 'approve' ? 'orders.approveDenied' : 'orders.cancelDenied')
+          )
+        );
+      }
       return;
     }
     if (isApiErrorCode(err, 'VALIDATION_FAILED')) {
@@ -462,6 +780,21 @@ export class OrdersComponent implements OnInit, OnDestroy {
       return;
     }
     this.notify.error(getApiErrorMessage(err, this.language.t('common.unexpectedError')));
+  }
+
+  private collectionError(err: unknown): string {
+    const details = getApiErrorDetails(err);
+    const expected = details?.['expectedCollectionAmount'];
+    const collected = details?.['collectedAmount'];
+    const shortfall = details?.['shortfallAmount'];
+    if (expected != null && collected != null && shortfall != null) {
+      return this.language.t('orders.underCollectionMeta', {
+        expected: String(expected),
+        collected: String(collected),
+        shortfall: String(shortfall),
+      });
+    }
+    return this.language.t('orders.underCollection');
   }
 
   private mapExportError(err: unknown): string {

@@ -1,0 +1,78 @@
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  background: var(--color-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.dialog-container {
+  width: min(40rem, 100%);
+  max-height: min(90vh, 52rem);
+  overflow: auto;
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.picker {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-height: 10rem;
+  overflow: auto;
+}
+
+.picker button {
+  width: 100%;
+  text-align: start;
+}
+
+.picker .active {
+  outline: 2px solid var(--color-brand-secondary);
+}
+
+.mod-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.agree {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.err {
+  color: var(--color-danger-text);
+  margin: 0;
+}
+
+.warn {
+  background: var(--color-warning-soft, #fff7ed);
+  padding: var(--space-2);
+  margin: 0;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+@media (max-width: 1024px) {
+  .dialog-container {
+    width: 100%;
+  }
+}

@@ -61,8 +61,45 @@
     </dl>
   </section>
 
+  @if (primaryOp(); as op) {
+    <section>
+      <h3>{{ 'orders.ops' | t }}</h3>
+      <p class="badge badge-warning">{{ 'orders.dashboardOverride' | t }}</p>
+      <p class="hint">{{ 'orders.nextOp' | t }}</p>
+      <div class="details-actions">
+        <button class="add-btn" type="button" [disabled]="mutating()" (click)="lifecycle.emit(op)">
+          {{ lifecycleLabel(op) }}
+        </button>
+      </div>
+      @if (secondaryOps().length) {
+        <p class="hint">{{ 'orders.otherOps' | t }}</p>
+        <div class="details-actions">
+          @for (action of secondaryOps(); track action) {
+            <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="lifecycle.emit(action)">
+              {{ lifecycleLabel(action) }}
+            </button>
+          }
+        </div>
+      }
+    </section>
+  }
+
   <section>
     <h3>{{ 'orders.items' | t }}</h3>
+    @if (!itemsUnlocked()) {
+      <p class="hint">{{ 'orders.itemsLocked' | t }}</p>
+    } @else if (!paymentAllowsItems()) {
+      <p class="hint">{{ 'orders.itemsNeedPayment' | t }}</p>
+    }
+    @if (canShowAdd()) {
+      <div class="details-actions">
+        <button class="add-btn" type="button" [disabled]="mutating()" (click)="addItem.emit()">
+          {{ 'orders.addItem' | t }}
+        </button>
+      </div>
+    } @else if (itemsUnlocked() && paymentAllowsItems() && catalogDenied() && !itemsMutateDenied()) {
+      <p class="hint">{{ 'orders.catalogDenied' | t }}</p>
+    }
     <ul class="order-items">
       @for (item of activeItems(); track item.id) {
         <li>
@@ -76,6 +113,23 @@
           <span>{{ formatIqd(item.lineTotal) }}</span>
           @for (mod of item.modifierSelections; track $index) {
             <small>{{ mod.name }} × {{ mod.quantity }} ({{ extraPrice(mod.unitPrice) }})</small>
+          }
+          @if (canShowItemMutations() || canShowReplace()) {
+            <span class="item-actions">
+              @if (canShowItemMutations()) {
+                <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="changeQuantity.emit(item)">
+                  {{ 'orders.changeQuantity' | t }}
+                </button>
+                <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="removeItem.emit(item)">
+                  {{ 'orders.removeItem' | t }}
+                </button>
+              }
+              @if (canShowReplace() && !catalogDenied()) {
+                <button class="ghost-btn" type="button" [disabled]="mutating()" (click)="replaceItem.emit(item)">
+                  {{ 'orders.replaceItem' | t }}
+                </button>
+              }
+            </span>
           }
         </li>
       }

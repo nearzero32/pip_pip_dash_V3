@@ -5,9 +5,14 @@ import {
   OrderAssignment,
   OrderDetail,
   OrderItemSnapshot,
+  OrderLifecycleAction,
   canApprove,
   canCancel,
+  canMutateOrderItems,
+  canMutateOrderItemsPayment,
   isActiveAssignment,
+  primaryLifecycleAction,
+  secondaryLifecycleActions,
 } from '../orders.models';
 import { OrderMapComponent } from '../order-map/order-map';
 
@@ -25,9 +30,18 @@ export class OrderDetailsComponent {
   readonly order = input.required<OrderDetail>();
   readonly storeLabel = input('');
   readonly mutating = input(false);
+  readonly itemsMutateDenied = input(false);
+  readonly itemsReplaceDenied = input(false);
+  readonly lifecycleDenied = input(false);
+  readonly catalogDenied = input(false);
   readonly closed = output<void>();
   readonly approve = output<void>();
   readonly cancel = output<void>();
+  readonly addItem = output<void>();
+  readonly changeQuantity = output<OrderItemSnapshot>();
+  readonly removeItem = output<OrderItemSnapshot>();
+  readonly replaceItem = output<OrderItemSnapshot>();
+  readonly lifecycle = output<OrderLifecycleAction>();
 
   readonly eventsOpen = signal(false);
 
@@ -56,6 +70,38 @@ export class OrderDetailsComponent {
 
   canCancelOrder(): boolean {
     return canCancel(this.order().status);
+  }
+
+  itemsUnlocked(): boolean {
+    return canMutateOrderItems(this.order().status);
+  }
+
+  paymentAllowsItems(): boolean {
+    return canMutateOrderItemsPayment(this.order());
+  }
+
+  canShowItemMutations(): boolean {
+    return this.itemsUnlocked() && this.paymentAllowsItems() && !this.itemsMutateDenied();
+  }
+
+  canShowReplace(): boolean {
+    return this.itemsUnlocked() && this.paymentAllowsItems() && !this.itemsReplaceDenied();
+  }
+
+  canShowAdd(): boolean {
+    return this.canShowItemMutations() && !this.catalogDenied();
+  }
+
+  primaryOp(): OrderLifecycleAction | null {
+    return this.lifecycleDenied() ? null : primaryLifecycleAction(this.order());
+  }
+
+  secondaryOps(): OrderLifecycleAction[] {
+    return this.lifecycleDenied() ? [] : secondaryLifecycleActions(this.order());
+  }
+
+  lifecycleLabel(action: OrderLifecycleAction): string {
+    return this.language.t(`orders.lifecycle.${action}`);
   }
 
   statusLabel(status: string | null): string {

@@ -1,0 +1,123 @@
+<div class="dialog-overlay" (click)="requestClose()">
+  <div
+    class="dialog-container"
+    (click)="$event.stopPropagation()"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="item-editor-title"
+  >
+    <h3 id="item-editor-title">{{ titleKey() | t }}</h3>
+    <p class="hint">{{ 'orders.catalogPreviewHint' | t }}</p>
+
+    @if (catalogDenied() || catalogBlocked()) {
+      <p class="err">{{ 'orders.catalogDenied' | t }}</p>
+    } @else {
+      <label class="filter-field">
+        <span class="filter-field__label">{{ 'orders.searchProduct' | t }}</span>
+        <input
+          type="search"
+          [ngModel]="search()"
+          (ngModelChange)="onSearch($event)"
+          (focus)="products().length === 0 && loadProducts()"
+        />
+      </label>
+      @if (searching()) {
+        <p class="hint">{{ 'common.loading' | t }}</p>
+      }
+      <ul class="picker">
+        @for (product of products(); track product.id) {
+          <li>
+            <button type="button" [class.active]="selected()?.id === product.id" (click)="selectProduct(product)">
+              {{ product.name }}
+              @if (!product.isAvailable) {
+                <span>{{ 'orders.unavailable' | t }}</span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (selected(); as product) {
+      <p><strong>{{ product.name }}</strong></p>
+      @if (product.basePrice == null) {
+        <label class="filter-field">
+          <span class="filter-field__label">{{ 'orders.size' | t }}</span>
+          <select [ngModel]="sizeId()" (ngModelChange)="sizeId.set($event)">
+            <option value="">{{ 'orders.pickSize' | t }}</option>
+            @for (size of usableSizes(product); track size.id) {
+              <option [value]="size.id">{{ size.name }} — {{ size.price }} IQD</option>
+            }
+          </select>
+        </label>
+      }
+      @if (usableOptions().length) {
+        <fieldset>
+          <legend>{{ 'orders.modifiers' | t }}</legend>
+          <p class="hint">
+            {{ modifiers()?.group?.minSelect }}–{{ modifiers()?.group?.maxSelect }}
+            ({{ selectedModifierTotal() }})
+          </p>
+          @for (option of usableOptions(); track option.id) {
+            <label class="mod-row">
+              <span>{{ option.name }} (+{{ option.price }})</span>
+              <input
+                type="number"
+                min="0"
+                [max]="option.maxQuantity"
+                [attr.aria-label]="option.name"
+                [ngModel]="optionQty(option.modifierOptionId)"
+                (ngModelChange)="setOptionQty(option, +$event)"
+              />
+            </label>
+          }
+        </fieldset>
+      }
+      <label class="filter-field">
+        <span class="filter-field__label">{{ 'orders.quantity' | t }}</span>
+        <input type="number" min="1" max="99" [ngModel]="quantity()" (ngModelChange)="quantity.set(+$event || 1)" />
+      </label>
+      <p class="hint">{{ 'orders.catalogPreview' | t }}: {{ unitPreview() }} IQD</p>
+    }
+
+    <label class="filter-field">
+      <span class="filter-field__label">{{ 'orders.mutationReason' | t }}</span>
+      <textarea
+        rows="3"
+        maxlength="1000"
+        [ngModel]="reason()"
+        (ngModelChange)="reason.set($event)"
+        [attr.aria-invalid]="!!formError()"
+        [attr.aria-describedby]="formError() ? 'item-editor-error' : null"
+      ></textarea>
+    </label>
+
+    @if (mode() === 'replace') {
+      <label class="agree">
+        <input type="checkbox" [ngModel]="agreed()" (ngModelChange)="agreed.set($event)" />
+        <span>{{ 'orders.customerAgreed' | t }}</span>
+      </label>
+    }
+
+    @if (formError()) {
+      <p id="item-editor-error" class="err">{{ formError() | t }}</p>
+    }
+    @if (uncertain()) {
+      <p class="warn">{{ 'orders.uncertainResult' | t }}</p>
+    }
+
+    <div class="dialog-actions">
+      <button type="button" class="dialog-btn btn-cancel" [disabled]="submitting()" (click)="requestClose()">
+        {{ 'common.cancel' | t }}
+      </button>
+      <button
+        type="button"
+        class="dialog-btn btn-confirm"
+        [disabled]="submitting() || catalogDenied() || catalogBlocked() || (mode() === 'replace' && !agreed()) || !selected()?.isAvailable"
+        (click)="submit()"
+      >
+        {{ titleKey() | t }}
+      </button>
+    </div>
+  </div>
+</div>

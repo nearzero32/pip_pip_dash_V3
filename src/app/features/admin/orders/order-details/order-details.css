@@ -45,6 +45,13 @@
   opacity: 0.78;
 }
 
+.item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  inline-size: 100%;
+}
+
 .timeline {
   list-style: none;
   padding: 0;

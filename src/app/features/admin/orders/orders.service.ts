@@ -21,6 +21,12 @@ import {
   PaymentMethod,
   PaymentStatus,
   OrderStatus,
+  OrderAddItemBody,
+  OrderReplaceItemBody,
+  OrderChangeQuantityBody,
+  OrderLifecycleOverrideBody,
+  OrderArrivalAtStoreBody,
+  OrderDeliveryOverrideBody,
 } from './orders.models';
 
 interface DashboardListBody<T> {
@@ -81,6 +87,122 @@ export class OrdersService {
   ): Promise<OrderDetail> {
     const response = await this.api.client.post<Record<string, unknown>>(
       `/api/v1/dashboard/orders/${orderId}/cancel`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+    return this.mapDetail(response.data);
+  }
+
+  async addItem(orderId: string, body: OrderAddItemBody, idempotencyKey: string): Promise<OrderDetail> {
+    const response = await this.api.client.post<Record<string, unknown>>(
+      `/api/v1/dashboard/orders/${orderId}/items`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+    return this.mapDetail(response.data);
+  }
+
+  async changeQuantity(
+    orderId: string,
+    itemId: string,
+    body: OrderChangeQuantityBody,
+    idempotencyKey: string
+  ): Promise<OrderDetail> {
+    const response = await this.api.client.post<Record<string, unknown>>(
+      `/api/v1/dashboard/orders/${orderId}/items/${itemId}/quantity`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+    return this.mapDetail(response.data);
+  }
+
+  async removeItem(
+    orderId: string,
+    itemId: string,
+    body: { reason: string },
+    idempotencyKey: string
+  ): Promise<OrderDetail> {
+    const response = await this.api.client.post<Record<string, unknown>>(
+      `/api/v1/dashboard/orders/${orderId}/items/${itemId}/remove`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+    return this.mapDetail(response.data);
+  }
+
+  async replaceItem(
+    orderId: string,
+    itemId: string,
+    body: OrderReplaceItemBody,
+    idempotencyKey: string
+  ): Promise<OrderDetail> {
+    const response = await this.api.client.post<Record<string, unknown>>(
+      `/api/v1/dashboard/orders/${orderId}/items/${itemId}/replace`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+    return this.mapDetail(response.data);
+  }
+
+  async markReady(
+    orderId: string,
+    body: OrderLifecycleOverrideBody,
+    idempotencyKey: string
+  ): Promise<OrderDetail> {
+    const response = await this.api.client.post<Record<string, unknown>>(
+      `/api/v1/dashboard/orders/${orderId}/mark-ready`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+    return this.mapDetail(response.data);
+  }
+
+  async confirmArrivalAtStore(
+    orderId: string,
+    body: OrderArrivalAtStoreBody,
+    idempotencyKey: string
+  ): Promise<OrderDetail> {
+    const response = await this.api.client.post<Record<string, unknown>>(
+      `/api/v1/dashboard/orders/${orderId}/confirm-arrival-at-store`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+    return this.mapDetail(response.data);
+  }
+
+  async confirmPickup(
+    orderId: string,
+    body: OrderLifecycleOverrideBody,
+    idempotencyKey: string
+  ): Promise<OrderDetail> {
+    const response = await this.api.client.post<Record<string, unknown>>(
+      `/api/v1/dashboard/orders/${orderId}/confirm-pickup`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+    return this.mapDetail(response.data);
+  }
+
+  async confirmArrivalAtCustomer(
+    orderId: string,
+    body: OrderLifecycleOverrideBody,
+    idempotencyKey: string
+  ): Promise<OrderDetail> {
+    const response = await this.api.client.post<Record<string, unknown>>(
+      `/api/v1/dashboard/orders/${orderId}/confirm-arrival`,
+      body,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
+    );
+    return this.mapDetail(response.data);
+  }
+
+  async confirmDelivery(
+    orderId: string,
+    body: OrderDeliveryOverrideBody,
+    idempotencyKey: string
+  ): Promise<OrderDetail> {
+    const response = await this.api.client.post<Record<string, unknown>>(
+      `/api/v1/dashboard/orders/${orderId}/confirm-delivery`,
       body,
       { headers: { 'Idempotency-Key': idempotencyKey } }
     );

@@ -28,6 +28,14 @@ export function isApiErrorCode(err: unknown, code: string): boolean {
   return getApiErrorCode(err) === code;
 }
 
+export function getApiErrorDetails(err: unknown): Record<string, unknown> | undefined {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as ApiErrorBody | undefined;
+    return data?.error?.details;
+  }
+  return undefined;
+}
+
 export function apiErrorMessage(err: unknown, fallback: string): string {
   return getApiErrorMessage(err, fallback);
 }

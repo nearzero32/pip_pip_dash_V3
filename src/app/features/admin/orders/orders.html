@@ -123,9 +123,18 @@
     [order]="order"
     [storeLabel]="storeLabelFor(order)"
     [mutating]="mutating()"
+    [itemsMutateDenied]="itemsMutateDenied()"
+    [itemsReplaceDenied]="itemsReplaceDenied()"
+    [lifecycleDenied]="lifecycleDenied()"
+    [catalogDenied]="catalogDenied()"
     (closed)="closeDetails()"
     (approve)="requestApprove()"
     (cancel)="requestCancel()"
+    (addItem)="openAdd()"
+    (changeQuantity)="openQuantity($event)"
+    (removeItem)="openRemove($event)"
+    (replaceItem)="openReplace($event)"
+    (lifecycle)="openLifecycle($event)"
   ></app-order-details>
 }
 
@@ -146,4 +155,50 @@
     (closed)="cancelOpen.set(false)"
     (confirmed)="runCancel($event)"
   ></app-order-cancel-dialog>
+}
+
+@if (editorOpen() && selected(); as order) {
+  <app-order-item-editor
+    [mode]="editorOpen() === 'replace' ? 'replace' : 'add'"
+    [storeId]="order.storeId"
+    [submitting]="mutating()"
+    [uncertain]="uncertain()"
+    [catalogDenied]="catalogDenied()"
+    (closed)="closeMutationDialogs()"
+    (catalogDeniedEvent)="catalogDenied.set(true)"
+    (submitted)="onEditorSubmit($event)"
+  ></app-order-item-editor>
+}
+
+@if (quantityItem(); as item) {
+  <app-order-item-quantity-dialog
+    [item]="item"
+    [submitting]="mutating()"
+    [uncertain]="uncertain()"
+    (closed)="closeMutationDialogs()"
+    (confirmed)="runQuantity($event)"
+  ></app-order-item-quantity-dialog>
+}
+
+@if (removeItemTarget(); as item) {
+  <app-order-item-remove-dialog
+    [item]="item"
+    [submitting]="mutating()"
+    [uncertain]="uncertain()"
+    (closed)="closeMutationDialogs()"
+    (confirmed)="runRemove($event)"
+  ></app-order-item-remove-dialog>
+}
+
+@if (overrideAction(); as action) {
+  @if (selected(); as order) {
+    <app-order-lifecycle-override-dialog
+      [action]="action"
+      [expectedAmount]="order.expectedCollectionAmount ?? order.total"
+      [submitting]="mutating()"
+      [uncertain]="uncertain()"
+      (closed)="closeMutationDialogs()"
+      (confirmed)="runLifecycle($event)"
+    ></app-order-lifecycle-override-dialog>
+  }
 }

@@ -253,14 +253,85 @@ export interface OrderRow extends OrderSummary {
   readonly paymentLabel: string;
 }
 
-export type OrderCommandAction = 'approve' | 'cancel';
+export type OrderLifecycleAction =
+  | 'markReady'
+  | 'arrivalAtStore'
+  | 'pickup'
+  | 'arrivalAtCustomer'
+  | 'delivery';
+
+export type OrderCommandAction =
+  | 'approve'
+  | 'cancel'
+  | 'itemAdd'
+  | 'itemQuantity'
+  | 'itemRemove'
+  | 'itemReplace'
+  | OrderLifecycleAction;
+
+export interface OrderModifierSelectionInput {
+  modifierOptionId: string;
+  quantity: number;
+}
+
+export interface OrderAddItemBody {
+  productId: string;
+  sizeId?: string | null;
+  quantity: number;
+  modifierSelections?: OrderModifierSelectionInput[];
+  reason: string;
+}
+
+export interface OrderReplaceItemBody extends OrderAddItemBody {
+  customerAgreedByPhone: true;
+}
+
+export interface OrderChangeQuantityBody {
+  quantity: number;
+  reason: string;
+}
+
+export interface OrderMutationReasonBody {
+  reason: string;
+}
+
+export interface OrderLifecycleOverrideBody {
+  reason: string;
+  note?: string;
+  actedOnBehalfOf: 'STORE' | 'DRIVER';
+}
+
+export interface OrderArrivalAtStoreBody {
+  reason: string;
+  note?: string;
+}
+
+export interface OrderDeliveryOverrideBody {
+  collectedAmount: number;
+  reason: string;
+  note?: string;
+  actedOnBehalfOf: 'DRIVER';
+}
+
+export type OrderCommandPayload =
+  | { reason: string; note?: string }
+  | OrderAddItemBody
+  | OrderReplaceItemBody
+  | OrderChangeQuantityBody
+  | OrderMutationReasonBody
+  | OrderLifecycleOverrideBody
+  | OrderArrivalAtStoreBody
+  | OrderDeliveryOverrideBody;
 
 export interface PendingOrderCommand {
   action: OrderCommandAction;
   orderId: string;
+  itemId?: string;
   idempotencyKey: string;
-  payload?: { reason: string; note?: string };
+  payload?: OrderCommandPayload;
 }
+
+export const COLLECTION_AMOUNT_MAX = 99_999_999;
 
 export function createOrderCommandKey(): string {
   return crypto.randomUUID();
@@ -280,4 +351,80 @@ export function canCancel(status: OrderStatus): boolean {
 
 export function isActiveAssignment(row: OrderAssignment): boolean {
   return row.cancelledAt == null && row.completedAt == null;
+}
+
+export function canMutateOrderItems(status: OrderStatus): boolean {
+  return (
+    status === 'PENDING_STORE_APPROVAL' ||
+    status === 'APPROVED_BY_STORE' ||
+    status === 'SEARCHING_DRIVER' ||
+    status === 'DRIVER_ASSIGNED'
+  );
+}
+
+export function canMutateOrderItemsPayment(order: OrderSummary): boolean {
+  return order.paymentMethod === 'CASH' || order.paymentStatus === 'PAID';
+}
+
+export function activeAssignmentOf(order: OrderDetail): OrderAssignment | null {
+  return order.assignments.find((row) => isActiveAssignment(row)) ?? null;
+}
+
+export function canMarkReady(order: OrderDetail): boolean {
+  return (
+    activeAssignmentOf(order) != null &&
+    order.storeReadyMarkedAt == null &&
+    (order.status === 'DRIVER_ASSIGNED' || order.status === 'ARRIVED_AT_STORE')
+  );
+}
+
+export function canConfirmArrivalAtStore(order: OrderDetail): boolean {
+  return (
+    activeAssignmentOf(order) != null &&
+    order.custodyStatus === 'WITH_STORE' &&
+    order.arrivedAtStoreAt == null &&
+    (order.status === 'DRIVER_ASSIGNED' || order.status === 'READY_FOR_PICKUP')
+  );
+}
+
+export function canConfirmPickup(order: OrderDetail): boolean {
+  return (
+    order.status === 'ARRIVED_AT_STORE' &&
+    order.storeReadyMarkedAt != null &&
+    order.arrivedAtStoreAt != null &&
+    activeAssignmentOf(order) != null
+  );
+}
+
+export function canConfirmArrivalAtCustomer(order: OrderDetail): boolean {
+  return order.status === 'PICKED_UP' && activeAssignmentOf(order) != null;
+}
+
+export function canConfirmDelivery(order: OrderDetail): boolean {
+  return (
+    order.status === 'ARRIVED_AT_CUSTOMER' &&
+    order.custodyStatus === 'WITH_DRIVER' &&
+    activeAssignmentOf(order) != null &&
+    order.collection == null
+  );
+}
+
+export function primaryLifecycleAction(order: OrderDetail): OrderLifecycleAction | null {
+  if (canConfirmDelivery(order)) return 'delivery';
+  if (canConfirmArrivalAtCustomer(order)) return 'arrivalAtCustomer';
+  if (canConfirmPickup(order)) return 'pickup';
+  if (canConfirmArrivalAtStore(order)) return 'arrivalAtStore';
+  if (canMarkReady(order)) return 'markReady';
+  return null;
+}
+
+export function secondaryLifecycleActions(order: OrderDetail): OrderLifecycleAction[] {
+  const primary = primaryLifecycleAction(order);
+  const eligible: OrderLifecycleAction[] = [];
+  if (canMarkReady(order)) eligible.push('markReady');
+  if (canConfirmArrivalAtStore(order)) eligible.push('arrivalAtStore');
+  if (canConfirmPickup(order)) eligible.push('pickup');
+  if (canConfirmArrivalAtCustomer(order)) eligible.push('arrivalAtCustomer');
+  if (canConfirmDelivery(order)) eligible.push('delivery');
+  return eligible.filter((action) => action !== primary);
 }
