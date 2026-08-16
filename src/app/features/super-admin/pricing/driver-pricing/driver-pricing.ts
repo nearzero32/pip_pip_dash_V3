@@ -1,7 +1,8 @@
 import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { FormDialogComponent, FormField } from '../../../../shared/components/form-dialog/form-dialog';
+import { FormDialogComponent } from '../../../../shared/components/form-dialog/form-dialog';
+import { FormField } from '../../../../shared/models/form-field.interface';
 import { City } from '../../geography/geography.models';
 import { DriverPricing } from '../pricing.models';
 import { GeographyService } from '../../geography/geography.service';

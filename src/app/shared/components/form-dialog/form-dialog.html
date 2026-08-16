@@ -1,4 +1,4 @@
-<div class="modal-overlay" (click)="close()">
+<div class="modal-overlay" (click)="close()" role="dialog" aria-modal="true">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <!-- Header -->
     <div class="modal-header">
@@ -67,17 +67,6 @@
                 />
               }
 
-              <!-- Date Input -->
-              @if (field.type === 'date') {
-                <input
-                  type="date"
-                  [id]="field.name"
-                  class="form-input"
-                  [formControlName]="field.name"
-                  [class.error]="form.get(field.name)?.invalid && form.get(field.name)?.touched"
-                />
-              }
-
               <!-- Textarea -->
               @if (field.type === 'textarea') {
                 <textarea
@@ -111,56 +100,6 @@
                     <polyline points="6 9 12 15 18 9"></polyline>
                   </svg>
                 </div>
-              }
-
-              <!-- Checkbox / Toggle Switch -->
-              @if (field.type === 'checkbox') {
-                <div class="toggle-switch-group">
-                  <label class="toggle-switch-container">
-                    <input
-                      type="checkbox"
-                      [formControlName]="field.name"
-                      class="toggle-checkbox"
-                      (change)="onFieldValueChange(field.name, $any($event.target).checked)">
-                    <span class="toggle-slider">
-                      <span class="currency-indicator currency-iqd">IQD</span>
-                      <span class="currency-indicator currency-usd">USD</span>
-                    </span>
-                  </label>
-                  <span class="toggle-label">
-                    <svg class="toggle-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="12" y1="1" x2="12" y2="23"></line>
-                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                    </svg>
-                    {{ field.placeholder }}
-                  </span>
-                </div>
-              }
-
-              <!-- Toggle Switch -->
-              @if (field.type === 'toggle') {
-                <div class="form-label-with-toggle">
-                  <label class="form-label">{{ field.label }}</label>
-                  <div class="currency-toggle">
-                    <span class="currency-toggle-label" [class.active]="!form.get(field.name)?.value">IQD</span>
-                    <label class="toggle-switch">
-                      <input type="checkbox" [formControlName]="field.name" class="toggle-input">
-                      <span class="toggle-slider"></span>
-                    </label>
-                    <span class="currency-toggle-label" [class.active]="form.get(field.name)?.value">USD</span>
-                  </div>
-                </div>
-              }
-
-              <!-- Image Upload -->
-              @if (field.type === 'image-upload') {
-                <app-image-upload
-                  [label]="field.label"
-                  [placeholder]="field.placeholder || ''"
-                  [currentImage]="form.get(field.name)?.value"
-                  [error]="!!(form.get(field.name)?.invalid && form.get(field.name)?.touched)"
-                  (imageSelected)="onFieldValueChange(field.name, $event)">
-                </app-image-upload>
               }
 
               <!-- Error Message -->
@@ -203,4 +142,3 @@
     </form>
   </div>
 </div>
-

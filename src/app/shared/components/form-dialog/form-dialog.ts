@@ -1,36 +1,16 @@
 import { Component, EventEmitter, Input, Output, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, ValidatorFn } from '@angular/forms';
-import { NotificationService } from '../../services/notification.service';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormField } from '../../models/form-field.interface';
 import { LanguageService } from '../../../i18n/language.service';
-import { ImageUploadComponent } from '../image-upload/image-upload';
 import { TranslatePipe } from '../../../i18n/translate.pipe';
-
-export interface FormField {
-  name: string;
-  label: string;
-  type: 'text' | 'password' | 'number' | 'date' | 'textarea' | 'select' | 'checkbox' | 'toggle' | 'custom-select' | 'image-upload';
-  placeholder?: string;
-  icon?: string; // SVG path
-  required?: boolean;
-  validators?: ValidatorFn[];
-  options?: any[]; // For select fields
-  optionLabel?: string; // Property name for option label
-  optionValue?: string; // Property name for option value
-  formatter?: (value: any) => any; // For formatting display values
-  parser?: (value: any) => any; // For parsing form values before submit
-  defaultValue?: any;
-  width?: 'half' | 'full'; // Grid width
-  conditionalDisplay?: (formValue: any) => boolean; // Show/hide based on other fields
-  hint?: string; // Optional hint text
-}
 
 @Component({
   selector: 'app-form-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ImageUploadComponent, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './form-dialog.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './form-dialog.css'
 })
 export class FormDialogComponent implements OnInit {
@@ -46,7 +26,6 @@ export class FormDialogComponent implements OnInit {
   @Output() onFieldChange = new EventEmitter<{ fieldName: string, value: any, formValue: any }>();
 
   private fb = inject(FormBuilder);
-  private notificationService = inject(NotificationService);
   private language = inject(LanguageService);
 
   form!: FormGroup;
@@ -62,7 +41,7 @@ export class FormDialogComponent implements OnInit {
     const formControls: any = {};
 
     this.fields.forEach(field => {
-      const validators = field.validators || [];
+      const validators = [...(field.validators || [])];
       if (field.required) {
         validators.push(Validators.required);
       }
@@ -75,25 +54,7 @@ export class FormDialogComponent implements OnInit {
         }
       }
 
-      // Handle checkboxes and toggles specially - preserve false values
-      if (field.type === 'checkbox' || field.type === 'toggle') {
-        if (initialValue === undefined || initialValue === null) {
-          initialValue = field.defaultValue !== undefined ? field.defaultValue : false;
-        }
-        // Convert to boolean
-        initialValue = initialValue === true || initialValue === 'true' || initialValue === 1 || initialValue === '1';
-      } else if (field.type === 'image-upload') {
-        // For image-upload fields, preserve null values (null means no image/removed image)
-        // Only use empty string if both initialValue and defaultValue are undefined
-        if (initialValue === undefined && field.defaultValue === undefined) {
-          initialValue = '';
-        }
-        // Otherwise, keep initialValue as is (could be URL string, null, or undefined)
-      } else {
-        // For other fields, use empty string as fallback
-        initialValue = initialValue !== undefined && initialValue !== null ? initialValue : '';
-      }
-
+      initialValue = initialValue !== undefined && initialValue !== null ? initialValue : '';
       formControls[field.name] = [initialValue, validators];
     });
 
@@ -182,4 +143,3 @@ export class FormDialogComponent implements OnInit {
     }
   }
 }
-

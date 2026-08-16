@@ -1,7 +1,8 @@
 import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableComponent } from '../../../../shared/components/table/table';
-import { FormDialogComponent, FormField } from '../../../../shared/components/form-dialog/form-dialog';
+import { FormDialogComponent } from '../../../../shared/components/form-dialog/form-dialog';
+import { FormField } from '../../../../shared/models/form-field.interface';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog';
 import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button';
 import { TableColumn } from '../../../../shared/models/table-column.interface';

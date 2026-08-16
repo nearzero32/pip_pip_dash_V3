@@ -7,7 +7,7 @@ import { LanguageService } from '../../../i18n/language.service';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './confirmation-dialog.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './confirmation-dialog.css'
 })
 export class ConfirmationDialogComponent {
