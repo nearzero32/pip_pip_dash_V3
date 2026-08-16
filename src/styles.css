@@ -1,151 +1,221 @@
-/* Pip Pip dashboard design system */
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+/* =============================================================
+   PIP PIP DASHBOARD — GLOBAL STYLESHEET
+   Import order: tokens → base → shared component globals
+   ============================================================= */
 
-:root {
-  --primary-color: #fe5104;
-  --primary-hover: #d94403;
-  --primary-dark: #c43e03;
-  --primary-light: #fff1e8;
-  --accent-color: #fccb30;
-  --brand-dark: #33215f;
-  --brand-dark-alt: #33215e;
+@import './styles/tokens.css';
+@import './styles/base.css';
 
-  --text-main: #2D3748;
-  --text-secondary: #718096;
-  --text-placeholder: #A0AEC0;
+/* Readex Pro variable font — loaded via <link> in index.html */
+/* No @import here to avoid render-blocking duplicate load    */
 
-  --bg-sidebar: #33215f;
-  --bg-page: #F7F9FC;
-  --bg-card: #FFFFFF;
+/* =============================================================
+   SHARED COMPONENT GLOBALS
+   These are low-specificity utility classes used across pages.
+   Component-specific styles live in their own .css files.
+   ============================================================= */
 
-  --text-sidebar: #FFFFFF;
-  --text-sidebar-muted: #C4B8E0;
-  --sidebar-active-bg: rgba(252, 203, 48, 0.16);
-  --sidebar-hover-bg: rgba(255, 255, 255, 0.06);
-
-  --border-color: #E2E8F0;
-  --border-focus: #fe5104;
-
-  --shadow-sm: 0 1px 2px 0 rgba(51, 33, 95, 0.06);
-  --shadow-md: 0 4px 6px -1px rgba(51, 33, 95, 0.1), 0 2px 4px -2px rgba(51, 33, 95, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(51, 33, 95, 0.1), 0 4px 6px -4px rgba(51, 33, 95, 0.05);
-
-  --accent-glow: inset 4px 0 0 0 #fe5104;
-
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 16px;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: Inter, system-ui, -apple-system, sans-serif;
-  background-color: var(--bg-page);
-  color: var(--text-main);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body.lang-ar {
-  font-family: Cairo, Inter, system-ui, sans-serif;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-weight: 600;
-  letter-spacing: -0.025em;
-}
-
-button,
-input {
-  font-family: inherit;
-}
-
+/* ── PAGE TOOLBAR ───────────────────────────────────────────── */
 .page-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
   flex-wrap: wrap;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-5);
 }
 
 .page-toolbar .hint {
-  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
+/* ── BUTTONS ────────────────────────────────────────────────── */
+
+/* Primary — key action (PIP PIP orange) */
 .add-btn {
-  background: var(--primary-color);
-  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-height-md);
+  padding: 0 var(--space-5);
+  background: var(--color-brand-primary);
+  color: var(--color-text-on-brand);
   border: none;
-  border-radius: 16px;
-  padding: 0.875rem 1.5rem;
-  font-weight: 700;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
+  transition:
+    background var(--duration-normal) var(--ease-default),
+    box-shadow var(--duration-normal) var(--ease-default),
+    transform var(--duration-fast) var(--ease-default);
+  white-space: nowrap;
 }
 
-.add-btn:hover {
-  background: var(--primary-hover);
+.add-btn:hover:not(:disabled) {
+  background: var(--color-brand-primary-hover);
+  box-shadow: 0 4px 12px var(--brand-orange-tint);
+  transform: translateY(-1px);
 }
 
+.add-btn:active:not(:disabled) {
+  background: var(--brand-orange-active);
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.add-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.add-btn:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+/* Secondary / Ghost — non-primary actions */
 .ghost-btn {
-  background: #f3f4f6;
-  color: #374151;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 0.5rem 0.9rem;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-height-md);
+  padding: 0 var(--space-4);
+  background: var(--color-surface-card);
+  color: var(--color-text-primary);
+  border: 1.5px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
+  transition:
+    background var(--duration-normal) var(--ease-default),
+    border-color var(--duration-normal) var(--ease-default),
+    transform var(--duration-fast) var(--ease-default);
+  white-space: nowrap;
 }
 
+.ghost-btn:hover:not(:disabled) {
+  background: var(--color-surface-subtle);
+  border-color: var(--color-border-strong);
+  color: var(--color-text-strong);
+}
+
+.ghost-btn:active:not(:disabled) {
+  background: var(--color-surface-hover);
+  transform: translateY(0);
+}
+
+.ghost-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ghost-btn:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+/* ── CITY PICKER ────────────────────────────────────────────── */
 .city-picker {
-  min-width: 240px;
-  height: 48px;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 0 0.75rem;
-  background: #fff;
+  height: var(--control-height-md);
+  min-width: 220px;
+  border: 1.5px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: 0 var(--space-3);
+  background: var(--color-surface-card);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-md);
+  transition:
+    border-color var(--duration-normal) var(--ease-default),
+    box-shadow var(--duration-normal) var(--ease-default);
 }
 
+.city-picker:hover {
+  border-color: var(--color-border-strong);
+}
+
+.city-picker:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: var(--focus-ring);
+}
+
+/* ── CARDS ──────────────────────────────────────────────────── */
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .dash-card {
   display: block;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 1.25rem;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
   text-decoration: none;
   color: inherit;
   box-shadow: var(--shadow-sm);
+  transition:
+    box-shadow var(--duration-normal) var(--ease-default),
+    transform var(--duration-normal) var(--ease-default);
+}
+
+.dash-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .dash-card h3 {
-  color: var(--brand-dark);
-  margin-bottom: 0.35rem;
+  color: var(--brand-purple);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-1);
 }
 
 .dash-card p {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* ── STATUS BADGES (shared across table & pages) ────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.badge-success {
+  background: var(--color-success-soft);
+  color: var(--color-success-text);
+}
+
+.badge-warning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning-text);
+}
+
+.badge-danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger-text);
+}
+
+.badge-info {
+  background: var(--color-info-soft);
+  color: var(--color-info-text);
+}
+
+.badge-default {
+  background: var(--color-neutral-soft);
+  color: var(--color-neutral);
 }

@@ -1,0 +1,133 @@
+/* =============================================================
+   PIP PIP DASHBOARD — BASE STYLES
+   Reset · Typography · Body · Focus · Motion · RTL
+   ============================================================= */
+
+/* ── BOX SIZING ─────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ── BODY & DOCUMENT ────────────────────────────────────────── */
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface-page);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── HEADINGS ───────────────────────────────────────────────── */
+/* No negative letter-spacing — Arabic text should not have this */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-family: var(--font-family-base);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-text-strong);
+  /* letter-spacing intentionally omitted for Arabic/RTL readability */
+}
+
+/* ── PARAGRAPH & TEXT DEFAULTS ──────────────────────────────── */
+p {
+  margin: 0;
+}
+
+/* ── FORM ELEMENTS ──────────────────────────────────────────── */
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-family-base);
+  font-size: inherit;
+}
+
+/* ── LINKS ──────────────────────────────────────────────────── */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ── IMAGES ─────────────────────────────────────────────────── */
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/* ── LISTS ──────────────────────────────────────────────────── */
+ul, ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ── FOCUS SYSTEM ───────────────────────────────────────────── */
+/* Single global focus-visible pattern — keyboard accessible */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Exception: native form controls in browsers without focus-visible support */
+:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ── REDUCED MOTION ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── SCROLLBARS (global subtle style) ──────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface-subtle);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) var(--color-surface-subtle);
+}
+
+/* ── SELECTION ──────────────────────────────────────────────── */
+::selection {
+  background: var(--brand-orange-soft);
+  color: var(--brand-orange-active);
+}
