@@ -36,6 +36,7 @@
   display: flex;
   flex-direction: column;
   animation: dialogIn var(--duration-slow) var(--ease-spring);
+  border: 1px solid color-mix(in srgb, var(--color-border-default) 82%, white);
 }
 
 @keyframes dialogIn {
@@ -50,7 +51,7 @@
 
 /* ── HEADER ─────────────────────────────────────────────────── */
 .modal-header {
-  padding: var(--space-5) var(--space-6);
+  padding: var(--space-5) var(--space-6) calc(var(--space-5) - 2px);
   border-bottom: 1.5px solid var(--color-border-subtle);
   display: flex;
   justify-content: space-between;
@@ -81,6 +82,9 @@
   color: var(--color-text-strong);
   margin: 0;
 }
+
+.modal-heading { display: grid; gap: var(--space-1); }
+.modal-heading__eyebrow { color: var(--color-brand-primary); font-size: 0.6875rem; font-weight: var(--font-weight-bold); letter-spacing: 0.1em; line-height: 1; }
 
 /* ── CLOSE BUTTON ───────────────────────────────────────────── */
 .close-btn {
@@ -133,7 +137,7 @@
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-5);
+  gap: var(--space-5) var(--space-4);
 }
 
 /* ── FORM GROUP ─────────────────────────────────────────────── */
@@ -155,7 +159,7 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
-  line-height: 1;
+  line-height: var(--line-height-normal);
 }
 
 .optional-label {
@@ -181,7 +185,8 @@ textarea.form-input {
   font-weight: var(--font-weight-normal);
   transition:
     border-color var(--duration-normal) var(--ease-default),
-    box-shadow var(--duration-normal) var(--ease-default);
+    box-shadow var(--duration-normal) var(--ease-default),
+    background var(--duration-normal) var(--ease-default);
 }
 
 textarea.form-input {
@@ -206,6 +211,12 @@ textarea.form-input:focus {
   border-color: var(--color-border-focus);
   box-shadow: var(--focus-ring);
 }
+
+.input-shell { position: relative; }
+.input-shell .form-input { padding-inline-end: 4.75rem; }
+.password-toggle { position: absolute; inset-inline-end: var(--space-2); top: 50%; transform: translateY(-50%); min-height: 30px; padding: 0 var(--space-2); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--color-brand-secondary); font: inherit; font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); cursor: pointer; }
+.password-toggle:hover { background: var(--brand-orange-soft); color: var(--color-brand-primary); }
+.password-toggle:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 
 .form-input:disabled,
 select.form-input:disabled,
@@ -286,7 +297,7 @@ textarea.form-input.ng-invalid.ng-touched {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-3);
-  background: var(--color-surface-page);
+  background: color-mix(in srgb, var(--color-surface-page) 80%, white);
 }
 
 /* ── DIALOG BUTTONS ─────────────────────────────────────────── */

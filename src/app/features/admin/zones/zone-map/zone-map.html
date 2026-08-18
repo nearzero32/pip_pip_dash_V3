@@ -1,4 +1,7 @@
 <div class="zone-map-shell">
+  @if (!basemapConfigured) {
+    <div class="zone-map-configuration"><strong>{{ 'zones.mapNotConfigured' | t }}</strong><span>{{ 'zones.mapConfigurationHelp' | t }}</span></div>
+  }
   @if (loading()) {
     <div class="zone-map-banner">{{ 'zones.mapLoading' | t }}</div>
   }

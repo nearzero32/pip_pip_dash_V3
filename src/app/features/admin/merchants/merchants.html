@@ -1,17 +1,17 @@
 <section class="feature-page">
-  <div class="page-toolbar"><div class="page-toolbar__context"><p class="hint">إدارة تجار المدينة وربطهم بالمتاجر.</p></div><div class="page-toolbar__actions">
-    <label class="filter-field"><span class="filter-field__label">بحث</span><input class="merchant-search" type="search" [value]="search()" (input)="onSearch($any($event.target).value)" /></label>
-    <label class="filter-field"><span class="filter-field__label">الحالة</span><select [ngModel]="status()" (ngModelChange)="onStatus($event)"><option value="">الكل</option><option value="ACTIVE">نشط</option><option value="INACTIVE">غير نشط</option><option value="SUSPENDED">موقوف</option></select></label>
-    <label class="filter-field"><span class="filter-field__label">المتجر</span><select [ngModel]="storeId()" (ngModelChange)="onStore($event)"><option value="">كل المتاجر</option>@for (store of stores(); track store.id) { <option [value]="store.id">{{ store.name }}</option> }</select></label>
-    <button class="add-btn" type="button" [disabled]="blocked()" (click)="openCreate()">إضافة تاجر</button>
+  <div class="page-toolbar"><div class="page-toolbar__context"><p class="hint">{{ 'merchants.hint' | t }}</p></div><div class="page-toolbar__actions">
+    <label class="filter-field"><span class="filter-field__label">{{ 'merchants.search' | t }}</span><input class="merchant-search" type="search" [value]="search()" (input)="onSearch($any($event.target).value)" /></label>
+    <label class="filter-field"><span class="filter-field__label">{{ 'merchants.status' | t }}</span><select [ngModel]="status()" (ngModelChange)="onStatus($event)"><option value="">{{ 'merchants.allStatuses' | t }}</option><option value="ACTIVE">{{ 'status.ACTIVE' | t }}</option><option value="INACTIVE">{{ 'status.INACTIVE' | t }}</option><option value="SUSPENDED">{{ 'status.SUSPENDED' | t }}</option></select></label>
+    <label class="filter-field"><span class="filter-field__label">{{ 'merchants.store' | t }}</span><select [ngModel]="storeId()" (ngModelChange)="onStore($event)"><option value="">{{ 'merchants.allStores' | t }}</option>@for (store of stores(); track store.id) { <option [value]="store.id">{{ store.name }}</option> }</select></label>
+    <button class="add-btn" type="button" [disabled]="blocked()" (click)="openCreate()">{{ 'merchants.create' | t }}</button>
   </div></div>
-  @if (blocked()) { <div class="state-panel state-panel--warning"><h2 class="state-panel__title">لا تملك صلاحية التجار</h2><p class="state-panel__message">تتطلب هذه الصفحة merchants.read.</p></div> }
+  @if (blocked()) { <div class="state-panel state-panel--warning"><h2 class="state-panel__title">{{ 'merchants.noPermissionTitle' | t }}</h2><p class="state-panel__message">{{ 'merchants.noPermissionBody' | t }}</p></div> }
   @else { <app-table [data]="rows()" [columns]="columns" [pagination]="pagination()" [isLoading]="loading()" [allowDelete]="false" [allowEdit]="true" [allowView]="true" rowKey="accountId" (pageChange)="onPage($event)" (onEdit)="openEdit($event)" (onView)="openDetails($event)"></app-table> }
 </section>
 @if (formOpen()) { <app-form-dialog [title]="formTitle()" [fields]="fields()" [initialData]="selected()" [isSubmitting]="submitting()" (onClose)="closeForm()" (onSubmit)="save($event)"></app-form-dialog> }
 @if (selected(); as merchant) { @if (!formOpen()) {
-  <div class="backdrop" (click)="closeDetails()"></div><aside class="details merchant-details"><header><h2>{{ merchant.displayName || merchant.phone }}</h2><button type="button" (click)="closeDetails()">إغلاق</button></header>
-    <dl><div><dt>الهاتف</dt><dd>{{ merchant.phone }}</dd></div><div><dt>المتجر</dt><dd>{{ merchant.storeName || '—' }}</dd></div><div><dt>الحالة</dt><dd>{{ merchant.status }}</dd></div><div><dt>تاريخ الإنشاء</dt><dd>{{ merchant.createdAt | date: 'yyyy-MM-dd HH:mm' }}</dd></div></dl>
-    <div class="details-actions"><button class="add-btn" type="button" (click)="openEdit(merchant)">تعديل</button><button class="ghost-btn" type="button" (click)="openTransfer(merchant)">نقل إلى متجر</button><button class="danger-btn" type="button" (click)="openPassword(merchant)">تغيير كلمة المرور</button></div>
+  <div class="backdrop" (click)="closeDetails()"></div><aside class="details merchant-details"><header><h2>{{ merchant.displayName || merchant.phone }}</h2><button type="button" (click)="closeDetails()">{{ 'common.close' | t }}</button></header>
+    <dl><div><dt>{{ 'merchants.phone' | t }}</dt><dd>{{ merchant.phone }}</dd></div><div><dt>{{ 'merchants.store' | t }}</dt><dd>{{ merchant.storeName || '—' }}</dd></div><div><dt>{{ 'merchants.status' | t }}</dt><dd>{{ ('status.' + merchant.status) | t }}</dd></div><div><dt>{{ 'merchants.createdAt' | t }}</dt><dd>{{ merchant.createdAt | date: 'yyyy-MM-dd HH:mm' }}</dd></div></dl>
+    <div class="details-actions"><button class="add-btn" type="button" (click)="openEdit(merchant)">{{ 'common.edit' | t }}</button><button class="ghost-btn" type="button" (click)="openTransfer(merchant)">{{ 'merchants.transferStore' | t }}</button><button class="danger-btn" type="button" (click)="openPassword(merchant)">{{ 'merchants.resetPassword' | t }}</button></div>
   </aside>
 } }

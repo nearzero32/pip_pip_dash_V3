@@ -1,9 +1,7 @@
 export const environment = {
   apiBaseUrl: 'http://localhost:3000',
-  /**
-   * MapLibre style URL. The default is the public MapLibre demo style for local/dev.
-   * DEMO STYLE IS NOT A PRODUCTION TILE PROVIDER DECISION.
-   * Do not put MapTiler/Mapbox tokens in source control.
-   */
+  /** Public browser key restricted by HTTP referrer in Google Cloud. */
+  googleMapsApiKey: '',
+  /** Temporary MapLibre style for non-Zones map components still using MapLibre. */
   mapStyleUrl: 'https://demotiles.maplibre.org/style.json',
 };

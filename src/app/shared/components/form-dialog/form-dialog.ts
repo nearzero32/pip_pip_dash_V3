@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, inject, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormField } from '../../models/form-field.interface';
@@ -29,6 +29,7 @@ export class FormDialogComponent implements OnInit {
   private language = inject(LanguageService);
 
   form!: FormGroup;
+  readonly visiblePasswords = signal<ReadonlySet<string>>(new Set());
 
   ngOnInit() {
     if (!this.title) this.title = this.language.t('common.add');
@@ -91,7 +92,21 @@ export class FormDialogComponent implements OnInit {
   }
 
   close() {
+    if (this.isSubmitting) return;
     this.onClose.emit();
+  }
+
+  passwordVisible(fieldName: string): boolean {
+    return this.visiblePasswords().has(fieldName);
+  }
+
+  togglePassword(fieldName: string) {
+    this.visiblePasswords.update((visible) => {
+      const next = new Set(visible);
+      if (next.has(fieldName)) next.delete(fieldName);
+      else next.add(fieldName);
+      return next;
+    });
   }
 
   getErrorMessage(fieldName: string): string {

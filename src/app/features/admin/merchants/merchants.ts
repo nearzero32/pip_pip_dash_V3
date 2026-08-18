@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { TableComponent } from '../../../shared/components/table/table';
 import { FormDialogComponent } from '../../../shared/components/form-dialog/form-dialog';
+import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { TableColumn } from '../../../shared/models/table-column.interface';
 import { PaginationConfig } from '../../../shared/models/pagination.interface';
 import { FormField } from '../../../shared/models/form-field.interface';
@@ -16,7 +17,7 @@ import { MerchantsService } from './merchants.service';
 
 @Component({
   selector: 'app-merchants', standalone: true,
-  imports: [FormsModule, DatePipe, TableComponent, FormDialogComponent],
+  imports: [FormsModule, DatePipe, TableComponent, FormDialogComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './merchants.html', styleUrl: './merchants.css',
 })
@@ -44,10 +45,10 @@ export class MerchantsComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.columns = [
-      { key: 'displayName', label: 'الاسم' }, { key: 'phone', label: 'الهاتف' },
-      { key: 'storeName', label: 'المتجر' },
-      { key: 'status', label: 'الحالة', type: 'badge', badgeClassMap: { ACTIVE: 'badge-success', INACTIVE: 'badge-default', SUSPENDED: 'badge-danger' } },
-      { key: 'createdAt', label: 'تاريخ الإنشاء', type: 'date' },
+      { key: 'displayName', label: this.language.t('merchants.name') }, { key: 'phone', label: this.language.t('merchants.phone') },
+      { key: 'storeName', label: this.language.t('merchants.store') },
+      { key: 'status', label: this.language.t('merchants.status'), type: 'badge', valueMap: { ACTIVE: this.language.t('status.ACTIVE'), INACTIVE: this.language.t('status.INACTIVE'), SUSPENDED: this.language.t('status.SUSPENDED') }, badgeClassMap: { ACTIVE: 'badge-success', INACTIVE: 'badge-default', SUSPENDED: 'badge-danger' } },
+      { key: 'createdAt', label: this.language.t('merchants.createdAt'), type: 'date' },
     ];
     void this.loadStores(); void this.load(1);
   }
@@ -63,13 +64,13 @@ export class MerchantsComponent implements OnInit, OnDestroy {
   openDetails(row: Merchant) { this.selected.set(row); }
   closeDetails() { this.selected.set(null); }
   closeForm() { this.formOpen.set(false); }
-  formTitle() { return { create: 'إضافة تاجر', edit: 'تعديل التاجر', password: 'تغيير كلمة المرور', transfer: 'نقل التاجر' }[this.formMode()]; }
+  formTitle() { return this.language.t({ create: 'merchants.create', edit: 'merchants.edit', password: 'merchants.resetPassword', transfer: 'merchants.transfer' }[this.formMode()]); }
   fields(): FormField[] {
     const storeOptions = this.stores().map(store => ({ value: store.id, label: store.name }));
-    if (this.formMode() === 'password') return [{ name: 'password', label: 'كلمة المرور الجديدة', type: 'password', required: true, hint: '12 حرفًا على الأقل' }];
-    if (this.formMode() === 'transfer') return [{ name: 'storeId', label: 'المتجر', type: 'select', required: true, options: storeOptions }];
-    const base: FormField[] = [{ name: 'displayName', label: 'الاسم الظاهر', type: 'text' }, { name: 'status', label: 'الحالة', type: 'select', options: this.statusOptions() }];
-    return this.formMode() === 'edit' ? base : [{ name: 'phone', label: 'الهاتف', type: 'text', required: true }, { name: 'password', label: 'كلمة المرور', type: 'password', required: true, hint: '12 حرفًا على الأقل' }, { name: 'storeId', label: 'المتجر', type: 'select', required: true, options: storeOptions }, ...base];
+    if (this.formMode() === 'password') return [{ name: 'password', label: this.language.t('merchants.newPassword'), type: 'password', required: true, hint: this.language.t('merchants.passwordHint') }];
+    if (this.formMode() === 'transfer') return [{ name: 'storeId', label: this.language.t('merchants.store'), type: 'select', required: true, options: storeOptions }];
+    const base: FormField[] = [{ name: 'displayName', label: this.language.t('merchants.displayName'), type: 'text', width: 'full' }, { name: 'status', label: this.language.t('merchants.status'), type: 'select', width: 'full', options: this.statusOptions() }];
+    return this.formMode() === 'edit' ? base : [{ name: 'phone', label: this.language.t('merchants.phone'), type: 'text', required: true, width: 'full' }, { name: 'password', label: this.language.t('merchants.password'), type: 'password', required: true, width: 'full', hint: this.language.t('merchants.passwordHint') }, { name: 'storeId', label: this.language.t('merchants.store'), type: 'select', required: true, width: 'full', options: storeOptions }, ...base];
   }
   async save(value: Record<string, string>) {
     const selected = this.selected(); this.submitting.set(true);
@@ -80,10 +81,10 @@ export class MerchantsComponent implements OnInit, OnDestroy {
       else if (this.formMode() === 'password') await this.merchantsApi.resetPassword(selected.accountId, value['password']);
       else await this.merchantsApi.transferStore(selected.accountId, value['storeId']);
       this.notify.success('تم الحفظ بنجاح'); this.closeForm(); await this.load(this.page);
-    } catch (err) { this.notify.error(getApiErrorMessage(err, 'تعذر حفظ التغييرات')); }
+    } catch (err) { this.notify.error(getApiErrorMessage(err, this.language.t('merchants.saveFailed'))); }
     finally { this.submitting.set(false); }
   }
-  private statusOptions() { return [{ value: 'ACTIVE', label: 'نشط' }, { value: 'INACTIVE', label: 'غير نشط' }, { value: 'SUSPENDED', label: 'موقوف' }]; }
+  private statusOptions() { return [{ value: 'ACTIVE', label: this.language.t('status.ACTIVE') }, { value: 'INACTIVE', label: this.language.t('status.INACTIVE') }, { value: 'SUSPENDED', label: this.language.t('status.SUSPENDED') }]; }
   private asStatus(value: string | undefined): MerchantStatus | undefined { return value === 'ACTIVE' || value === 'INACTIVE' || value === 'SUSPENDED' ? value : undefined; }
   private async load(page: number) {
     const request = ++this.request; this.loading.set(true); this.page = page;

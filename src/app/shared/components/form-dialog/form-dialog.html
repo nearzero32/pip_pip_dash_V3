@@ -1,8 +1,8 @@
 <div class="modal-overlay" (click)="close()" role="dialog" aria-modal="true">
-  <div class="modal-content" (click)="$event.stopPropagation()">
+  <div class="modal-content" (click)="$event.stopPropagation()" [attr.aria-labelledby]="'dialog-title'">
     <!-- Header -->
     <div class="modal-header">
-      <h2 class="modal-title">{{ title }}</h2>
+      <div class="modal-heading"><span class="modal-heading__eyebrow">PIP PIP</span><h2 id="dialog-title" class="modal-title">{{ title }}</h2></div>
       <button class="close-btn" (click)="close()" type="button" aria-label="Close">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -43,15 +43,20 @@
 
               <!-- Password Input -->
               @if (field.type === 'password') {
-                <input
-                  type="password"
-                  [id]="field.name"
-                  class="form-input"
-                  [formControlName]="field.name"
-                  [placeholder]="field.placeholder || ''"
-                  [class.error]="form.get(field.name)?.invalid && form.get(field.name)?.touched"
-                  autocomplete="new-password"
-                />
+                <div class="input-shell">
+                  <input
+                    [type]="passwordVisible(field.name) ? 'text' : 'password'"
+                    [id]="field.name"
+                    class="form-input"
+                    [formControlName]="field.name"
+                    [placeholder]="field.placeholder || ''"
+                    [class.error]="form.get(field.name)?.invalid && form.get(field.name)?.touched"
+                    autocomplete="new-password"
+                  />
+                  <button class="password-toggle" type="button" (click)="togglePassword(field.name)" [attr.aria-label]="passwordVisible(field.name) ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'" [attr.aria-pressed]="passwordVisible(field.name)">
+                    @if (passwordVisible(field.name)) { إخفاء } @else { إظهار }
+                  </button>
+                </div>
               }
 
               <!-- Number Input -->

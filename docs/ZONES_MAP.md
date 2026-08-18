@@ -20,11 +20,11 @@ Terra Draw’s official adapter table supports **MapLibre GL JS v4/v5**. MapLibr
 
 ## Configuration
 
-`environment.mapStyleUrl` (see `src/app/core/config/environment.ts`).
+Set `environment.mapTilerApiKey` to a **public browser MapTiler key** in the environment file used by your build. The dashboard then uses MapTiler Streets through MapLibre:
 
-Default: `https://demotiles.maplibre.org/style.json`
+`https://api.maptiler.com/maps/streets-v2/style.json?key=…`
 
-**This demo style is not a production tile provider decision.** Do not commit MapTiler/Mapbox tokens. Attribution must remain visible.
+Alternatively, `environment.mapStyleUrl` can provide a complete style URL. Do not commit a private key, JWT, backend credential, or R2 credential. If neither value is configured, the Zones maps stay stable and show a configuration message rather than a blank map. Attribution must remain visible.
 
 ## Coordinate order
 

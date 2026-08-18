@@ -12,13 +12,14 @@ import {
 } from '@angular/core';
 import maplibregl, { GeoJSONSource, Map as MapLibreMap, MapLayerMouseEvent } from 'maplibre-gl';
 import { TranslatePipe } from '../../../../i18n/translate.pipe';
-import { environment } from '../../../../core/config/environment';
 import { IRAQ_MAP_FALLBACK, MapCenter, Zone, boundsOfZones, zoneToFeature } from '../zones.models';
+import { mapStyleUrl } from '../map-config';
 
 const SOURCE_ID = 'pip-zones';
 const FILL_ID = 'pip-zones-fill';
 const LINE_ID = 'pip-zones-line';
 const SELECTED_ID = 'pip-zones-selected';
+const LABEL_ID = 'pip-zones-labels';
 
 @Component({
   selector: 'app-zone-map',
@@ -36,6 +37,7 @@ export class ZoneMapComponent implements AfterViewInit, OnDestroy {
   readonly error = input(false);
   readonly fallbackCenter = input<MapCenter>(IRAQ_MAP_FALLBACK);
   readonly selectZone = output<string>();
+  readonly basemapConfigured = Boolean(mapStyleUrl());
 
   private readonly container = viewChild.required<ElementRef<HTMLDivElement>>('mapHost');
   private map: MapLibreMap | null = null;
@@ -57,11 +59,13 @@ export class ZoneMapComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
+    const style = mapStyleUrl();
+    if (!style) return;
     const host = this.container().nativeElement;
     const center = this.fallbackCenter();
     this.map = new maplibregl.Map({
       container: host,
-      style: environment.mapStyleUrl,
+      style,
       center: [center.longitude, center.latitude],
       zoom: center.zoom,
       attributionControl: {},
@@ -78,6 +82,14 @@ export class ZoneMapComponent implements AfterViewInit, OnDestroy {
     this.map.on('click', FILL_ID, (event: MapLayerMouseEvent) => {
       const id = event.features?.[0]?.properties?.['zoneId'];
       if (typeof id === 'string') this.selectZone.emit(id);
+      const name = event.features?.[0]?.properties?.['name'];
+      const status = event.features?.[0]?.properties?.['status'];
+      if (typeof name === 'string') {
+        new maplibregl.Popup({ closeButton: false, offset: 8 })
+          .setLngLat(event.lngLat)
+          .setHTML(`<strong>${this.escapeHtml(name)}</strong><br><small>${this.escapeHtml(String(status ?? ''))}</small>`)
+          .addTo(this.map!);
+      }
     });
     this.map.on('mouseenter', FILL_ID, () => {
       this.map!.getCanvas().style.cursor = 'pointer';
@@ -132,7 +144,21 @@ export class ZoneMapComponent implements AfterViewInit, OnDestroy {
           '#991B1B',
         ],
         'line-width': 2,
+        'line-dasharray': ['case', ['==', ['get', 'status'], 'INACTIVE'], ['literal', [2, 2]], ['literal', [1, 0]]],
       },
+    });
+    this.map.addLayer({
+      id: LABEL_ID,
+      type: 'symbol',
+      source: SOURCE_ID,
+      layout: {
+        'text-field': ['get', 'name'],
+        'text-size': 12,
+        'text-font': ['Open Sans SemiBold'],
+        'text-allow-overlap': false,
+        'text-ignore-placement': false,
+      },
+      paint: { 'text-color': '#33215F', 'text-halo-color': '#FFFFFF', 'text-halo-width': 1.5 },
     });
     this.map.addLayer({
       id: SELECTED_ID,
@@ -183,5 +209,9 @@ export class ZoneMapComponent implements AfterViewInit, OnDestroy {
     const bounds = boundsOfZones([zone]);
     if (!bounds) return;
     this.map.fitBounds(bounds, { padding: 64, maxZoom: 15, duration: 350 });
+  }
+
+  private escapeHtml(value: string): string {
+    return value.replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char] ?? char);
   }
 }
