@@ -34,7 +34,11 @@ export const ADMIN_ROUTES: Routes = [
   { path: 'drivers-outside-orders', ...page('nav.driversOutside') },
   { path: 'drivers-requests', ...page('nav.driversRequests') },
   { path: 'drivers-join-requests', ...page('nav.driversJoin') },
-  { path: 'merchants', ...page('nav.merchantsList') },
+  {
+    path: 'merchants',
+    loadComponent: () => import('./merchants/merchants').then((m) => m.MerchantsComponent),
+    data: { titleKey: 'nav.merchantsList' },
+  },
   { path: 'customers', ...page('nav.customersActive') },
   { path: 'customers-deleted', ...page('nav.customersDeleted') },
   { path: 'customers-otp', ...page('nav.customersOtp') },
@@ -44,7 +48,12 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./stores/stores').then((m) => m.StoresComponent),
     data: { titleKey: 'nav.storesActive' },
   },
-  { path: 'stores-percentage', ...page('nav.storesPercentage') },
+  {
+    path: 'stores-percentage',
+    loadComponent: () =>
+      import('./store-commissions/store-commissions').then((m) => m.StoreCommissionsComponent),
+    data: { titleKey: 'nav.storesPercentage' },
+  },
   { path: 'notifications', ...page('nav.notificationsAll') },
   {
     path: 'categories',
