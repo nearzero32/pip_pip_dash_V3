@@ -8,7 +8,7 @@ export interface FormOption {
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'password' | 'number' | 'textarea' | 'select';
+  type: 'text' | 'password' | 'number' | 'textarea' | 'select' | 'map';
   placeholder?: string;
   icon?: string; // SVG path
   required?: boolean;
@@ -22,4 +22,8 @@ export interface FormField {
   width?: 'half' | 'full'; // Grid width
   conditionalDisplay?: (formValue: any) => boolean; // Show/hide based on other fields
   hint?: string; // Optional hint text
+  helpText?: string; // Optional explanation revealed from a help button beside the label
+  /** Form control names filled when type is `map`. */
+  latitudeField?: string;
+  longitudeField?: string;
 }

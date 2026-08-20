@@ -105,13 +105,22 @@ export class CitiesComponent implements OnInit {
         label: this.language.t('nav.governorates'),
         type: 'select',
         required: true,
+        width: 'full',
         options: this.governorates.map((g) => ({ value: g.id, label: `${g.nameEn} / ${g.nameAr}` })),
       },
       { name: 'nameAr', label: this.language.t('geo.nameAr'), type: 'text', required: true },
       { name: 'nameEn', label: this.language.t('geo.nameEn'), type: 'text', required: true },
+      {
+        name: 'locationMap',
+        label: this.language.t('geo.mapLabel'),
+        type: 'map',
+        width: 'full',
+        latitudeField: 'latitude',
+        longitudeField: 'longitude',
+      },
       { name: 'latitude', label: this.language.t('geo.latitude'), type: 'number', required: true },
       { name: 'longitude', label: this.language.t('geo.longitude'), type: 'number', required: true },
-      { name: 'displayOrder', label: this.language.t('geo.displayOrder'), type: 'number', required: true },
+      { name: 'displayOrder', label: this.language.t('geo.displayOrder'), type: 'number', required: true, width: 'full' },
     ];
   }
 

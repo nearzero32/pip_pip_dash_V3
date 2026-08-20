@@ -50,7 +50,7 @@
 
 .pricing-stage {
   display: grid;
-  grid-template-columns: minmax(6rem, 8rem) 1fr 1fr;
+  grid-template-columns: minmax(5.5rem, auto) minmax(8rem, 1fr) auto auto;
   gap: var(--space-3);
   align-items: center;
   padding: var(--space-3) var(--space-4);
@@ -63,6 +63,13 @@
 .pricing-stage__label {
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-strong);
+}
+
+.pricing-stage__offer {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-strong);
+  font-variant-numeric: tabular-nums;
+  justify-self: end;
 }
 
 .pricing-skeleton .skel {

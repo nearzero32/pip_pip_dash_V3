@@ -1,19 +1,36 @@
-import { Component, EventEmitter, Input, Output, OnInit, inject, ChangeDetectionStrategy, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormField } from '../../models/form-field.interface';
 import { LanguageService } from '../../../i18n/language.service';
 import { TranslatePipe } from '../../../i18n/translate.pipe';
+import { LocationPickerMapComponent, MapPoint } from '../location-picker-map/location-picker-map';
+import { registerDialogOverlay } from '../dialog-layer';
+
+const FOCUSABLE =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 @Component({
   selector: 'app-form-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, LocationPickerMapComponent],
   templateUrl: './form-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './form-dialog.css'
+  styleUrl: './form-dialog.css',
 })
-export class FormDialogComponent implements OnInit {
+export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() title: string = '';
   @Input() fields: FormField[] = [];
   @Input() initialData: any = null;
@@ -23,25 +40,42 @@ export class FormDialogComponent implements OnInit {
 
   @Output() onClose = new EventEmitter<void>();
   @Output() onSubmit = new EventEmitter<any>();
-  @Output() onFieldChange = new EventEmitter<{ fieldName: string, value: any, formValue: any }>();
+  @Output() onFieldChange = new EventEmitter<{ fieldName: string; value: any; formValue: any }>();
 
   private fb = inject(FormBuilder);
   private language = inject(LanguageService);
+  private host = inject(ElementRef<HTMLElement>);
 
   form!: FormGroup;
   readonly visiblePasswords = signal<ReadonlySet<string>>(new Set());
+  readonly submitted = signal(false);
+  readonly openFieldHelp = signal<string | null>(null);
+
+  private unregisterOverlay: (() => void) | null = null;
 
   ngOnInit() {
     if (!this.title) this.title = this.language.t('common.add');
     if (!this.submitButtonText) this.submitButtonText = this.language.t('common.save');
     if (!this.cancelButtonText) this.cancelButtonText = this.language.t('common.cancel');
     this.initializeForm();
+    this.unregisterOverlay = registerDialogOverlay(() => this.close());
+  }
+
+  ngAfterViewInit() {
+    queueMicrotask(() => this.focusFirstField());
+  }
+
+  ngOnDestroy() {
+    this.unregisterOverlay?.();
+    this.unregisterOverlay = null;
   }
 
   initializeForm() {
     const formControls: any = {};
 
-    this.fields.forEach(field => {
+    this.fields.forEach((field) => {
+      if (field.type === 'map') return;
+
       const validators = [...(field.validators || [])];
       if (field.required) {
         validators.push(Validators.required);
@@ -68,21 +102,96 @@ export class FormDialogComponent implements OnInit {
   }
 
   getFieldWidth(field: FormField): string {
+    if (field.type === 'map') return 'full-width';
     return field.width === 'full' ? 'full-width' : '';
   }
 
+  hasMapField(): boolean {
+    return this.fields.some((field) => field.type === 'map');
+  }
+
+  mapLatitudeField(field: FormField): string {
+    return field.latitudeField || 'latitude';
+  }
+
+  mapLongitudeField(field: FormField): string {
+    return field.longitudeField || 'longitude';
+  }
+
+  onMapLocation(field: FormField, point: MapPoint) {
+    this.updateFieldValue(this.mapLatitudeField(field), point.latitude);
+    this.updateFieldValue(this.mapLongitudeField(field), point.longitude);
+    this.onFieldChange.emit({
+      fieldName: field.name,
+      value: point,
+      formValue: this.form.value,
+    });
+  }
+
+  isInvalid(field: FormField): boolean {
+    if (field.type === 'map') return false;
+    const control = this.form.get(field.name);
+    return !!control && control.invalid && (control.touched || this.submitted());
+  }
+
+  errorId(fieldName: string): string {
+    return `field-error-${fieldName}`;
+  }
+
+  hintId(fieldName: string): string {
+    return `field-hint-${fieldName}`;
+  }
+
+  helpId(fieldName: string): string {
+    return `field-help-${fieldName}`;
+  }
+
+  toggleFieldHelp(fieldName: string) {
+    this.openFieldHelp.update((current) => (current === fieldName ? null : fieldName));
+  }
+
+  describedBy(field: FormField): string | null {
+    const parts: string[] = [];
+    if (this.isInvalid(field)) parts.push(this.errorId(field.name));
+    if (field.hint && field.type !== 'map') parts.push(this.hintId(field.name));
+    return parts.length ? parts.join(' ') : null;
+  }
+
+  inputType(field: FormField): string {
+    if (field.type === 'password') return this.passwordVisible(field.name) ? 'text' : 'password';
+    if (field.name.toLowerCase().includes('email')) return 'email';
+    if (field.name.toLowerCase().includes('phone')) return 'tel';
+    return 'text';
+  }
+
+  inputMode(field: FormField): string | null {
+    if (field.type === 'number') return 'decimal';
+    if (field.name.toLowerCase().includes('email')) return 'email';
+    if (field.name.toLowerCase().includes('phone')) return 'tel';
+    return null;
+  }
+
+  autocomplete(field: FormField): string {
+    if (field.type === 'password') return 'new-password';
+    if (field.name.toLowerCase().includes('email')) return 'email';
+    if (field.name.toLowerCase().includes('phone')) return 'tel';
+    if (field.name.toLowerCase().includes('name')) return 'name';
+    return 'off';
+  }
+
   handleSubmit() {
+    this.submitted.set(true);
     if (this.form.invalid) {
-      Object.keys(this.form.controls).forEach(key => {
+      Object.keys(this.form.controls).forEach((key) => {
         this.form.get(key)?.markAsTouched();
       });
+      queueMicrotask(() => this.focusFirstInvalid());
       return;
     }
 
     let formData = { ...this.form.value };
 
-    // Apply parsers to convert display values back to data values
-    this.fields.forEach(field => {
+    this.fields.forEach((field) => {
       if (field.parser && formData[field.name] !== undefined) {
         formData[field.name] = field.parser(formData[field.name]);
       }
@@ -94,6 +203,25 @@ export class FormDialogComponent implements OnInit {
   close() {
     if (this.isSubmitting) return;
     this.onClose.emit();
+  }
+
+  trapTab(event: KeyboardEvent) {
+    if (event.key !== 'Tab') return;
+    const root = this.host.nativeElement.querySelector('.modal-content') as HTMLElement | null;
+    if (!root) return;
+    const nodes = Array.from(root.querySelectorAll(FOCUSABLE) as NodeListOf<HTMLElement>).filter(
+      (el) => !el.hasAttribute('disabled') && el.offsetParent !== null
+    );
+    if (nodes.length === 0) return;
+    const first = nodes[0];
+    const last = nodes[nodes.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      last.focus();
+      event.preventDefault();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      first.focus();
+      event.preventDefault();
+    }
   }
 
   passwordVisible(fieldName: string): boolean {
@@ -111,7 +239,6 @@ export class FormDialogComponent implements OnInit {
 
   getErrorMessage(fieldName: string): string {
     const control = this.form.get(fieldName);
-    const field = this.fields.find(f => f.name === fieldName);
 
     if (control?.hasError('required')) {
       return this.language.t('common.required');
@@ -143,18 +270,31 @@ export class FormDialogComponent implements OnInit {
     this.onFieldChange.emit({
       fieldName,
       value,
-      formValue: this.form.value
+      formValue: this.form.value,
     });
   }
 
-  // Public method to update form field values from parent component
   updateFieldValue(fieldName: string, value: any) {
     const control = this.form.get(fieldName);
     if (control) {
-      // Apply formatter if exists
-      const field = this.fields.find(f => f.name === fieldName);
+      const field = this.fields.find((item) => item.name === fieldName);
       const formattedValue = field?.formatter ? field.formatter(value) : value;
       control.setValue(formattedValue);
+      control.markAsDirty();
+      control.markAsTouched();
     }
+  }
+
+  private focusFirstField() {
+    const root = this.host.nativeElement.querySelector('.modal-body') as HTMLElement | null;
+    const first = root?.querySelector('input, select, textarea') as HTMLElement | null;
+    first?.focus();
+  }
+
+  private focusFirstInvalid() {
+    const root = this.host.nativeElement.querySelector('.modal-body') as HTMLElement | null;
+    const invalid = root?.querySelector('.form-input.ng-invalid, .form-select.ng-invalid') as HTMLElement | null;
+    invalid?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    invalid?.focus();
   }
 }

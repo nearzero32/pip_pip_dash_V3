@@ -1,14 +1,28 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../../core/http/api.service';
 import { DeliveryPricingInput, DeliveryPricingVersion, DriverPricing } from './pricing.models';
+import { Paginated } from '../geography/geography.models';
 
 @Injectable({ providedIn: 'root' })
 export class PricingService {
   private api = inject(ApiService);
 
-  listDeliveryVersions(cityId: string) {
+  listDeliveryVersions(
+    cityId: string,
+    options: { page?: number; limit?: number; search?: string; status?: string } = {},
+  ) {
     return this.api.client
-      .get<DeliveryPricingVersion[]>(`/api/v1/dashboard/cities/${cityId}/delivery-pricing/versions`)
+      .get<Paginated<DeliveryPricingVersion>>(
+        `/api/v1/dashboard/cities/${cityId}/delivery-pricing/versions`,
+        {
+          params: {
+            page: options.page ?? 1,
+            limit: options.limit ?? 20,
+            ...(options.search ? { search: options.search } : {}),
+            ...(options.status ? { status: options.status } : {}),
+          },
+        },
+      )
       .then((r) => r.data);
   }
 

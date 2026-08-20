@@ -1,4 +1,4 @@
-/* Confirmation dialog — semantic tokens, no competing visual language */
+/* Confirmation dialog — aligned with form-dialog overlay language */
 
 .dialog-overlay {
   position: fixed;
@@ -8,7 +8,7 @@
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(6px);
   animation: overlayIn var(--duration-normal) var(--ease-out);
   padding: var(--space-4);
 }
@@ -23,15 +23,16 @@
   border-radius: var(--radius-xl);
   width: 100%;
   max-width: 420px;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-xl);
   animation: dialogIn var(--duration-slow) var(--ease-out);
   overflow: hidden;
   position: relative;
-  padding: var(--space-8) var(--space-6) var(--space-6);
+  padding: var(--space-6) var(--space-5) var(--space-5);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  border: 1px solid color-mix(in srgb, var(--color-border-default) 82%, white);
 }
 
 @keyframes dialogIn {
@@ -71,13 +72,13 @@
 }
 
 .dialog-icon {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 
 .danger-icon {
@@ -96,14 +97,14 @@
 }
 
 .dialog-content {
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-5);
 }
 
 .dialog-title {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-strong);
-  margin: 0 0 var(--space-3) 0;
+  margin: 0 0 var(--space-2) 0;
   line-height: var(--line-height-tight);
 }
 
@@ -133,7 +134,9 @@
   transition:
     background var(--duration-normal) var(--ease-default),
     border-color var(--duration-normal) var(--ease-default),
-    color var(--duration-normal) var(--ease-default);
+    color var(--duration-normal) var(--ease-default),
+    transform var(--duration-fast) var(--ease-default),
+    box-shadow var(--duration-normal) var(--ease-default);
   border: 1.5px solid transparent;
   display: flex;
   align-items: center;
@@ -145,7 +148,7 @@
 }
 
 .btn-cancel {
-  background: var(--color-surface-subtle);
+  background: var(--color-surface-card);
   color: var(--color-text-primary);
   border-color: var(--color-border-default);
 }
@@ -165,6 +168,8 @@
 .btn-confirm.danger-btn:hover {
   background: var(--color-danger-text);
   border-color: var(--color-danger-text);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-confirm.warning-btn {
@@ -176,6 +181,8 @@
 .btn-confirm.warning-btn:hover {
   background: var(--color-warning-text);
   border-color: var(--color-warning-text);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-confirm.info-btn {
@@ -187,11 +194,20 @@
 .btn-confirm.info-btn:hover {
   background: var(--color-info-text);
   border-color: var(--color-info-text);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 @media (max-width: 640px) {
+  .dialog-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
   .dialog-container {
-    padding: var(--space-6) var(--space-5) var(--space-5);
+    max-width: 100%;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    padding: var(--space-6) var(--space-4) calc(var(--space-4) + env(safe-area-inset-bottom));
   }
 
   .dialog-actions {

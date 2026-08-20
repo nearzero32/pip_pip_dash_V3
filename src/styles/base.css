@@ -15,7 +15,8 @@ html {
   color-scheme: light;
 }
 
-body.nav-drawer-open {
+body.nav-drawer-open,
+body.dialog-open {
   overflow: hidden;
 }
 

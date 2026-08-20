@@ -60,6 +60,9 @@
               <span class="pricing-stage__label">{{ 'pricing.stage' | t: { n: $index + 1 } }}</span>
               <span>{{ 'pricing.afterSeconds' | t: { seconds: stage.afterSeconds } }}</span>
               <span>{{ 'pricing.increase' | t: { percent: stage.increasePercentage } }}</span>
+              <span class="pricing-stage__offer">{{
+                stageOffer(currentVal.pricingBase, stage.increasePercentage)
+              }}</span>
             </li>
           }
         </ol>
@@ -77,12 +80,10 @@
 </section>
 
 @if (showForm()) {
-  <app-form-dialog
-    [title]="'pricing.savePricing' | t"
-    [fields]="fields"
-    [initialData]="initialData()"
+  <app-driver-pricing-form
+    [initialData]="current()"
     [isSubmitting]="submitting()"
-    (onClose)="showForm.set(false)"
-    (onSubmit)="save($event)"
-  ></app-form-dialog>
+    (closeForm)="showForm.set(false)"
+    (saveForm)="save($event)"
+  ></app-driver-pricing-form>
 }

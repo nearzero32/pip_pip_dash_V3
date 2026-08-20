@@ -1,0 +1,79 @@
+<div class="driver-form-overlay" (click)="close()" role="dialog" aria-modal="true" aria-labelledby="driver-form-title">
+  <section class="driver-form" (click)="$event.stopPropagation()">
+    <header class="driver-form__header">
+      <h2 id="driver-form-title">{{ 'pricing.savePricing' | t }}</h2>
+      <button class="driver-form__close" type="button" [disabled]="isSubmitting" (click)="close()" [attr.aria-label]="'common.close' | t">×</button>
+    </header>
+
+    <div class="driver-form__body">
+      <div class="driver-form__grid">
+        <div class="driver-field">
+          <div class="driver-field__label">
+            <label for="driver-pricing-base">{{ 'pricing.driverBase' | t }} <span aria-hidden="true">*</span></label>
+            <button class="driver-help" type="button" (click)="toggleHelp('base')" [attr.aria-expanded]="openHelp() === 'base'">!</button>
+          </div>
+          @if (openHelp() === 'base') { <p class="driver-help-text">{{ 'pricing.help.driverBase' | t }}</p> }
+          <input id="driver-pricing-base" type="number" min="1" step="1" [ngModel]="pricingBase()" (ngModelChange)="pricingBase.set($event)" />
+        </div>
+
+        <div class="driver-field">
+          <div class="driver-field__label">
+            <label for="driver-rounding-unit">{{ 'pricing.roundingUnit' | t }} <span aria-hidden="true">*</span></label>
+            <button class="driver-help" type="button" (click)="toggleHelp('rounding')" [attr.aria-expanded]="openHelp() === 'rounding'">!</button>
+          </div>
+          @if (openHelp() === 'rounding') { <p class="driver-help-text">{{ 'pricing.help.driverRounding' | t }}</p> }
+          <input id="driver-rounding-unit" type="number" min="1" step="1" [ngModel]="roundingUnit()" (ngModelChange)="roundingUnit.set($event)" />
+        </div>
+      </div>
+
+      <section class="stage-editor">
+        <div class="stage-editor__heading">
+          <div class="driver-field__label">
+            <h3>{{ 'pricing.stagesHeading' | t }}</h3>
+            <button class="driver-help" type="button" (click)="toggleHelp('stages')" [attr.aria-expanded]="openHelp() === 'stages'">!</button>
+          </div>
+          <button class="stage-add" type="button" (click)="addStage()" [attr.aria-label]="'pricing.addStage' | t">
+            <span aria-hidden="true">+</span> {{ 'pricing.addStage' | t }}
+          </button>
+        </div>
+        @if (openHelp() === 'stages') { <p class="driver-help-text">{{ 'pricing.help.driverStages' | t }}</p> }
+
+        <div class="stage-list">
+          @for (stage of stages(); track $index; let index = $index) {
+            <article class="stage-row">
+              <strong>{{ 'pricing.stage' | t: { n: index + 1 } }}</strong>
+              <div class="driver-field">
+                <div class="driver-field__label">
+                  <label [for]="'stage-seconds-' + index">{{ 'pricing.stageSeconds' | t }}</label>
+                  <button class="driver-help" type="button" (click)="toggleHelp('seconds-' + index)" [attr.aria-expanded]="openHelp() === 'seconds-' + index">!</button>
+                </div>
+                @if (openHelp() === 'seconds-' + index) { <p class="driver-help-text">{{ 'pricing.help.stageSeconds' | t }}</p> }
+                <input [id]="'stage-seconds-' + index" type="number" min="0" step="1" [ngModel]="stage.afterSeconds" (ngModelChange)="updateStage(index, 'afterSeconds', $event)" />
+              </div>
+              <div class="driver-field">
+                <div class="driver-field__label">
+                  <label [for]="'stage-increase-' + index">{{ 'pricing.stageIncrease' | t }}</label>
+                  <button class="driver-help" type="button" (click)="toggleHelp('increase-' + index)" [attr.aria-expanded]="openHelp() === 'increase-' + index">!</button>
+                </div>
+                @if (openHelp() === 'increase-' + index) { <p class="driver-help-text">{{ 'pricing.help.stageIncrease' | t }}</p> }
+                <input [id]="'stage-increase-' + index" type="number" min="0" step="1" [ngModel]="stage.increasePercentage" (ngModelChange)="updateStage(index, 'increasePercentage', $event)" />
+              </div>
+              <button class="stage-remove" type="button" [disabled]="stages().length === 1" (click)="removeStage(index)" [attr.aria-label]="'common.delete' | t">×</button>
+            </article>
+          }
+        </div>
+      </section>
+
+      @if (submitted() && !isValid()) {
+        <p class="driver-form__error" role="alert">{{ 'pricing.invalidDriverPricing' | t }}</p>
+      }
+    </div>
+
+    <footer class="driver-form__footer">
+      <button class="driver-form__cancel" type="button" [disabled]="isSubmitting" (click)="close()">{{ 'common.cancel' | t }}</button>
+      <button class="driver-form__submit" type="button" [disabled]="isSubmitting" (click)="submit()">
+        {{ (isSubmitting ? 'common.saving' : 'pricing.savePricing') | t }}
+      </button>
+    </footer>
+  </section>
+</div>

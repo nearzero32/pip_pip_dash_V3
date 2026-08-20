@@ -1,8 +1,6 @@
 import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { FormDialogComponent } from '../../../../shared/components/form-dialog/form-dialog';
-import { FormField } from '../../../../shared/models/form-field.interface';
 import { City } from '../../geography/geography.models';
 import { DriverPricing } from '../pricing.models';
 import { GeographyService } from '../../geography/geography.service';
@@ -11,12 +9,13 @@ import { LanguageService } from '../../../../i18n/language.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { TranslatePipe } from '../../../../i18n/translate.pipe';
 import { apiErrorMessage, getApiErrorStatus, isApiErrorCode } from '../../../../core/http/api-error';
+import { DriverPricingFormComponent, DriverPricingFormValue } from './driver-pricing-form';
 
 
 @Component({
   selector: 'app-driver-pricing',
   standalone: true,
-  imports: [CommonModule, FormsModule, FormDialogComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, DriverPricingFormComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './driver-pricing.html',
   styleUrl: './driver-pricing.css',
@@ -34,21 +33,8 @@ export class DriverPricingComponent implements OnInit {
   loading = signal(true);
   showForm = signal(false);
   submitting = signal(false);
-  fields: FormField[] = [];
 
   ngOnInit() {
-    this.fields = [
-      { name: 'pricingBase', label: this.language.t('pricing.driverBase'), type: 'number', required: true },
-      { name: 'roundingUnit', label: this.language.t('pricing.roundingUnit'), type: 'number', required: true },
-      {
-        name: 'pricingStages',
-        label: this.language.t('pricing.stages'),
-        type: 'textarea',
-        required: true,
-        hint: this.language.t('pricing.stagesHint'),
-        defaultValue: '[{"afterSeconds":0,"increasePercentage":0}]',
-      },
-    ];
     this.loadCities();
   }
 
@@ -110,25 +96,20 @@ export class DriverPricingComponent implements OnInit {
     this.showForm.set(true);
   }
 
-  initialData() {
-    const currentVal = this.current();
-    if (!currentVal) return { pricingStages: '[{"afterSeconds":0,"increasePercentage":0}]' };
-    return {
-      pricingBase: currentVal.pricingBase,
-      roundingUnit: currentVal.roundingUnit,
-      pricingStages: JSON.stringify(currentVal.pricingStages),
-    };
+  stageOffer(pricingBase: number, increasePercentage: number): string {
+    const amount = pricingBase * (1 + increasePercentage / 100);
+    const display = Number.isInteger(amount) ? amount : Math.round(amount * 100) / 100;
+    return new Intl.NumberFormat(this.language.lang() === 'ar' ? 'ar' : 'en-GB').format(display);
   }
 
-  async save(value: Record<string, string>) {
+  async save(value: DriverPricingFormValue) {
     this.submitting.set(true);
     const activeCityId = this.cityId();
     try {
-      const stages = JSON.parse(value['pricingStages']);
       const updated = await this.pricing.putDriverPricing(activeCityId, {
-        pricingBase: Number(value['pricingBase']),
-        roundingUnit: Number(value['roundingUnit']),
-        pricingStages: stages,
+        pricingBase: value.pricingBase,
+        roundingUnit: value.roundingUnit,
+        pricingStages: value.pricingStages,
       });
       if (this.cityId() === activeCityId) {
         this.current.set(updated);

@@ -1,149 +1,223 @@
-<div class="modal-overlay" (click)="close()" role="dialog" aria-modal="true">
-  <div class="modal-content" (click)="$event.stopPropagation()" [attr.aria-labelledby]="'dialog-title'">
-    <!-- Header -->
-    <div class="modal-header">
-      <div class="modal-heading"><span class="modal-heading__eyebrow">PIP PIP</span><h2 id="dialog-title" class="modal-title">{{ title }}</h2></div>
-      <button class="close-btn" (click)="close()" type="button" aria-label="Close">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<div
+  class="modal-overlay"
+  (click)="close()"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-labelledby]="'dialog-title'"
+>
+  <div
+    class="modal-content"
+    [class.modal-content--wide]="hasMapField()"
+    (click)="$event.stopPropagation()"
+    (keydown)="trapTab($event)"
+  >
+    <header class="modal-header">
+      <div class="modal-heading">
+        <span class="modal-heading__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+          </svg>
+        </span>
+        <h2 id="dialog-title" class="modal-title">{{ title }}</h2>
+      </div>
+      <button
+        class="close-btn"
+        (click)="close()"
+        type="button"
+        [disabled]="isSubmitting"
+        [attr.aria-label]="'common.close' | t"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
       </button>
-    </div>
+    </header>
 
-    <!-- Body -->
-    <form [formGroup]="form" (ngSubmit)="handleSubmit()" class="modal-body">
-      <div class="form-grid">
-        @for (field of fields; track $index) {
-          @if (shouldShowField(field)) {
-            <div class="form-group" [ngClass]="getFieldWidth(field)">
-              <!-- Label -->
-              <label class="form-label" [for]="field.name">
-                @if (field.icon) {
-                  <svg class="label-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [innerHTML]="field.icon"></svg>
+    <form [formGroup]="form" (ngSubmit)="handleSubmit()" class="modal-form">
+      <div class="modal-body">
+        <div class="form-grid">
+          @for (field of fields; track field.name) {
+            @if (shouldShowField(field)) {
+              <div class="form-group" [class.form-group--map]="field.type === 'map'" [ngClass]="getFieldWidth(field)">
+                <div class="form-label">
+                  <label class="form-label__main" [attr.for]="field.type === 'map' ? null : field.name">
+                    <span class="form-label__text">{{ field.label }}</span>
+                    @if (field.required) {
+                      <span class="required-mark" aria-hidden="true">*</span>
+                    } @else if (field.type !== 'map') {
+                      <span class="optional-label">{{ 'common.optional' | t }}</span>
+                    }
+                  </label>
+                  @if (field.helpText) {
+                    <button
+                      class="field-help-btn"
+                      type="button"
+                      (click)="toggleFieldHelp(field.name)"
+                      [attr.aria-label]="field.label"
+                      [attr.aria-expanded]="openFieldHelp() === field.name"
+                      [attr.aria-controls]="helpId(field.name)"
+                    >!</button>
+                  }
+                </div>
+
+                @if (field.helpText && openFieldHelp() === field.name) {
+                  <div class="field-help" [id]="helpId(field.name)" role="note">
+                    {{ field.helpText }}
+                  </div>
                 }
-                {{ field.label }}
-                @if (!field.required) {
-                  <span class="optional-label">{{ 'common.optional' | t }}</span>
-                }
-              </label>
 
-              <!-- Text Input -->
-              @if (field.type === 'text') {
-                <input
-                  type="text"
-                  [id]="field.name"
-                  class="form-input"
-                  [formControlName]="field.name"
-                  [placeholder]="field.placeholder || ''"
-                  (input)="formatValue($event, field)"
-                  [class.error]="form.get(field.name)?.invalid && form.get(field.name)?.touched"
-                />
-              }
-
-              <!-- Password Input -->
-              @if (field.type === 'password') {
-                <div class="input-shell">
+                @if (field.type === 'text' || field.type === 'number') {
                   <input
-                    [type]="passwordVisible(field.name) ? 'text' : 'password'"
+                    [type]="inputType(field)"
+                    [id]="field.name"
+                    class="form-input"
+                    [formControlName]="field.name"
+                    [placeholder]="field.placeholder || (field.type === 'number' ? '0' : '')"
+                    [attr.inputmode]="inputMode(field)"
+                    [attr.autocomplete]="autocomplete(field)"
+                    [attr.aria-invalid]="isInvalid(field)"
+                    [attr.aria-required]="field.required || null"
+                    [attr.aria-describedby]="describedBy(field)"
+                    (input)="formatValue($event, field)"
+                    [class.error]="isInvalid(field)"
+                  />
+                }
+
+                @if (field.type === 'password') {
+                  <div class="input-shell">
+                    <input
+                      [type]="inputType(field)"
+                      [id]="field.name"
+                      class="form-input"
+                      [formControlName]="field.name"
+                      [placeholder]="field.placeholder || ''"
+                      [attr.autocomplete]="autocomplete(field)"
+                      [attr.aria-invalid]="isInvalid(field)"
+                      [attr.aria-required]="field.required || null"
+                      [attr.aria-describedby]="describedBy(field)"
+                      [class.error]="isInvalid(field)"
+                    />
+                    <button
+                      class="password-toggle"
+                      type="button"
+                      (click)="togglePassword(field.name)"
+                      [attr.aria-label]="(passwordVisible(field.name) ? 'common.hidePassword' : 'common.showPassword') | t"
+                      [attr.aria-pressed]="passwordVisible(field.name)"
+                    >
+                      @if (passwordVisible(field.name)) {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+                          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                      } @else {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      }
+                    </button>
+                  </div>
+                }
+
+                @if (field.type === 'textarea') {
+                  <textarea
                     [id]="field.name"
                     class="form-input"
                     [formControlName]="field.name"
                     [placeholder]="field.placeholder || ''"
-                    [class.error]="form.get(field.name)?.invalid && form.get(field.name)?.touched"
-                    autocomplete="new-password"
-                  />
-                  <button class="password-toggle" type="button" (click)="togglePassword(field.name)" [attr.aria-label]="passwordVisible(field.name) ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'" [attr.aria-pressed]="passwordVisible(field.name)">
-                    @if (passwordVisible(field.name)) { إخفاء } @else { إظهار }
-                  </button>
-                </div>
-              }
+                    rows="3"
+                    [attr.aria-invalid]="isInvalid(field)"
+                    [attr.aria-required]="field.required || null"
+                    [attr.aria-describedby]="describedBy(field)"
+                    [class.error]="isInvalid(field)"
+                  ></textarea>
+                }
 
-              <!-- Number Input -->
-              @if (field.type === 'number') {
-                <input
-                  type="text"
-                  [id]="field.name"
-                  class="form-input"
-                  [formControlName]="field.name"
-                  [placeholder]="field.placeholder || '0'"
-                  (input)="formatValue($event, field)"
-                  [class.error]="form.get(field.name)?.invalid && form.get(field.name)?.touched"
-                />
-              }
+                @if (field.type === 'map') {
+                  <app-location-picker-map
+                    [latitude]="form.get(mapLatitudeField(field))?.value"
+                    [longitude]="form.get(mapLongitudeField(field))?.value"
+                    [disabled]="isSubmitting"
+                    (locationChange)="onMapLocation(field, $event)"
+                  ></app-location-picker-map>
+                }
 
-              <!-- Textarea -->
-              @if (field.type === 'textarea') {
-                <textarea
-                  [id]="field.name"
-                  class="form-input"
-                  [formControlName]="field.name"
-                  [placeholder]="field.placeholder || ''"
-                  rows="3"
-                  [class.error]="form.get(field.name)?.invalid && form.get(field.name)?.touched"
-                ></textarea>
-              }
+                @if (field.type === 'select') {
+                  <div class="select-wrapper">
+                    <select
+                      [id]="field.name"
+                      class="form-input form-select"
+                      [formControlName]="field.name"
+                      [class.error]="isInvalid(field)"
+                      [class.is-empty]="!form.get(field.name)?.value"
+                      [attr.aria-invalid]="isInvalid(field)"
+                      [attr.aria-required]="field.required || null"
+                      [attr.aria-describedby]="describedBy(field)"
+                      (change)="onFieldValueChange(field.name, $any($event.target).value)"
+                    >
+                      <option value="">{{ field.placeholder || ('common.select' | t) }}</option>
+                      @for (option of field.options; track $index) {
+                        <option [value]="option[field.optionValue || 'value']">
+                          {{ option[field.optionLabel || 'label'] }}
+                        </option>
+                      }
+                    </select>
+                    <svg class="select-arrow" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </div>
+                }
 
-              <!-- Select Dropdown -->
-              @if (field.type === 'select') {
-                <div class="select-wrapper">
-                  <select
-                    [id]="field.name"
-                    class="form-input form-select"
-                    [formControlName]="field.name"
-                    [class.error]="form.get(field.name)?.invalid && form.get(field.name)?.touched"
-                    (change)="onFieldValueChange(field.name, $any($event.target).value)"
-                  >
-                    <option value="">{{ field.placeholder || ('common.select' | t) }}</option>
-                    @for (option of field.options; track $index) {
-                      <option [value]="option[field.optionValue || 'value']">
-                        {{ option[field.optionLabel || 'label'] }}
-                      </option>
-                    }
-                  </select>
-                  <svg class="select-arrow" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </div>
-              }
+                @if (isInvalid(field)) {
+                  <span class="error-message" [id]="errorId(field.name)" role="alert">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    {{ getErrorMessage(field.name) }}
+                  </span>
+                }
 
-              <!-- Error Message -->
-              @if (form.get(field.name)?.invalid && form.get(field.name)?.touched) {
-                <span class="error-message">{{ getErrorMessage(field.name) }}</span>
-              }
-
-              <!-- Hint -->
-              @if (field.hint) {
-                <span class="hint-text">{{ field.hint }}</span>
-              }
-            </div>
+                @if (field.hint && field.type !== 'map') {
+                  <span class="hint-text" [id]="hintId(field.name)">{{ field.hint }}</span>
+                }
+              </div>
+            }
           }
+        </div>
+      </div>
+
+      <footer class="modal-footer">
+        @if (submitted() && form.invalid) {
+          <p class="form-status" role="alert">{{ 'common.fixErrors' | t }}</p>
         }
-      </div>
-
-      <!-- Footer -->
-      <div class="modal-footer">
-        <button type="button" class="btn btn-cancel" (click)="close()" [disabled]="isSubmitting">
-          {{ cancelButtonText }}
-        </button>
-        <button type="submit" class="btn btn-submit" [disabled]="isSubmitting || form.invalid">
-          @if (isSubmitting) {
-            <svg class="spinner" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="2" x2="12" y2="6"></line>
-              <line x1="12" y1="18" x2="12" y2="22"></line>
-              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
-              <line x1="2" y1="12" x2="6" y2="12"></line>
-              <line x1="18" y1="12" x2="22" y2="12"></line>
-              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
-            </svg>
-            {{ 'common.saving' | t }}
-          } @else {
-            {{ submitButtonText }}
-          }
-        </button>
-      </div>
+        <div class="modal-footer__actions">
+          <button type="button" class="btn btn-cancel" (click)="close()" [disabled]="isSubmitting">
+            {{ cancelButtonText }}
+          </button>
+          <button type="submit" class="btn btn-submit" [disabled]="isSubmitting">
+            @if (isSubmitting) {
+              <svg class="spinner" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="2" x2="12" y2="6"></line>
+                <line x1="12" y1="18" x2="12" y2="22"></line>
+                <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                <line x1="2" y1="12" x2="6" y2="12"></line>
+                <line x1="18" y1="12" x2="22" y2="12"></line>
+                <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+              </svg>
+              {{ 'common.saving' | t }}
+            } @else {
+              {{ submitButtonText }}
+            }
+          </button>
+        </div>
+      </footer>
     </form>
   </div>
 </div>

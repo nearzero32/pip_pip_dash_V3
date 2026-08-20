@@ -5,6 +5,30 @@
     </div>
     <div class="page-toolbar__actions">
       <label class="filter-field">
+        <span class="filter-field__label">{{ 'pricing.search' | t }}</span>
+        <input
+          class="city-picker"
+          type="search"
+          [value]="search()"
+          (input)="onSearchInput($any($event.target).value)"
+          [placeholder]="'pricing.searchPlaceholder' | t"
+          [attr.aria-label]="'pricing.search' | t"
+        />
+      </label>
+      <label class="filter-field">
+        <span class="filter-field__label">{{ 'geo.status' | t }}</span>
+        <select
+          class="city-picker"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="onStatusChange($event)"
+        >
+          <option value="">{{ 'pricing.allStatuses' | t }}</option>
+          <option value="DRAFT">{{ 'status.DRAFT' | t }}</option>
+          <option value="ACTIVE">{{ 'status.ACTIVE' | t }}</option>
+          <option value="INACTIVE">{{ 'status.INACTIVE' | t }}</option>
+        </select>
+      </label>
+      <label class="filter-field">
         <span class="filter-field__label">{{ 'common.city' | t }}</span>
         <select
           class="city-picker"
@@ -17,15 +41,17 @@
           }
         </select>
       </label>
-      <button class="add-btn" type="button" (click)="showForm.set(true)">{{ 'pricing.newDraft' | t }}</button>
+      <button class="add-btn" type="button" (click)="showForm.set(true)">{{ 'pricing.addAndActivate' | t }}</button>
     </div>
   </div>
 
   <app-table
     [data]="data()"
     [columns]="columns"
+    [pagination]="pagination()"
     [isLoading]="isLoading()"
     [allowDelete]="false"
+    (pageChange)="onPageChange($event)"
     (onEdit)="onEdit($event)"
   ></app-table>
 
@@ -34,7 +60,7 @@
 
 @if (showForm()) {
   <app-form-dialog
-    [title]="'pricing.newDraft' | t"
+    [title]="'pricing.addAndActivate' | t"
     [fields]="fields"
     [isSubmitting]="submitting()"
     (onClose)="showForm.set(false)"

@@ -7,6 +7,11 @@
 @import './styles/base.css';
 @import 'maplibre-gl/dist/maplibre-gl.css';
 
+/* Google Places autocomplete must sit above modal dialogs. */
+.pac-container {
+  z-index: 2000;
+}
+
 /* Readex Pro variable font — loaded via <link> in index.html */
 /* No @import here to avoid render-blocking duplicate load    */
 

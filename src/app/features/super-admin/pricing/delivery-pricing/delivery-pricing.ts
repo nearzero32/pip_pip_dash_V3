@@ -1,4 +1,11 @@
-import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableComponent } from '../../../../shared/components/table/table';
@@ -14,6 +21,7 @@ import { LanguageService } from '../../../../i18n/language.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
 import { TranslatePipe } from '../../../../i18n/translate.pipe';
 import { apiErrorMessage } from '../../../../core/http/api-error';
+import { PaginationConfig } from '../../../../shared/models/pagination.interface';
 
 
 @Component({
@@ -30,7 +38,7 @@ import { apiErrorMessage } from '../../../../core/http/api-error';
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './delivery-pricing.html',
 })
-export class DeliveryPricingComponent implements OnInit {
+export class DeliveryPricingComponent implements OnInit, OnDestroy {
   private geography = inject(GeographyService);
   private pricing = inject(PricingService);
   private language = inject(LanguageService);
@@ -39,12 +47,17 @@ export class DeliveryPricingComponent implements OnInit {
   cities = signal<City[]>([]);
   cityId = signal('');
   data = signal<(DeliveryPricingVersion & { _id: string })[]>([]);
+  pagination = signal<PaginationConfig | null>(null);
+  search = signal('');
+  statusFilter = signal<'' | DeliveryPricingVersion['status']>('');
+  page = signal(1);
   isLoading = signal(true);
   showForm = signal(false);
   submitting = signal(false);
   activateId = signal<string | null>(null);
   columns: TableColumn[] = [];
   fields: FormField[] = [];
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit() {
     this.columns = [
@@ -64,17 +77,21 @@ export class DeliveryPricingComponent implements OnInit {
       { key: 'pricePerKm', label: this.language.t('pricing.pricePerKm') },
     ];
     this.fields = [
-      { name: 'baseFee', label: this.language.t('pricing.baseFee'), type: 'number', required: true, defaultValue: 1000 },
-      { name: 'includedDistanceMeters', label: this.language.t('pricing.includedDistance'), type: 'number', required: true, defaultValue: 1000 },
-      { name: 'pricePerKm', label: this.language.t('pricing.pricePerKm'), type: 'number', required: true, defaultValue: 500 },
-      { name: 'roundingStep', label: this.language.t('pricing.roundingStep'), type: 'number', required: true, defaultValue: 250 },
-      { name: 'maximumDeliveryDistanceMeters', label: this.language.t('pricing.maxDistance'), type: 'number' },
-      { name: 'routingFallbackEnabled', label: this.language.t('pricing.fallback'), type: 'select', required: true, options: [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }], defaultValue: 'false' },
-      { name: 'fallbackOnNoRoute', label: this.language.t('pricing.fallbackNoRoute'), type: 'select', required: true, options: [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }], defaultValue: 'false' },
-      { name: 'fallbackOnProviderFailure', label: this.language.t('pricing.fallbackProvider'), type: 'select', required: true, options: [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }], defaultValue: 'false' },
-      { name: 'fallbackExtraDistanceMeters', label: this.language.t('pricing.fallbackExtra'), type: 'number', required: true, defaultValue: 0 },
+      { name: 'baseFee', label: this.language.t('pricing.baseFee'), helpText: this.language.t('pricing.help.baseFee'), type: 'number', required: true, defaultValue: 1000 },
+      { name: 'includedDistanceMeters', label: this.language.t('pricing.includedDistance'), helpText: this.language.t('pricing.help.includedDistance'), type: 'number', required: true, defaultValue: 1000 },
+      { name: 'pricePerKm', label: this.language.t('pricing.pricePerKm'), helpText: this.language.t('pricing.help.pricePerKm'), type: 'number', required: true, defaultValue: 500 },
+      { name: 'roundingStep', label: this.language.t('pricing.roundingStep'), helpText: this.language.t('pricing.help.roundingStep'), type: 'number', required: true, defaultValue: 250 },
+      { name: 'maximumDeliveryDistanceMeters', label: this.language.t('pricing.maxDistance'), helpText: this.language.t('pricing.help.maxDistance'), type: 'number' },
+      { name: 'routingFallbackEnabled', label: this.language.t('pricing.fallback'), helpText: this.language.t('pricing.help.fallback'), type: 'select', required: true, options: [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }], defaultValue: 'false' },
+      { name: 'fallbackOnNoRoute', label: this.language.t('pricing.fallbackNoRoute'), helpText: this.language.t('pricing.help.fallbackNoRoute'), type: 'select', required: true, options: [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }], defaultValue: 'false' },
+      { name: 'fallbackOnProviderFailure', label: this.language.t('pricing.fallbackProvider'), helpText: this.language.t('pricing.help.fallbackProvider'), type: 'select', required: true, options: [{ value: 'true', label: 'Yes' }, { value: 'false', label: 'No' }], defaultValue: 'false' },
+      { name: 'fallbackExtraDistanceMeters', label: this.language.t('pricing.fallbackExtra'), helpText: this.language.t('pricing.help.fallbackExtra'), type: 'number', required: true, defaultValue: 0 },
     ];
     this.loadCities();
+  }
+
+  ngOnDestroy() {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
   }
 
   async loadCities() {
@@ -97,23 +114,55 @@ export class DeliveryPricingComponent implements OnInit {
   onCityChange(id: string) {
     this.cityId.set(id);
     this.data.set([]);
-    this.load();
+    this.page.set(1);
+    void this.load(1);
   }
 
-  async load() {
+  onSearchInput(value: string) {
+    this.search.set(value);
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => void this.load(1), 350);
+  }
+
+  onStatusChange(value: string) {
+    this.statusFilter.set((value || '') as '' | DeliveryPricingVersion['status']);
+    void this.load(1);
+  }
+
+  onPageChange(page: number) {
+    void this.load(page);
+  }
+
+  async load(page = this.page()) {
     const currentCityId = this.cityId();
     if (!currentCityId) return;
     this.isLoading.set(true);
     try {
-      const rows = await this.pricing.listDeliveryVersions(currentCityId);
+      const result = await this.pricing.listDeliveryVersions(currentCityId, {
+        page,
+        limit: 20,
+        search: this.search().trim(),
+        status: this.statusFilter(),
+      });
       if (this.cityId() === currentCityId) {
-        this.data.set(rows.map((row) => ({ ...row, _id: row.id })));
+        this.data.set(result.data.map((row) => ({ ...row, _id: row.id })));
+        this.page.set(result.page);
+        const pages = Math.max(1, Math.ceil(result.total / result.limit));
+        this.pagination.set({
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          pages,
+          hasNext: result.page < pages,
+          hasPrev: result.page > 1,
+        });
       }
     } catch (err) {
       if (this.cityId() !== currentCityId) {
         return;
       }
       this.data.set([]);
+      this.pagination.set(null);
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {
       if (this.cityId() === currentCityId) {
@@ -127,7 +176,7 @@ export class DeliveryPricingComponent implements OnInit {
     const activeCityId = this.cityId();
     try {
       const max = value['maximumDeliveryDistanceMeters'];
-      await this.pricing.createDeliveryVersion(activeCityId, {
+      const created = await this.pricing.createDeliveryVersion(activeCityId, {
         baseFee: Number(value['baseFee']),
         includedDistanceMeters: Number(value['includedDistanceMeters']),
         pricePerKm: Number(value['pricePerKm']),
@@ -138,9 +187,10 @@ export class DeliveryPricingComponent implements OnInit {
         fallbackOnProviderFailure: value['fallbackOnProviderFailure'] === 'true',
         fallbackExtraDistanceMeters: Number(value['fallbackExtraDistanceMeters']),
       });
+      await this.pricing.activateDeliveryVersion(activeCityId, created.id);
       this.notify.success(this.language.t('common.success'));
       this.showForm.set(false);
-      await this.load();
+      await this.load(1);
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {
