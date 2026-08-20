@@ -22,6 +22,14 @@ import { registerDialogOverlay } from '../dialog-layer';
 const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+const PASSWORD_CHARACTER_SETS = [
+  'ABCDEFGHJKLMNPQRSTUVWXYZ',
+  'abcdefghijkmnopqrstuvwxyz',
+  '23456789',
+  '!@#$%^&*_-+=',
+];
+const PASSWORD_ALPHABET = PASSWORD_CHARACTER_SETS.join('');
+
 @Component({
   selector: 'app-form-dialog',
   standalone: true,
@@ -48,6 +56,7 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
 
   form!: FormGroup;
   readonly visiblePasswords = signal<ReadonlySet<string>>(new Set());
+  readonly generatedPasswordField = signal<string | null>(null);
   readonly submitted = signal(false);
   readonly openFieldHelp = signal<string | null>(null);
 
@@ -235,6 +244,31 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
       else next.add(fieldName);
       return next;
     });
+  }
+
+  generatePassword(fieldName: string) {
+    if (!globalThis.crypto?.getRandomValues) return;
+
+    const length = 20;
+    const random = new Uint32Array(length * 2);
+    globalThis.crypto.getRandomValues(random);
+    const password = PASSWORD_CHARACTER_SETS.map(
+      (characters, index) => characters[random[index]! % characters.length]!,
+    );
+    for (let index = password.length; index < length; index++) {
+      password.push(PASSWORD_ALPHABET[random[index]! % PASSWORD_ALPHABET.length]!);
+    }
+    for (let index = password.length - 1; index > 0; index--) {
+      const swapIndex = random[length + index]! % (index + 1);
+      [password[index], password[swapIndex]] = [password[swapIndex]!, password[index]!];
+    }
+
+    const control = this.form.get(fieldName);
+    control?.setValue(password.join(''));
+    control?.markAsDirty();
+    control?.markAsTouched();
+    this.visiblePasswords.update((visible) => new Set([...visible, fieldName]));
+    this.generatedPasswordField.set(fieldName);
   }
 
   getErrorMessage(fieldName: string): string {

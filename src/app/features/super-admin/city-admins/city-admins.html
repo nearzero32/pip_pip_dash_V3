@@ -16,15 +16,17 @@
     [columns]="columns"
     [isLoading]="isLoading()"
     [allowDelete]="false"
+    [allowPassword]="true"
     (onEdit)="onEdit($event)"
+    (onPassword)="onPassword($event)"
   ></app-table>
 </section>
 
 @if (showForm()) {
   <app-form-dialog
-    [title]="(editing() ? 'staff.editAdmin' : 'staff.addAdmin') | t"
+    [title]="formTitle()"
     [fields]="fields()"
-    [initialData]="editing()"
+    [initialData]="formMode() === 'password' ? null : editing()"
     [isSubmitting]="submitting()"
     (onClose)="closeForm()"
     (onSubmit)="save($event)"

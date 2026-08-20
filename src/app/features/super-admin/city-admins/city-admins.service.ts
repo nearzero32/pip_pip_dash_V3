@@ -37,6 +37,10 @@ export class CityAdminsService {
     return withId(response.data);
   }
 
+  async resetPassword(adminId: string, password: string) {
+    await this.api.client.post(`/api/v1/dashboard/admins/${adminId}/password`, { password });
+  }
+
   async exportAdmins() {
     const response = await this.api.client.get<Blob>('/api/v1/dashboard/admins/export', {
       responseType: 'blob',

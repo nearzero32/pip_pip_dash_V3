@@ -23,6 +23,7 @@ export class TableComponent<T extends object = object> {
   @Input() allowDelete: boolean = true;
   @Input() allowEdit: boolean = true;
   @Input() allowView: boolean = false;
+  @Input() allowPassword: boolean = false;
   @Input() showActions: boolean = true;
   @Input() rowKey: string = '_id';
 
@@ -30,6 +31,7 @@ export class TableComponent<T extends object = object> {
   @Output() onEdit = new EventEmitter<T>();
   @Output() onDelete = new EventEmitter<T>();
   @Output() onView = new EventEmitter<T>();
+  @Output() onPassword = new EventEmitter<T>();
 
   /**
    * Resolve a dot-notated key path against a row object.

@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Validators } from '@angular/forms';
 import { TableComponent } from '../../../shared/components/table/table';
 import { FormDialogComponent } from '../../../shared/components/form-dialog/form-dialog';
 import { FormField } from '../../../shared/models/form-field.interface';
@@ -14,6 +15,8 @@ import { NotificationService } from '../../../shared/services/notification.servi
 import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { apiErrorMessage } from '../../../core/http/api-error';
 import { downloadBlob } from '../../../core/utils/download';
+
+type CityAdminFormMode = 'create' | 'edit' | 'password';
 
 @Component({
   selector: 'app-city-admins',
@@ -34,6 +37,7 @@ export class CityAdminsComponent implements OnInit {
   exporting = signal<boolean>(false);
   submitting = signal<boolean>(false);
   showForm = signal<boolean>(false);
+  formMode = signal<CityAdminFormMode>('create');
   editing = signal<CityAdmin | null>(null);
   columns: TableColumn[] = [];
   fields = signal<FormField[]>([]);
@@ -84,13 +88,26 @@ export class CityAdminsComponent implements OnInit {
     }
   }
 
-  private buildFields(editing: boolean): FormField[] {
+  private buildFields(mode: CityAdminFormMode): FormField[] {
+    if (mode === 'password') {
+      return [
+        {
+          name: 'password',
+          label: this.language.t('staff.newPassword'),
+          type: 'password',
+          required: true,
+          width: 'full',
+          validators: [Validators.minLength(12)],
+          hint: this.language.t('auth.passwordHint'),
+        },
+      ];
+    }
     const cityOptions = this.cities.map((c) => ({
       value: c.id,
       label: `${c.nameEn} / ${c.nameAr}`,
     }));
     const fields: FormField[] = [];
-    if (!editing) {
+    if (mode === 'create') {
       fields.push(
         { name: 'email', label: this.language.t('auth.email'), type: 'text', required: true },
         {
@@ -98,6 +115,7 @@ export class CityAdminsComponent implements OnInit {
           label: this.language.t('auth.password'),
           type: 'password',
           required: true,
+          validators: [Validators.minLength(12)],
           hint: this.language.t('auth.passwordHint'),
         }
       );
@@ -112,7 +130,7 @@ export class CityAdminsComponent implements OnInit {
         options: cityOptions,
       }
     );
-    if (editing) {
+    if (mode === 'edit') {
       fields.push({
         name: 'status',
         label: this.language.t('geo.status'),
@@ -157,10 +175,11 @@ export class CityAdminsComponent implements OnInit {
 
   async openCreate() {
     if (this.isLoadingCities()) return;
+    this.formMode.set('create');
     this.editing.set(null);
     try {
       await this.ensureCitiesLoaded();
-      this.fields.set(this.buildFields(false));
+      this.fields.set(this.buildFields('create'));
       this.showForm.set(true);
     } catch (err) {
       // Non-blocking error handled in fetchCities
@@ -169,25 +188,50 @@ export class CityAdminsComponent implements OnInit {
 
   async onEdit(row: CityAdmin) {
     if (this.isLoadingCities()) return;
+    this.formMode.set('edit');
     this.editing.set(row);
     try {
       await this.ensureCitiesLoaded();
-      this.fields.set(this.buildFields(true));
+      this.fields.set(this.buildFields('edit'));
       this.showForm.set(true);
     } catch (err) {
       // Non-blocking error handled in fetchCities
     }
   }
 
+  onPassword(row: CityAdmin) {
+    this.formMode.set('password');
+    this.editing.set(row);
+    this.fields.set(this.buildFields('password'));
+    this.showForm.set(true);
+  }
+
+  formTitle(): string {
+    return this.language.t(
+      {
+        create: 'staff.addAdmin',
+        edit: 'staff.editAdmin',
+        password: 'staff.changePassword',
+      }[this.formMode()],
+    );
+  }
+
   closeForm() {
     this.showForm.set(false);
+    this.editing.set(null);
+    this.formMode.set('create');
   }
 
   async save(value: Record<string, string>) {
     this.submitting.set(true);
     try {
       const currentEditing = this.editing();
-      if (currentEditing) {
+      const mode = this.formMode();
+      if (mode === 'password') {
+        if (!currentEditing) return;
+        await this.staff.resetPassword(currentEditing.accountId, value['password']);
+      } else if (mode === 'edit') {
+        if (!currentEditing) return;
         const body: { displayName?: string; cityId?: string; status?: 'ACTIVE' | 'DISABLED' } = {};
         if (value['displayName']) body.displayName = value['displayName'];
         if (value['cityId']) body.cityId = value['cityId'];
@@ -202,7 +246,7 @@ export class CityAdminsComponent implements OnInit {
         });
       }
       this.notify.success(this.language.t('common.success'));
-      this.showForm.set(false);
+      this.closeForm();
       await this.load();
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));

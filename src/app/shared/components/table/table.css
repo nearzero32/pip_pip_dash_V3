@@ -52,7 +52,7 @@
 
 .custom-table th.actions-header {
   text-align: center;
-  width: 120px;
+  width: 148px;
 }
 
 .custom-table th.index-header {
@@ -195,6 +195,21 @@
   box-shadow: var(--shadow-sm);
 }
 .view-bg:hover svg { stroke: var(--color-text-on-brand); }
+
+/* Password */
+.password-bg {
+  background: var(--brand-purple-soft);
+  border-color: color-mix(in srgb, var(--brand-purple) 18%, transparent);
+  color: var(--color-brand-secondary);
+}
+.password-bg svg { stroke: var(--color-brand-secondary); }
+.password-bg:hover:not(:disabled) {
+  background: var(--color-brand-secondary);
+  border-color: var(--color-brand-secondary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+.password-bg:hover svg { stroke: var(--color-text-on-brand); }
 
 /* ── BADGES ─────────────────────────────────────────────────── */
 /* Badge styles are defined in global styles.css as shared utilities */

@@ -311,11 +311,11 @@ textarea.form-input:focus {
 }
 
 .input-shell { position: relative; }
-.input-shell .form-input { padding-inline-end: 2.75rem; }
+.input-shell .form-input { padding-inline-end: 5rem; }
 
-.password-toggle {
+.password-toggle,
+.password-generate {
   position: absolute;
-  inset-inline-end: 6px;
   top: 50%;
   transform: translateY(-50%);
   width: 32px;
@@ -331,14 +331,25 @@ textarea.form-input:focus {
   cursor: pointer;
 }
 
-.password-toggle:hover {
+.password-toggle { inset-inline-end: 6px; }
+.password-generate { inset-inline-end: 38px; }
+
+.password-toggle:hover,
+.password-generate:hover {
   background: var(--brand-orange-soft);
   color: var(--color-brand-primary);
 }
 
-.password-toggle:focus-visible {
+.password-toggle:focus-visible,
+.password-generate:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
+}
+
+.password-generated {
+  color: var(--color-success);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-normal);
 }
 
 .form-input:disabled,
