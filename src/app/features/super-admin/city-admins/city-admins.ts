@@ -51,7 +51,7 @@ export class CityAdminsComponent implements OnInit {
         type: 'badge',
         badgeClassMap: { ACTIVE: 'badge-success', DISABLED: 'badge-danger', INVITED: 'badge-warning' },
       },
-      { key: 'cityId', label: this.language.t('staff.cityId') },
+      { key: 'cityName', label: this.language.t('staff.cityId') },
     ];
     this.load();
   }
@@ -129,14 +129,30 @@ export class CityAdminsComponent implements OnInit {
   async load() {
     this.isLoading.set(true);
     try {
-      const admins = await this.staff.listAdmins();
-      this.data.set(admins);
+      const [admins] = await Promise.all([
+        this.staff.listAdmins(),
+        this.ensureCitiesLoaded().catch(() => undefined),
+      ]);
+      this.data.set(
+        admins.map((admin) => ({
+          ...admin,
+          cityName: this.cityName(admin.cityId),
+        })),
+      );
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
       this.data.set([]);
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  private cityName(cityId: string): string {
+    const city = this.cities.find((item) => item.id === cityId);
+    if (!city) return cityId;
+    return this.language.lang() === 'ar'
+      ? city.nameAr || city.nameEn
+      : city.nameEn || city.nameAr;
   }
 
   async openCreate() {

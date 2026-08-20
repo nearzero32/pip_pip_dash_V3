@@ -5,6 +5,7 @@ export interface CityAdmin {
   displayName: string | null;
   status: 'INVITED' | 'ACTIVE' | 'DISABLED' | 'CLOSED';
   cityId: string;
+  cityName?: string;
   createdAt: string;
   updatedAt: string;
 }
