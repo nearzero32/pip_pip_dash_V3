@@ -1,17 +1,1 @@
-<div class="zone-map-shell">
-  @if (!basemapConfigured) {
-    <div class="zone-map-configuration"><strong>{{ 'zones.mapNotConfigured' | t }}</strong><span>{{ 'zones.mapConfigurationHelp' | t }}</span></div>
-  }
-  @if (loading()) {
-    <div class="zone-map-banner">{{ 'zones.mapLoading' | t }}</div>
-  }
-  @if (error()) {
-    <div class="zone-map-banner zone-map-banner--error">{{ 'zones.mapError' | t }}</div>
-  }
-  <div class="zone-map-host" #mapHost role="application" [attr.aria-label]="'zones.mapLabel' | t"></div>
-  <ul class="zone-legend">
-    <li><span class="swatch swatch-active"></span>{{ 'status.ACTIVE' | t }}</li>
-    <li><span class="swatch swatch-inactive"></span>{{ 'status.INACTIVE' | t }}</li>
-    <li><span class="swatch swatch-selected"></span>{{ 'zones.selected' | t }}</li>
-  </ul>
-</div>
+<div class="zone-map-shell"><div class="zone-map-host" #mapHost role="application" [attr.aria-label]="'zones.mapLabel' | t"></div>@if (!mapReady() && !mapFailed()) { <div class="zone-map-configuration">{{ 'zones.mapLoading' | t }}</div> } @if (mapFailed()) { <div class="zone-map-configuration"><strong>{{ 'zones.mapNotConfigured' | t }}</strong><span>{{ 'zones.mapConfigurationHelp' | t }}</span></div> } @if (loading()) { <div class="zone-map-banner">{{ 'zones.mapLoading' | t }}</div> } @if (error()) { <div class="zone-map-banner zone-map-banner--error">{{ 'zones.mapError' | t }}</div> }<ul class="zone-legend"><li><span class="swatch swatch-active"></span>{{ 'status.ACTIVE' | t }}</li><li><span class="swatch swatch-inactive"></span>{{ 'status.INACTIVE' | t }}</li><li><span class="swatch swatch-selected"></span>{{ 'zones.selected' | t }}</li></ul></div>

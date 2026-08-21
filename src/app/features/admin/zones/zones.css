@@ -1,9 +1,101 @@
 .zone-search {
   height: var(--control-height-md);
-  min-width: 200px;
+  min-width: 220px;
   border: 1.5px solid var(--color-border-default);
   border-radius: var(--radius-md);
   padding: 0 var(--space-3);
   font-family: inherit;
   background: var(--color-surface-card);
+  color: var(--color-text-primary);
+}
+
+.zone-search:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: var(--focus-ring);
+}
+
+.zones-workspace {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.zones-card {
+  overflow: hidden;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-card);
+  box-shadow: var(--shadow-xs);
+}
+
+.zones-card--map {
+  padding: var(--space-4);
+}
+
+.zones-card--table {
+  padding-top: var(--space-4);
+}
+
+.zones-card--table app-table {
+  display: block;
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.zones-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.zones-card--map .zones-card__header {
+  padding-inline: 0;
+}
+
+.zones-card__header h2 {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.zones-card__header p {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.zones-card__count {
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-orange-soft);
+  color: var(--color-brand-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+@media (max-width: 720px) {
+  .page-toolbar__actions {
+    align-items: stretch;
+  }
+
+  .zone-search {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .zones-card--map,
+  .zones-card--table app-table {
+    padding-inline: var(--space-3);
+  }
+
+  .zones-card__header {
+    padding-inline: var(--space-3);
+  }
+
+  .zones-card--map .zones-card__header {
+    padding-inline: 0;
+  }
 }

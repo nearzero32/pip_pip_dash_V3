@@ -46,28 +46,48 @@
       <p class="info-callout">{{ 'zones.mapContextError' | t }}</p>
     }
 
-    <app-zone-map
-      [zones]="mapZones()"
-      [selectedId]="selected()?.id ?? null"
-      [previewZone]="previewZone()"
-      [loading]="mapLoading()"
-      [error]="mapError()"
-      [fallbackCenter]="mapCenter()"
-      (selectZone)="onMapSelect($event)"
-    ></app-zone-map>
+    <div class="zones-workspace">
+      <section class="zones-card zones-card--map" [attr.aria-label]="'zones.mapLabel' | t">
+        <div class="zones-card__header">
+          <div>
+            <h2>{{ 'zones.mapLabel' | t }}</h2>
+            <p>{{ 'zones.mapSummary' | t }}</p>
+          </div>
+          <span class="zones-card__count">{{ 'zones.count' | t: { count: mapZones().length } }}</span>
+        </div>
+        <app-zone-map
+          [zones]="mapZones()"
+          [selectedId]="selected()?.id ?? null"
+          [previewZone]="previewZone()"
+          [loading]="mapLoading()"
+          [error]="mapError()"
+          [fallbackCenter]="mapCenter()"
+          (selectZone)="onMapSelect($event)"
+        ></app-zone-map>
+      </section>
 
-    <app-table
-      [data]="data()"
-      [columns]="columns"
-      [pagination]="pagination()"
-      [isLoading]="isLoading()"
-      [allowDelete]="false"
-      [allowEdit]="false"
-      [allowView]="true"
-      rowKey="id"
-      (pageChange)="onPageChange($event)"
-      (onView)="onView($event)"
-    ></app-table>
+      <section class="zones-card zones-card--table">
+        <div class="zones-card__header">
+          <div>
+            <h2>{{ 'nav.zones' | t }}</h2>
+            <p>{{ 'zones.tableSummary' | t }}</p>
+          </div>
+          <span class="zones-card__count">{{ 'zones.count' | t: { count: pagination()?.total ?? 0 } }}</span>
+        </div>
+        <app-table
+          [data]="data()"
+          [columns]="columns"
+          [pagination]="pagination()"
+          [isLoading]="isLoading()"
+          [allowDelete]="false"
+          [allowEdit]="false"
+          [allowView]="true"
+          rowKey="id"
+          (pageChange)="onPageChange($event)"
+          (onView)="onView($event)"
+        ></app-table>
+      </section>
+    </div>
   }
 </section>
 
