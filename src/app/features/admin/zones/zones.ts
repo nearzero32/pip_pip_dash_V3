@@ -24,6 +24,9 @@ import {
 import { ZoneMapComponent } from './zone-map/zone-map';
 import { ZoneEditorComponent } from './zone-editor/zone-editor';
 import { ZonesService } from './zones.service';
+import { GeographyService } from '../../super-admin/geography/geography.service';
+import { City } from '../../super-admin/geography/geography.models';
+import { CityBoundary } from '../../super-admin/geography/geography.models';
 import { IRAQ_MAP_FALLBACK, Zone, ZoneStatus } from './zones.models';
 
 @Component({
@@ -46,6 +49,10 @@ export class ZonesComponent implements OnInit, OnDestroy {
   private language = inject(LanguageService);
   private notify = inject(NotificationService);
   private auth = inject(AuthService);
+  private geography = inject(GeographyService);
+  readonly cities = signal<City[]>([]);
+  readonly cityId = signal('');
+  readonly cityBoundary = signal<CityBoundary | null>(null);
 
   readonly data = signal<Zone[]>([]);
   readonly pagination = signal<PaginationConfig | null>(null);
@@ -100,9 +107,7 @@ export class ZonesComponent implements OnInit, OnDestroy {
       { key: 'createdAt', label: this.language.t('geo.createdAt'), type: 'date' },
       { key: 'updatedAt', label: this.language.t('zones.updatedAt'), type: 'date' },
     ];
-    void this.resolveCityCenter();
-    void this.loadList(1);
-    void this.loadMapContext();
+    void this.loadCities();
   }
 
   ngOnDestroy() {
@@ -122,6 +127,11 @@ export class ZonesComponent implements OnInit, OnDestroy {
 
   onPageChange(page: number) {
     void this.loadList(page);
+  }
+
+  onCityChange(cityId: string) {
+    this.cityId.set(cityId); this.selected.set(null);
+    void this.resolveCityCenter(); void this.loadList(1); void this.loadMapContext();
   }
 
   onView(row: Zone) {
@@ -167,7 +177,7 @@ export class ZonesComponent implements OnInit, OnDestroy {
     if (!zone || zone.status === 'ARCHIVED') return;
     this.mutating.set(true);
     try {
-      const updated = await this.zonesApi.update(zone.id, { status });
+      const updated = await this.zonesApi.update(this.cityId(), zone.id, { status });
       this.selected.set(updated);
       this.notify.success(this.language.t('zones.statusUpdated'));
       await Promise.all([this.loadList(this.page()), this.loadMapContext()]);
@@ -183,7 +193,7 @@ export class ZonesComponent implements OnInit, OnDestroy {
     if (!zone) return;
     this.mutating.set(true);
     try {
-      const updated = await this.zonesApi.archive(zone.id);
+      const updated = await this.zonesApi.archive(this.cityId(), zone.id);
       this.confirmArchive.set(false);
       this.selected.set(updated);
       this.notify.success(this.language.t('zones.archived'));
@@ -211,7 +221,8 @@ export class ZonesComponent implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.page.set(page);
     try {
-      const result = await this.zonesApi.list({
+      if (!this.cityId()) return;
+      const result = await this.zonesApi.list(this.cityId(), {
         page,
         limit: 20,
         search: this.search().trim() || undefined,
@@ -252,8 +263,8 @@ export class ZonesComponent implements OnInit, OnDestroy {
     this.mapError.set(false);
     try {
       const [active, inactive] = await Promise.all([
-        this.zonesApi.listAllByStatus('ACTIVE'),
-        this.zonesApi.listAllByStatus('INACTIVE'),
+        this.zonesApi.listAllByStatus(this.cityId(), 'ACTIVE'),
+        this.zonesApi.listAllByStatus(this.cityId(), 'INACTIVE'),
       ]);
       if (seq !== this.mapSeq) return;
       this.mapZones.set([...active, ...inactive]);
@@ -267,21 +278,33 @@ export class ZonesComponent implements OnInit, OnDestroy {
   }
 
   private async resolveCityCenter() {
-    const cityId = this.auth.identity()?.cityId;
+    const cityId = this.cityId();
     if (!cityId) {
       this.usedIraqFallback.set(true);
       return;
     }
     try {
       const city = await this.zonesApi.getCity(cityId);
+      this.cityBoundary.set(city.boundary ?? null);
       this.mapCenter.set({
         longitude: city.longitude,
         latitude: city.latitude,
         zoom: 12,
       });
     } catch {
+      this.cityBoundary.set(null);
       this.usedIraqFallback.set(true);
     }
+  }
+
+  private async loadCities() {
+    try {
+      const result = await this.geography.listCities(1, 100);
+      this.cities.set(result.data);
+      const initial = result.data.find((city) => city.status !== 'ARCHIVED')?.id ?? '';
+      if (initial) this.onCityChange(initial);
+      else this.isLoading.set(false);
+    } catch { this.isLoading.set(false); this.notify.error(this.language.t('common.unexpectedError')); }
   }
 
   private handleMutationError(err: unknown) {

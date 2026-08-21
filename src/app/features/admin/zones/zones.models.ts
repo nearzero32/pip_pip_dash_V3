@@ -28,6 +28,7 @@ export interface ZoneListQuery {
 }
 
 export interface ZoneCreateBody {
+  cityId: string;
   name: string;
   boundary: GeoJsonPolygon;
 }

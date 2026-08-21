@@ -27,11 +27,12 @@ interface DashboardListBody<T> {
 export class ZonesService {
   private api = inject(ApiService);
 
-  async list(query: ZoneListQuery = {}): Promise<ZoneListPage> {
+  async list(cityId: string, query: ZoneListQuery = {}): Promise<ZoneListPage> {
     const response = await this.api.client.get<DashboardListBody<Zone>>(
       '/api/v1/dashboard/zones',
       {
         params: {
+          cityId,
           page: query.page ?? 1,
           limit: query.limit ?? 20,
           ...(query.search ? { search: query.search } : {}),
@@ -46,12 +47,12 @@ export class ZonesService {
     return { data: body.data ?? [], page, limit, total };
   }
 
-  async listAllByStatus(status: Exclude<ZoneStatus, 'ARCHIVED'>): Promise<Zone[]> {
+  async listAllByStatus(cityId: string, status: Exclude<ZoneStatus, 'ARCHIVED'>): Promise<Zone[]> {
     const collected: Zone[] = [];
     let page = 1;
     const limit = 100;
     for (;;) {
-      const result = await this.list({ page, limit, status });
+      const result = await this.list(cityId, { page, limit, status });
       collected.push(...result.data);
       if (result.data.length < limit || collected.length >= result.total) break;
       page += 1;
@@ -60,8 +61,8 @@ export class ZonesService {
     return collected;
   }
 
-  async get(zoneId: string): Promise<Zone> {
-    const response = await this.api.client.get<Zone>(`/api/v1/dashboard/zones/${zoneId}`);
+  async get(cityId: string, zoneId: string): Promise<Zone> {
+    const response = await this.api.client.get<Zone>(`/api/v1/dashboard/zones/${zoneId}`, { params: { cityId } });
     return response.data;
   }
 
@@ -70,16 +71,16 @@ export class ZonesService {
     return response.data;
   }
 
-  async update(zoneId: string, body: ZoneUpdateBody): Promise<Zone> {
+  async update(cityId: string, zoneId: string, body: ZoneUpdateBody): Promise<Zone> {
     const response = await this.api.client.patch<Zone>(
       `/api/v1/dashboard/zones/${zoneId}`,
-      body
+      body, { params: { cityId } }
     );
     return response.data;
   }
 
-  async archive(zoneId: string): Promise<Zone> {
-    const response = await this.api.client.delete<Zone>(`/api/v1/dashboard/zones/${zoneId}`);
+  async archive(cityId: string, zoneId: string): Promise<Zone> {
+    const response = await this.api.client.delete<Zone>(`/api/v1/dashboard/zones/${zoneId}`, { params: { cityId } });
     return response.data;
   }
 

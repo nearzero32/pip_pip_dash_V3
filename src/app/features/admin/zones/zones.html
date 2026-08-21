@@ -8,6 +8,12 @@
     </div>
     <div class="page-toolbar__actions">
       <label class="filter-field">
+        <span class="filter-field__label">{{ 'nav.cities' | t }}</span>
+        <select class="city-picker" [ngModel]="cityId()" (ngModelChange)="onCityChange($event)">
+          @for (city of cities(); track city.id) { <option [value]="city.id">{{ city.nameAr }} — {{ city.nameEn }}</option> }
+        </select>
+      </label>
+      <label class="filter-field">
         <span class="filter-field__label">{{ 'zones.search' | t }}</span>
         <input
           class="zone-search"
@@ -57,6 +63,7 @@
         </div>
         <app-zone-map
           [zones]="mapZones()"
+          [cityBoundary]="cityBoundary()"
           [selectedId]="selected()?.id ?? null"
           [previewZone]="previewZone()"
           [loading]="mapLoading()"
@@ -164,6 +171,8 @@
 
 @if (editorOpen()) {
   <app-zone-editor
+    [cityId]="cityId()"
+    [cityBoundary]="cityBoundary()"
     [zone]="editingZone()"
     [references]="mapZones()"
     [fallbackCenter]="mapCenter()"

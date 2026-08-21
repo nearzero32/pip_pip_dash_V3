@@ -447,6 +447,8 @@ export class StoresComponent implements OnInit, OnDestroy {
   }
 
   private async loadZones() {
+    const cityId = this.auth.identity()?.cityId;
+    if (!cityId) { this.zones.set([]); return; }
     if (this.zonesInFlight) {
       this.zones.set(await this.zonesInFlight);
       return;
@@ -454,8 +456,8 @@ export class StoresComponent implements OnInit, OnDestroy {
     this.zonesLoading.set(true);
     this.zonesError.set(false);
     this.zonesInFlight = Promise.all([
-      this.zonesApi.listAllByStatus('ACTIVE'),
-      this.zonesApi.listAllByStatus('INACTIVE'),
+      this.zonesApi.listAllByStatus(cityId, 'ACTIVE'),
+      this.zonesApi.listAllByStatus(cityId, 'INACTIVE'),
     ]).then(([active, inactive]) => [...active, ...inactive]);
     try {
       this.zones.set(await this.zonesInFlight);
@@ -479,7 +481,8 @@ export class StoresComponent implements OnInit, OnDestroy {
     await Promise.all(
       missing.map(async (id) => {
         try {
-          extra[id] = await this.zonesApi.get(id);
+          const cityId = this.auth.identity()?.cityId;
+          if (cityId) extra[id] = await this.zonesApi.get(cityId, id);
         } catch {
           /* archived or foreign: keep id-only display */
         }

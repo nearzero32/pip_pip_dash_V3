@@ -3,6 +3,12 @@ import { superAdminGuard } from '../../core/auth/auth.guard';
 
 export const SUPER_ADMIN_ROUTES: Routes = [
   {
+    path: 'zones',
+    loadComponent: () => import('../admin/zones/zones').then((m) => m.ZonesComponent),
+    canActivate: [superAdminGuard],
+    data: { titleKey: 'nav.zones' },
+  },
+  {
     path: 'governorates',
     loadComponent: () =>
       import('./geography/governorates/governorates').then((m) => m.GovernoratesComponent),
