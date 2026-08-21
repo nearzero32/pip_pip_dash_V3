@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from '../../../core/http/api.service';
-import { City, Governorate, Paginated } from './geography.models';
+import { City, CityBoundary, Governorate, Paginated } from './geography.models';
 import { HTTP_CONFIG } from '../../../core/http/http.config';
 
 const withId = <T extends { id: string }>(row: T): T & { _id: string } => ({
@@ -64,6 +64,7 @@ export class GeographyService {
     latitude: number;
     longitude: number;
     displayOrder: number;
+    boundary: CityBoundary;
   }) {
     const response = await this.api.client.post<City>('/api/v1/dashboard/cities', body);
     return withId(response.data);
@@ -78,9 +79,15 @@ export class GeographyService {
       latitude: number;
       longitude: number;
       displayOrder: number;
+      boundary: CityBoundary;
     }>
   ) {
     const response = await this.api.client.patch<City>(`/api/v1/dashboard/cities/${id}`, body);
+    return withId(response.data);
+  }
+
+  async getCity(id: string) {
+    const response = await this.api.client.get<City>(`/api/v1/dashboard/cities/${id}`);
     return withId(response.data);
   }
 

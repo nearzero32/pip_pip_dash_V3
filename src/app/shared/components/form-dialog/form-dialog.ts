@@ -17,6 +17,7 @@ import { FormField } from '../../models/form-field.interface';
 import { LanguageService } from '../../../i18n/language.service';
 import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { LocationPickerMapComponent, MapPoint } from '../location-picker-map/location-picker-map';
+import { CityBoundaryMapComponent } from '../city-boundary-map/city-boundary-map';
 import { registerDialogOverlay } from '../dialog-layer';
 
 const FOCUSABLE =
@@ -33,7 +34,7 @@ const PASSWORD_ALPHABET = PASSWORD_CHARACTER_SETS.join('');
 @Component({
   selector: 'app-form-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, LocationPickerMapComponent],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, LocationPickerMapComponent, CityBoundaryMapComponent],
   templateUrl: './form-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './form-dialog.css',
@@ -45,6 +46,7 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() isSubmitting: boolean = false;
   @Input() submitButtonText: string = '';
   @Input() cancelButtonText: string = '';
+  @Input() steps: string[] = [];
 
   @Output() onClose = new EventEmitter<void>();
   @Output() onSubmit = new EventEmitter<any>();
@@ -59,6 +61,7 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly generatedPasswordField = signal<string | null>(null);
   readonly submitted = signal(false);
   readonly openFieldHelp = signal<string | null>(null);
+  readonly activeStep = signal(0);
 
   private unregisterOverlay: (() => void) | null = null;
 
@@ -83,7 +86,7 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
     const formControls: any = {};
 
     this.fields.forEach((field) => {
-      if (field.type === 'map') return;
+    if (field.type === 'map') return;
 
       const validators = [...(field.validators || [])];
       if (field.required) {
@@ -106,17 +109,18 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   shouldShowField(field: FormField): boolean {
+    if (this.steps.length && field.step !== undefined && field.step !== this.activeStep()) return false;
     if (!field.conditionalDisplay) return true;
     return field.conditionalDisplay(this.form?.value);
   }
 
   getFieldWidth(field: FormField): string {
-    if (field.type === 'map') return 'full-width';
+    if (field.type === 'map' || field.type === 'boundary-map') return 'full-width';
     return field.width === 'full' ? 'full-width' : '';
   }
 
   hasMapField(): boolean {
-    return this.fields.some((field) => field.type === 'map');
+    return this.fields.some((field) => field.type === 'map' || field.type === 'boundary-map');
   }
 
   mapLatitudeField(field: FormField): string {
@@ -245,6 +249,16 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
       return next;
     });
   }
+
+  isLastStep(): boolean { return this.activeStep() >= this.steps.length - 1; }
+  nextStep() {
+    const current = this.fields.filter((field) => field.type !== 'map' && field.step === this.activeStep());
+    current.forEach((field) => this.form.get(field.name)?.markAsTouched());
+    if (current.some((field) => this.form.get(field.name)?.invalid)) return;
+    this.activeStep.update((step) => Math.min(step + 1, this.steps.length - 1));
+    queueMicrotask(() => this.focusFirstField());
+  }
+  previousStep() { this.activeStep.update((step) => Math.max(0, step - 1)); }
 
   generatePassword(fieldName: string) {
     if (!globalThis.crypto?.getRandomValues) return;

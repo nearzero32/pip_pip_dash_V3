@@ -1,0 +1,1 @@
+<div class="boundary-map"><div #host class="boundary-map__host"></div><div class="boundary-map__controls"><span>{{ drawing() ? 'Click the map to add points, then finish.' : 'Drag vertices to refine the boundary.' }}</span><button type="button" (click)="finish()" [disabled]="!drawing()">Finish boundary</button><button type="button" (click)="reset()">Reset</button></div></div>

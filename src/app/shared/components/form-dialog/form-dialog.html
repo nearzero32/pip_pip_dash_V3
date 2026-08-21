@@ -36,6 +36,11 @@
     </header>
 
     <form [formGroup]="form" (ngSubmit)="handleSubmit()" class="modal-form">
+      @if (steps.length) {
+        <ol class="wizard-steps" aria-label="Form steps">
+          @for (step of steps; track $index) { <li [class.is-active]="$index === activeStep()" [class.is-complete]="$index < activeStep()">{{ $index + 1 }}. {{ step }}</li> }
+        </ol>
+      }
       <div class="modal-body">
         <div class="form-grid">
           @for (field of fields; track field.name) {
@@ -159,6 +164,14 @@
                     (locationChange)="onMapLocation(field, $event)"
                   ></app-location-picker-map>
                 }
+                @if (field.type === 'boundary-map') {
+                  <app-city-boundary-map
+                    [latitude]="form.get('latitude')?.value"
+                    [longitude]="form.get('longitude')?.value"
+                    [boundary]="form.get(field.name)?.value"
+                    (boundaryChange)="updateFieldValue(field.name, $event)"
+                  ></app-city-boundary-map>
+                }
 
                 @if (field.type === 'select') {
                   <div class="select-wrapper">
@@ -214,6 +227,8 @@
           <button type="button" class="btn btn-cancel" (click)="close()" [disabled]="isSubmitting">
             {{ cancelButtonText }}
           </button>
+          @if (steps.length && activeStep() > 0) { <button type="button" class="btn btn-cancel" (click)="previousStep()" [disabled]="isSubmitting">Back</button> }
+          @if (steps.length && !isLastStep()) { <button type="button" class="btn btn-submit" (click)="nextStep()" [disabled]="isSubmitting">Next</button> } @else {
           <button type="submit" class="btn btn-submit" [disabled]="isSubmitting">
             @if (isSubmitting) {
               <svg class="spinner" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -231,6 +246,7 @@
               {{ submitButtonText }}
             }
           </button>
+          }
         </div>
       </footer>
     </form>

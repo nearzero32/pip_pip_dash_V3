@@ -7,7 +7,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
 import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button';
 import { TableColumn } from '../../../../shared/models/table-column.interface';
 import { PaginationConfig } from '../../../../shared/models/pagination.interface';
-import { City, Governorate } from '../geography.models';
+import { City, CityBoundary, Governorate } from '../geography.models';
 import { GeographyService } from '../geography.service';
 import { LanguageService } from '../../../../i18n/language.service';
 import { NotificationService } from '../../../../shared/services/notification.service';
@@ -50,6 +50,7 @@ export class CitiesComponent implements OnInit {
   page = signal(1);
   columns: TableColumn[] = [];
   fields = signal<FormField[]>([]);
+  readonly citySteps = ['City details', 'Location', 'Boundary'];
 
   ngOnInit() {
     this.columns = [
@@ -107,9 +108,10 @@ export class CitiesComponent implements OnInit {
         required: true,
         width: 'full',
         options: this.governorates.map((g) => ({ value: g.id, label: `${g.nameEn} / ${g.nameAr}` })),
+        step: 0,
       },
-      { name: 'nameAr', label: this.language.t('geo.nameAr'), type: 'text', required: true },
-      { name: 'nameEn', label: this.language.t('geo.nameEn'), type: 'text', required: true },
+      { name: 'nameAr', label: this.language.t('geo.nameAr'), type: 'text', required: true, step: 0 },
+      { name: 'nameEn', label: this.language.t('geo.nameEn'), type: 'text', required: true, step: 0 },
       {
         name: 'locationMap',
         label: this.language.t('geo.mapLabel'),
@@ -117,10 +119,12 @@ export class CitiesComponent implements OnInit {
         width: 'full',
         latitudeField: 'latitude',
         longitudeField: 'longitude',
+        step: 1,
       },
-      { name: 'latitude', label: this.language.t('geo.latitude'), type: 'number', required: true },
-      { name: 'longitude', label: this.language.t('geo.longitude'), type: 'number', required: true },
-      { name: 'displayOrder', label: this.language.t('geo.displayOrder'), type: 'number', required: true, width: 'full' },
+      { name: 'latitude', label: this.language.t('geo.latitude'), type: 'number', required: true, step: 1 },
+      { name: 'longitude', label: this.language.t('geo.longitude'), type: 'number', required: true, step: 1 },
+      { name: 'displayOrder', label: this.language.t('geo.displayOrder'), type: 'number', required: true, width: 'full', step: 0 },
+      { name: 'boundary', label: 'City boundary', type: 'boundary-map', required: true, width: 'full', step: 2, hint: 'Draw the service area directly on the map.' },
     ];
   }
 
@@ -161,6 +165,8 @@ export class CitiesComponent implements OnInit {
     this.editing.set(row);
     try {
       await this.ensureGovernoratesLoaded();
+      const detail = await this.api.getCity(row.id);
+      this.editing.set(detail);
       this.fields.set(this.buildFields());
       this.showForm.set(true);
     } catch (err) {
@@ -179,6 +185,8 @@ export class CitiesComponent implements OnInit {
 
   async save(value: Record<string, string>) {
     this.submitting.set(true);
+    const boundary = value['boundary'] as unknown as CityBoundary;
+    if (!boundary) { this.notify.error('Draw a city boundary first.'); this.submitting.set(false); return; }
     const body = {
       governorateId: value['governorateId'],
       nameAr: value['nameAr'],
@@ -186,6 +194,7 @@ export class CitiesComponent implements OnInit {
       latitude: Number(value['latitude']),
       longitude: Number(value['longitude']),
       displayOrder: Number(value['displayOrder']),
+      boundary,
     };
     try {
       const activeEditing = this.editing();

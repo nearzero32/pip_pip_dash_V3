@@ -8,7 +8,7 @@ export interface FormOption {
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'password' | 'number' | 'textarea' | 'select' | 'map';
+  type: 'text' | 'password' | 'number' | 'textarea' | 'select' | 'map' | 'boundary-map';
   placeholder?: string;
   icon?: string; // SVG path
   required?: boolean;
@@ -26,4 +26,6 @@ export interface FormField {
   /** Form control names filled when type is `map`. */
   latitudeField?: string;
   longitudeField?: string;
+  /** Optional zero-based wizard step. */
+  step?: number;
 }

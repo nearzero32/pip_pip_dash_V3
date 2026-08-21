@@ -29,6 +29,8 @@ export interface City {
   createdAt: string;
   updatedAt: string;
   archivedAt: string | null;
+  hasBoundary: boolean;
+  boundary?: CityBoundary | null;
   governorate: {
     id: string;
     nameAr: string;
@@ -36,3 +38,8 @@ export interface City {
     status: 'ACTIVE' | 'INACTIVE';
   };
 }
+
+export type GeoJsonPosition = [number, number];
+export interface GeoJsonPolygon { type: 'Polygon'; coordinates: GeoJsonPosition[][]; }
+export interface GeoJsonMultiPolygon { type: 'MultiPolygon'; coordinates: GeoJsonPosition[][][]; }
+export type CityBoundary = GeoJsonPolygon | GeoJsonMultiPolygon;

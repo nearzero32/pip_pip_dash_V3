@@ -30,6 +30,7 @@
     [fields]="fields()"
     [initialData]="editing()"
     [isSubmitting]="submitting()"
+    [steps]="citySteps"
     (onClose)="closeForm()"
     (onSubmit)="save($event)"
   ></app-form-dialog>
