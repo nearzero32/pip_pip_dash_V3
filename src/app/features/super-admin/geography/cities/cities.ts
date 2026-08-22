@@ -189,8 +189,10 @@ export class CitiesComponent implements OnInit {
     if (!boundary) { this.notify.error('Draw a city boundary first.'); this.submitting.set(false); return; }
     const body = {
       governorateId: value['governorateId'],
-      nameAr: value['nameAr'],
-      nameEn: value['nameEn'],
+      translations: [
+        { locale: 'ar' as const, name: value['nameAr'].trim() },
+        { locale: 'en' as const, name: value['nameEn'].trim() },
+      ],
       latitude: Number(value['latitude']),
       longitude: Number(value['longitude']),
       displayOrder: Number(value['displayOrder']),

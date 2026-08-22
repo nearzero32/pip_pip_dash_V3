@@ -1,5 +1,6 @@
 export type CatalogStatus = 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
 export type MutableCatalogStatus = 'ACTIVE' | 'INACTIVE';
+export interface CatalogTranslation { readonly locale: 'ar' | 'en'; readonly name: string; }
 
 export interface CatalogImage {
   readonly assetId: string;
@@ -10,6 +11,7 @@ export interface MainCategory {
   readonly id: string;
   readonly cityId: string;
   readonly name: string;
+  readonly translations: readonly CatalogTranslation[];
   readonly status: CatalogStatus;
   readonly displayOrder: number;
   readonly image: CatalogImage;
@@ -48,14 +50,14 @@ export interface CatalogListPage<T> {
 
 export interface MainCategoryCreateBody {
   cityId: string;
-  name: string;
+  translations: CatalogTranslation[];
   imageAssetId: string;
   status?: MutableCatalogStatus;
   displayOrder?: number;
 }
 
 export interface MainCategoryPatch {
-  name?: string;
+  translations?: CatalogTranslation[];
   imageAssetId?: string;
   status?: MutableCatalogStatus;
   displayOrder?: number;

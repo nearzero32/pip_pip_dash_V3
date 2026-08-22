@@ -255,12 +255,12 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
       let row: MainCategory;
       if (original) {
         row = await this.catalog.updateMainCategory(original.id, this.cityId(), {
-          name: String(value['name']).trim(), status: value['status'] as MutableCatalogStatus,
+          translations: this.translationsFromForm(value), status: value['status'] as MutableCatalogStatus,
           displayOrder: Number(value['displayOrder']), ...(imageAssetId ? { imageAssetId } : {}),
         });
       } else {
         if (!imageAssetId) return;
-        row = await this.catalog.createMainCategory({ cityId: this.cityId(), name: String(value['name']).trim(), imageAssetId, status: value['status'] as MutableCatalogStatus, displayOrder: Number(value['displayOrder']) });
+        row = await this.catalog.createMainCategory({ cityId: this.cityId(), translations: this.translationsFromForm(value), imageAssetId, status: value['status'] as MutableCatalogStatus, displayOrder: Number(value['displayOrder']) });
       }
       await this.onSaved(row);
     } catch (err) { this.handleMutationError(err); }
@@ -290,7 +290,8 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
 
   private buildFields(create: boolean, displayOrder?: number): FormField[] {
     return [
-      { name: 'name', label: this.language.t('catalog.name'), type: 'text', required: true, step: 0 },
+      { name: 'nameAr', label: this.language.t('geo.nameAr'), type: 'text', required: true, step: 0 },
+      { name: 'nameEn', label: this.language.t('geo.nameEn'), type: 'text', required: true, step: 0 },
       {
         name: 'status', label: this.language.t('geo.status'), type: 'select', required: true,
         step: 0, defaultValue: create ? 'ACTIVE' : undefined,
@@ -302,6 +303,22 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
         hint: create ? 'Suggested next order. You can change it before saving.' : undefined,
       },
       { name: 'image', label: this.language.t('catalog.image'), type: 'file', required: create, width: 'full', step: 1 },
+    ];
+  }
+
+  formInitial(row: MainCategory | null): Record<string, unknown> | null {
+    if (!row) return null;
+    return {
+      ...row,
+      nameAr: row.translations.find((item) => item.locale === 'ar')?.name ?? row.name,
+      nameEn: row.translations.find((item) => item.locale === 'en')?.name ?? '',
+    };
+  }
+
+  private translationsFromForm(value: Record<string, unknown>) {
+    return [
+      { locale: 'ar' as const, name: String(value['nameAr'] ?? '').trim() },
+      { locale: 'en' as const, name: String(value['nameEn'] ?? '').trim() },
     ];
   }
 

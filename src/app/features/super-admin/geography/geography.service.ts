@@ -59,8 +59,7 @@ export class GeographyService {
 
   async createCity(body: {
     governorateId: string;
-    nameAr: string;
-    nameEn: string;
+    translations: Array<{ locale: 'ar' | 'en'; name: string }>;
     latitude: number;
     longitude: number;
     displayOrder: number;
@@ -74,8 +73,7 @@ export class GeographyService {
     id: string,
     body: Partial<{
       governorateId: string;
-      nameAr: string;
-      nameEn: string;
+      translations: Array<{ locale: 'ar' | 'en'; name: string }>;
       latitude: number;
       longitude: number;
       displayOrder: number;

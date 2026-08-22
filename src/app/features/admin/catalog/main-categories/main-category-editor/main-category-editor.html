@@ -16,10 +16,16 @@
       <p class="cat-editor__error">{{ nameError() }}</p>
     }
 
-    <label class="filter-field">
-      <span class="filter-field__label">{{ 'catalog.name' | t }}</span>
-      <input class="cat-editor__input" type="text" maxlength="100" [ngModel]="name()" (ngModelChange)="name.set($event)" />
-    </label>
+    <div class="cat-editor__translations">
+      <label class="filter-field" dir="rtl">
+        <span class="filter-field__label">{{ 'geo.nameAr' | t }}</span>
+        <input class="cat-editor__input" type="text" maxlength="100" [ngModel]="nameAr()" (ngModelChange)="nameAr.set($event)" />
+      </label>
+      <label class="filter-field" dir="ltr">
+        <span class="filter-field__label">{{ 'geo.nameEn' | t }}</span>
+        <input class="cat-editor__input" type="text" maxlength="100" [ngModel]="nameEn()" (ngModelChange)="nameEn.set($event)" />
+      </label>
+    </div>
     <p class="hint">{{ 'catalog.nameHint' | t }}</p>
 
     <label class="filter-field">

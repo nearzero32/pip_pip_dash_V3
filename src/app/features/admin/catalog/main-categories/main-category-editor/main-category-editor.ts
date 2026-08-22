@@ -21,7 +21,6 @@ import {
   MainCategory,
   MainCategoryPatch,
   MutableCatalogStatus,
-  validateArabicCatalogName,
 } from '../../catalog.models';
 
 @Component({
@@ -43,7 +42,8 @@ export class MainCategoryEditorComponent implements OnInit, OnDestroy {
   readonly closed = output<void>();
   readonly saved = output<MainCategory>();
 
-  readonly name = signal('');
+  readonly nameAr = signal('');
+  readonly nameEn = signal('');
   readonly status = signal<MutableCatalogStatus>('ACTIVE');
   readonly displayOrder = signal(0);
   readonly imageFile = signal<File | null>(null);
@@ -62,7 +62,8 @@ export class MainCategoryEditorComponent implements OnInit, OnDestroy {
     const category = this.category();
     this.original = category;
     if (category) {
-      this.name.set(category.name);
+      this.nameAr.set(category.translations.find((item) => item.locale === 'ar')?.name ?? category.name);
+      this.nameEn.set(category.translations.find((item) => item.locale === 'en')?.name ?? '');
       this.status.set(category.status === 'ARCHIVED' ? 'INACTIVE' : category.status);
       this.displayOrder.set(category.displayOrder);
       this.preview.set(category.image.url);
@@ -101,9 +102,8 @@ export class MainCategoryEditorComponent implements OnInit, OnDestroy {
 
   async submit() {
     if (this.saving()) return;
-    const nameError = validateArabicCatalogName(this.name());
-    if (nameError) {
-      this.nameError.set(this.language.t(nameError));
+    if (!this.nameAr().trim() || !this.nameEn().trim()) {
+      this.nameError.set(this.language.t('catalog.nameRequired'));
       return;
     }
     if (this.isCreate() && !this.imageFile()) {
@@ -119,7 +119,7 @@ export class MainCategoryEditorComponent implements OnInit, OnDestroy {
         const asset = await this.media.uploadImage(this.imageFile()!, 'CATEGORY_IMAGE', this.cityId());
         created.push(asset.id);
         const row = await this.catalog.createMainCategory({
-          cityId: this.cityId(), name: this.name().trim(),
+          cityId: this.cityId(), translations: this.translations(),
           imageAssetId: asset.id,
           status: this.status(),
           displayOrder: this.displayOrder(),
@@ -130,7 +130,7 @@ export class MainCategoryEditorComponent implements OnInit, OnDestroy {
       }
       const original = this.original!;
       const patch: MainCategoryPatch = {};
-      if (this.name().trim() !== original.name) patch.name = this.name().trim();
+      if (JSON.stringify(this.translations()) !== JSON.stringify(original.translations)) patch.translations = this.translations();
       if (this.status() !== original.status) patch.status = this.status();
       if (this.displayOrder() !== original.displayOrder) patch.displayOrder = this.displayOrder();
       if (this.imageFile()) {
@@ -156,11 +156,11 @@ export class MainCategoryEditorComponent implements OnInit, OnDestroy {
 
   private isDirty(): boolean {
     if (this.isCreate()) {
-      return Boolean(this.name() || this.imageFile());
+      return Boolean(this.nameAr() || this.nameEn() || this.imageFile());
     }
     const original = this.original!;
     return (
-      this.name().trim() !== original.name ||
+      JSON.stringify(this.translations()) !== JSON.stringify(original.translations) ||
       this.status() !== original.status ||
       this.displayOrder() !== original.displayOrder ||
       Boolean(this.imageFile())
@@ -194,5 +194,12 @@ export class MainCategoryEditorComponent implements OnInit, OnDestroy {
   private revoke() {
     if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
     this.previewUrl = null;
+  }
+
+  private translations() {
+    return [
+      { locale: 'ar' as const, name: this.nameAr().trim() },
+      { locale: 'en' as const, name: this.nameEn().trim() },
+    ];
   }
 }

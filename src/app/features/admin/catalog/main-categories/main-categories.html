@@ -138,7 +138,7 @@
   <app-form-dialog
     [title]="(editing() ? 'catalog.editMain' : 'catalog.addMain') | t"
     [fields]="fields()"
-    [initialData]="editing()"
+    [initialData]="formInitial(editing())"
     [isSubmitting]="mutating()"
     [steps]="['Details', 'Image']"
     (onClose)="editorOpen.set(false)"
