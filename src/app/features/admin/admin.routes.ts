@@ -56,12 +56,6 @@ export const ADMIN_ROUTES: Routes = [
   },
   { path: 'notifications', ...page('nav.notificationsAll') },
   {
-    path: 'categories',
-    loadComponent: () =>
-      import('./catalog/main-categories/main-categories').then((m) => m.MainCategoriesComponent),
-    data: { titleKey: 'nav.categoriesMain' },
-  },
-  {
     path: 'categories-sub',
     loadComponent: () =>
       import('./catalog/subcategories/subcategories').then((m) => m.SubcategoriesComponent),

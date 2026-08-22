@@ -19,6 +19,7 @@ export class MediaApiService {
     fileName: string;
     contentType: string;
     sizeBytes: number;
+    cityId?: string;
   }): Promise<MediaUploadIntent> {
     const response = await this.api.client.post<MediaUploadIntent>(
       '/api/v1/dashboard/media/upload-intents',
@@ -27,9 +28,10 @@ export class MediaApiService {
     return response.data;
   }
 
-  async confirm(assetId: string): Promise<MediaAsset> {
+  async confirm(assetId: string, cityId?: string): Promise<MediaAsset> {
     const response = await this.api.client.post<MediaAsset>(
-      `/api/v1/dashboard/media/${assetId}/confirm`
+      `/api/v1/dashboard/media/${assetId}/confirm`, undefined,
+      { params: cityId ? { cityId } : {} }
     );
     return response.data;
   }
@@ -41,8 +43,8 @@ export class MediaApiService {
     return response.data;
   }
 
-  async deleteUnattached(assetId: string): Promise<void> {
-    await this.api.client.delete(`/api/v1/dashboard/media/${assetId}`);
+  async deleteUnattached(assetId: string, cityId?: string): Promise<void> {
+    await this.api.client.delete(`/api/v1/dashboard/media/${assetId}`, { params: cityId ? { cityId } : {} });
   }
 
   /**
@@ -50,7 +52,8 @@ export class MediaApiService {
    */
   async uploadImage(
     file: File,
-    purpose: Extract<MediaPurpose, 'STORE_LOGO' | 'STORE_IMAGE' | 'CATEGORY_IMAGE' | 'PRODUCT_IMAGE'>
+    purpose: Extract<MediaPurpose, 'STORE_LOGO' | 'STORE_IMAGE' | 'CATEGORY_IMAGE' | 'PRODUCT_IMAGE'>,
+    cityId?: string,
   ): Promise<MediaAsset> {
     if (!isAllowedImageType(file.type)) {
       throw new MediaClientError(
@@ -66,6 +69,7 @@ export class MediaApiService {
       fileName: file.name || 'image',
       contentType: file.type,
       sizeBytes: file.size,
+      ...(purpose === 'CATEGORY_IMAGE' && cityId ? { cityId } : {}),
     });
     try {
       const putResponse = await fetch(intent.upload.url, {
@@ -76,31 +80,31 @@ export class MediaApiService {
         body: file,
       });
       if (!putResponse.ok) {
-        await this.bestEffortDelete(intent.asset.id);
+        await this.bestEffortDelete(intent.asset.id, cityId);
         throw new MediaClientError('MEDIA_PUT_FAILED', `Storage PUT failed (${putResponse.status})`);
       }
     } catch (err) {
       if (err instanceof MediaClientError) throw err;
-      await this.bestEffortDelete(intent.asset.id);
+      await this.bestEffortDelete(intent.asset.id, cityId);
       throw new MediaClientError('MEDIA_CORS', 'Presigned storage PUT failed (network or CORS)');
     }
     try {
-      const asset = await this.confirm(intent.asset.id);
+      const asset = await this.confirm(intent.asset.id, cityId);
       if (asset.status !== 'READY') {
-        await this.bestEffortDelete(asset.id);
+        await this.bestEffortDelete(asset.id, cityId);
         throw new MediaClientError('MEDIA_NOT_READY', 'Confirmed asset is not READY');
       }
       return asset;
     } catch (err) {
       if (err instanceof MediaClientError) throw err;
-      await this.bestEffortDelete(intent.asset.id);
+      await this.bestEffortDelete(intent.asset.id, cityId);
       throw new MediaClientError('MEDIA_CONFIRM_FAILED', 'Media confirm failed');
     }
   }
 
-  async bestEffortDelete(assetId: string): Promise<void> {
+  async bestEffortDelete(assetId: string, cityId?: string): Promise<void> {
     try {
-      await this.deleteUnattached(assetId);
+      await this.deleteUnattached(assetId, cityId);
     } catch {
       /* cleanup must not hide the original error */
     }

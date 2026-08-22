@@ -39,6 +39,7 @@ export class MainCategoryEditorComponent implements OnInit, OnDestroy {
   private notify = inject(NotificationService);
 
   readonly category = input<MainCategory | null>(null);
+  readonly cityId = input.required<string>();
   readonly closed = output<void>();
   readonly saved = output<MainCategory>();
 
@@ -115,10 +116,10 @@ export class MainCategoryEditorComponent implements OnInit, OnDestroy {
     const created: string[] = [];
     try {
       if (this.isCreate()) {
-        const asset = await this.media.uploadImage(this.imageFile()!, 'CATEGORY_IMAGE');
+        const asset = await this.media.uploadImage(this.imageFile()!, 'CATEGORY_IMAGE', this.cityId());
         created.push(asset.id);
         const row = await this.catalog.createMainCategory({
-          name: this.name().trim(),
+          cityId: this.cityId(), name: this.name().trim(),
           imageAssetId: asset.id,
           status: this.status(),
           displayOrder: this.displayOrder(),
@@ -133,7 +134,7 @@ export class MainCategoryEditorComponent implements OnInit, OnDestroy {
       if (this.status() !== original.status) patch.status = this.status();
       if (this.displayOrder() !== original.displayOrder) patch.displayOrder = this.displayOrder();
       if (this.imageFile()) {
-        const asset = await this.media.uploadImage(this.imageFile()!, 'CATEGORY_IMAGE');
+        const asset = await this.media.uploadImage(this.imageFile()!, 'CATEGORY_IMAGE', this.cityId());
         created.push(asset.id);
         patch.imageAssetId = asset.id;
       }
@@ -142,11 +143,11 @@ export class MainCategoryEditorComponent implements OnInit, OnDestroy {
         this.closed.emit();
         return;
       }
-      const row = await this.catalog.updateMainCategory(original.id, patch);
+      const row = await this.catalog.updateMainCategory(original.id, this.cityId(), patch);
       this.notify.success(this.language.t('catalog.mainUpdated'));
       this.saved.emit(row);
     } catch (err) {
-      await Promise.all(created.map((id) => this.media.bestEffortDelete(id)));
+      await Promise.all(created.map((id) => this.media.bestEffortDelete(id, this.cityId())));
       this.handleError(err);
     } finally {
       this.saving.set(false);

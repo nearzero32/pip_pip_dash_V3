@@ -8,7 +8,7 @@ export interface FormOption {
 export interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'password' | 'number' | 'textarea' | 'select' | 'map' | 'boundary-map';
+  type: 'text' | 'password' | 'number' | 'textarea' | 'select' | 'file' | 'map' | 'boundary-map';
   placeholder?: string;
   icon?: string; // SVG path
   required?: boolean;

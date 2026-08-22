@@ -164,6 +164,19 @@
                     (locationChange)="onMapLocation(field, $event)"
                   ></app-location-picker-map>
                 }
+
+                @if (field.type === 'file') {
+                  <div class="image-picker" [class.image-picker--selected]="form.get(field.name)?.value">
+                    <input [id]="field.name" class="image-picker__input" type="file" accept="image/png,image/jpeg,image/webp" (change)="onFileChange(field, $any($event.target).files?.[0])" />
+                    @if (filePreviews()[field.name]; as preview) {
+                      <img class="image-picker__preview" [src]="preview" [alt]="field.label" />
+                      <div class="image-picker__meta"><strong>{{ form.get(field.name)?.value?.name }}</strong><span>{{ form.get(field.name)?.value?.type }}</span></div>
+                      <button type="button" class="image-picker__remove" (click)="clearFile(field)">×</button>
+                    } @else {
+                      <label class="image-picker__drop" [attr.for]="field.name"><span class="image-picker__icon">↑</span><strong>Select an image</strong><span>PNG, JPG, or WebP</span></label>
+                    }
+                  </div>
+                }
                 @if (field.type === 'boundary-map') {
                   <app-city-boundary-map
                     [latitude]="form.get('latitude')?.value"

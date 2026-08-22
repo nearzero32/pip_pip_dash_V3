@@ -31,9 +31,9 @@ export class CatalogService {
     return this.list('/api/v1/dashboard/main-categories', query);
   }
 
-  async getMainCategory(id: string): Promise<MainCategory> {
+  async getMainCategory(id: string, cityId: string): Promise<MainCategory> {
     const response = await this.api.client.get<MainCategory>(
-      `/api/v1/dashboard/main-categories/${id}`
+      `/api/v1/dashboard/main-categories/${id}`, { params: { cityId } }
     );
     return response.data;
   }
@@ -47,18 +47,17 @@ export class CatalogService {
     return response.data;
   }
 
-  async updateMainCategory(id: string, patch: MainCategoryPatch): Promise<MainCategory> {
+  async updateMainCategory(id: string, cityId: string, patch: MainCategoryPatch): Promise<MainCategory> {
     const response = await this.api.client.patch<MainCategory>(
-      `/api/v1/dashboard/main-categories/${id}`,
-      patch
+      `/api/v1/dashboard/main-categories/${id}`, patch, { params: { cityId } }
     );
     this.invalidateLookups();
     return response.data;
   }
 
-  async archiveMainCategory(id: string): Promise<MainCategory> {
+  async archiveMainCategory(id: string, cityId: string): Promise<MainCategory> {
     const response = await this.api.client.delete<MainCategory>(
-      `/api/v1/dashboard/main-categories/${id}`
+      `/api/v1/dashboard/main-categories/${id}`, { params: { cityId } }
     );
     this.invalidateLookups();
     return response.data;
@@ -155,6 +154,7 @@ export class CatalogService {
         ...(query.search ? { search: query.search } : {}),
         ...(query.status ? { status: query.status } : {}),
         ...(query.mainCategoryId ? { mainCategoryId: query.mainCategoryId } : {}),
+        ...(query.cityId ? { cityId: query.cityId } : {}),
       },
     });
     const body = response.data;

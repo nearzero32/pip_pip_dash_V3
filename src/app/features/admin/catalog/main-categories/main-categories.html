@@ -5,6 +5,12 @@
     </div>
     <div class="page-toolbar__actions">
       <label class="filter-field">
+        <span class="filter-field__label">{{ 'nav.cities' | t }}</span>
+        <select class="city-picker" [ngModel]="cityId()" (ngModelChange)="onCityChange($event)">
+          @for (city of cities(); track city.id) { <option [value]="city.id">{{ city.nameAr }} — {{ city.nameEn }}</option> }
+        </select>
+      </label>
+      <label class="filter-field">
         <span class="filter-field__label">{{ 'catalog.search' | t }}</span>
         <input
           class="cat-search"
@@ -129,9 +135,13 @@
 }
 
 @if (editorOpen()) {
-  <app-main-category-editor
-    [category]="editing()"
-    (closed)="editorOpen.set(false)"
-    (saved)="onSaved($event)"
-  ></app-main-category-editor>
+  <app-form-dialog
+    [title]="(editing() ? 'catalog.editMain' : 'catalog.addMain') | t"
+    [fields]="fields()"
+    [initialData]="editing()"
+    [isSubmitting]="mutating()"
+    [steps]="['Details', 'Image']"
+    (onClose)="editorOpen.set(false)"
+    (onSubmit)="saveForm($event)"
+  ></app-form-dialog>
 }

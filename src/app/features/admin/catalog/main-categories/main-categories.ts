@@ -22,6 +22,11 @@ import {
 import { CatalogService } from '../catalog.service';
 import { CatalogStatus, MainCategory, MutableCatalogStatus } from '../catalog.models';
 import { MainCategoryEditorComponent } from './main-category-editor/main-category-editor';
+import { FormDialogComponent } from '../../../../shared/components/form-dialog/form-dialog';
+import { FormField } from '../../../../shared/models/form-field.interface';
+import { MediaApiService } from '../../../../core/media/media-api.service';
+import { GeographyService } from '../../../super-admin/geography/geography.service';
+import { City } from '../../../super-admin/geography/geography.models';
 
 @Component({
   selector: 'app-main-categories',
@@ -31,7 +36,7 @@ import { MainCategoryEditorComponent } from './main-category-editor/main-categor
     TableComponent,
     ConfirmationDialogComponent,
     TranslatePipe,
-    MainCategoryEditorComponent,
+    FormDialogComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './main-categories.html',
@@ -41,6 +46,11 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
   private catalog = inject(CatalogService);
   private language = inject(LanguageService);
   private notify = inject(NotificationService);
+  private geography = inject(GeographyService);
+  private media = inject(MediaApiService);
+
+  readonly cities = signal<City[]>([]);
+  readonly cityId = signal('');
 
   readonly data = signal<MainCategory[]>([]);
   readonly pagination = signal<PaginationConfig | null>(null);
@@ -55,6 +65,7 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
   readonly editing = signal<MainCategory | null>(null);
   readonly confirmArchive = signal(false);
   readonly mutating = signal(false);
+  readonly fields = signal<FormField[]>([]);
 
   columns: TableColumn[] = [];
   private listSeq = 0;
@@ -82,7 +93,7 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
       { key: 'displayOrder', label: this.language.t('catalog.displayOrder') },
       { key: 'createdAt', label: this.language.t('geo.createdAt'), type: 'date' },
     ];
-    void this.loadList(1);
+    void this.loadCities();
   }
 
   ngOnDestroy() {
@@ -104,6 +115,12 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
     void this.loadList(page);
   }
 
+  onCityChange(cityId: string) {
+    this.cityId.set(cityId);
+    this.selected.set(null);
+    void this.loadList(1);
+  }
+
   onView(row: MainCategory) {
     this.selected.set(row);
   }
@@ -114,6 +131,7 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
 
   openCreate() {
     this.editing.set(null);
+    this.fields.set(this.buildFields(true));
     this.editorOpen.set(true);
   }
 
@@ -121,6 +139,7 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
     const row = this.selected();
     if (!row || row.status === 'ARCHIVED') return;
     this.editing.set(row);
+    this.fields.set(this.buildFields(false));
     this.editorOpen.set(true);
   }
 
@@ -136,7 +155,7 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
     if (!row || row.status === 'ARCHIVED') return;
     this.mutating.set(true);
     try {
-      const updated = await this.catalog.updateMainCategory(row.id, { status });
+      const updated = await this.catalog.updateMainCategory(row.id, this.cityId(), { status });
       this.selected.set(updated);
       this.notify.success(this.language.t('catalog.mainUpdated'));
       await this.loadList(this.page());
@@ -152,7 +171,7 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
     if (!row) return;
     this.mutating.set(true);
     try {
-      const updated = await this.catalog.archiveMainCategory(row.id);
+      const updated = await this.catalog.archiveMainCategory(row.id, this.cityId());
       this.confirmArchive.set(false);
       this.selected.set(updated);
       this.notify.success(this.language.t('catalog.mainArchived'));
@@ -180,7 +199,13 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.page.set(page);
     try {
+      if (!this.cityId()) {
+        this.data.set([]);
+        this.pagination.set(null);
+        return;
+      }
       const result = await this.catalog.listMainCategories({
+        cityId: this.cityId(),
         page,
         limit: 20,
         search: this.search().trim() || undefined,
@@ -218,6 +243,50 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
     } finally {
       if (seq === this.listSeq) this.isLoading.set(false);
     }
+  }
+
+  async saveForm(value: Record<string, unknown>) {
+    this.mutating.set(true);
+    const original = this.editing();
+    const file = value['image'] instanceof File ? value['image'] : null;
+    try {
+      let imageAssetId: string | undefined;
+      if (file) imageAssetId = (await this.media.uploadImage(file, 'CATEGORY_IMAGE', this.cityId())).id;
+      let row: MainCategory;
+      if (original) {
+        row = await this.catalog.updateMainCategory(original.id, this.cityId(), {
+          name: String(value['name']).trim(), status: value['status'] as MutableCatalogStatus,
+          displayOrder: Number(value['displayOrder']), ...(imageAssetId ? { imageAssetId } : {}),
+        });
+      } else {
+        if (!imageAssetId) return;
+        row = await this.catalog.createMainCategory({ cityId: this.cityId(), name: String(value['name']).trim(), imageAssetId, status: value['status'] as MutableCatalogStatus, displayOrder: Number(value['displayOrder']) });
+      }
+      await this.onSaved(row);
+    } catch (err) { this.handleMutationError(err); }
+    finally { this.mutating.set(false); }
+  }
+
+  private async loadCities() {
+    try {
+      const result = await this.geography.listCities(1, 100);
+      this.cities.set(result.data);
+      const initial = result.data.find((city) => city.status !== 'ARCHIVED')?.id ?? '';
+      if (initial) this.onCityChange(initial);
+      else this.isLoading.set(false);
+    } catch {
+      this.isLoading.set(false);
+      this.notify.error(this.language.t('common.unexpectedError'));
+    }
+  }
+
+  private buildFields(create: boolean): FormField[] {
+    return [
+      { name: 'name', label: this.language.t('catalog.name'), type: 'text', required: true, step: 0 },
+      { name: 'status', label: this.language.t('geo.status'), type: 'select', required: true, step: 0, options: [{ value: 'ACTIVE', label: this.language.t('status.ACTIVE') }, { value: 'INACTIVE', label: this.language.t('status.INACTIVE') }] },
+      { name: 'displayOrder', label: this.language.t('catalog.displayOrder'), type: 'number', required: true, step: 0 },
+      { name: 'image', label: this.language.t('catalog.image'), type: 'file', required: create, width: 'full', step: 1 },
+    ];
   }
 
   private handleMutationError(err: unknown) {

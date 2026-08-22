@@ -62,6 +62,7 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly submitted = signal(false);
   readonly openFieldHelp = signal<string | null>(null);
   readonly activeStep = signal(0);
+  readonly filePreviews = signal<Record<string, string>>({});
 
   private unregisterOverlay: (() => void) | null = null;
 
@@ -80,6 +81,7 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy() {
     this.unregisterOverlay?.();
     this.unregisterOverlay = null;
+    Object.values(this.filePreviews()).forEach((url) => URL.revokeObjectURL(url));
   }
 
   initializeForm() {
@@ -153,6 +155,26 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
 
   hintId(fieldName: string): string {
     return `field-hint-${fieldName}`;
+  }
+
+  onFileChange(field: FormField, file: File | undefined) {
+    const previous = this.filePreviews()[field.name];
+    if (previous) URL.revokeObjectURL(previous);
+    this.filePreviews.update((current) => ({
+      ...current,
+      ...(file ? { [field.name]: URL.createObjectURL(file) } : { [field.name]: '' }),
+    }));
+    this.form.get(field.name)?.setValue(file ?? null);
+    this.form.get(field.name)?.markAsTouched();
+    this.onFieldChange.emit({ fieldName: field.name, value: file ?? null, formValue: this.form.value });
+  }
+
+  clearFile(field: FormField) {
+    const previous = this.filePreviews()[field.name];
+    if (previous) URL.revokeObjectURL(previous);
+    this.filePreviews.update((current) => ({ ...current, [field.name]: '' }));
+    this.form.get(field.name)?.setValue(null);
+    this.form.get(field.name)?.markAsTouched();
   }
 
   helpId(fieldName: string): string {

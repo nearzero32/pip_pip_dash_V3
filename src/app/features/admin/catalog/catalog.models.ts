@@ -8,6 +8,7 @@ export interface CatalogImage {
 
 export interface MainCategory {
   readonly id: string;
+  readonly cityId: string;
   readonly name: string;
   readonly status: CatalogStatus;
   readonly displayOrder: number;
@@ -30,6 +31,7 @@ export interface Subcategory {
 }
 
 export interface CatalogListQuery {
+  cityId?: string;
   page?: number;
   limit?: number;
   search?: string;
@@ -45,6 +47,7 @@ export interface CatalogListPage<T> {
 }
 
 export interface MainCategoryCreateBody {
+  cityId: string;
   name: string;
   imageAssetId: string;
   status?: MutableCatalogStatus;
