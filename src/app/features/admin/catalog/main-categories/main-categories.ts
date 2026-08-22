@@ -131,7 +131,7 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
 
   openCreate() {
     this.editing.set(null);
-    this.fields.set(this.buildFields(true));
+    this.fields.set(this.buildFields(true, this.suggestDisplayOrder()));
     this.editorOpen.set(true);
   }
 
@@ -280,11 +280,27 @@ export class MainCategoriesComponent implements OnInit, OnDestroy {
     }
   }
 
-  private buildFields(create: boolean): FormField[] {
+  private suggestDisplayOrder(): number {
+    const highest = this.data().reduce(
+      (max, category) => Math.max(max, category.displayOrder),
+      0,
+    );
+    return highest + 1;
+  }
+
+  private buildFields(create: boolean, displayOrder?: number): FormField[] {
     return [
       { name: 'name', label: this.language.t('catalog.name'), type: 'text', required: true, step: 0 },
-      { name: 'status', label: this.language.t('geo.status'), type: 'select', required: true, step: 0, options: [{ value: 'ACTIVE', label: this.language.t('status.ACTIVE') }, { value: 'INACTIVE', label: this.language.t('status.INACTIVE') }] },
-      { name: 'displayOrder', label: this.language.t('catalog.displayOrder'), type: 'number', required: true, step: 0 },
+      {
+        name: 'status', label: this.language.t('geo.status'), type: 'select', required: true,
+        step: 0, defaultValue: create ? 'ACTIVE' : undefined,
+        options: [{ value: 'ACTIVE', label: this.language.t('status.ACTIVE') }, { value: 'INACTIVE', label: this.language.t('status.INACTIVE') }],
+      },
+      {
+        name: 'displayOrder', label: this.language.t('catalog.displayOrder'), type: 'number',
+        required: true, step: 0, defaultValue: create ? displayOrder : undefined,
+        hint: create ? 'Suggested next order. You can change it before saving.' : undefined,
+      },
       { name: 'image', label: this.language.t('catalog.image'), type: 'file', required: create, width: 'full', step: 1 },
     ];
   }
