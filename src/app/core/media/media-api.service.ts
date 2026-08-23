@@ -69,7 +69,7 @@ export class MediaApiService {
       fileName: file.name || 'image',
       contentType: file.type,
       sizeBytes: file.size,
-      ...(purpose === 'CATEGORY_IMAGE' && cityId ? { cityId } : {}),
+      ...(cityId ? { cityId } : {}),
     });
     try {
       const putResponse = await fetch(intent.upload.url, {

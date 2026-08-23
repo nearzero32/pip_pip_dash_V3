@@ -3,10 +3,22 @@ import { superAdminGuard } from '../../core/auth/auth.guard';
 
 export const SUPER_ADMIN_ROUTES: Routes = [
   {
+    path: 'stores',
+    loadComponent: () => import('./stores/stores').then((m) => m.SuperAdminStoresComponent),
+    canActivate: [superAdminGuard],
+    data: { titleKey: 'nav.storesActive' },
+  },
+  {
     path: 'main-categories',
     loadComponent: () => import('../admin/catalog/main-categories/main-categories').then((m) => m.MainCategoriesComponent),
     canActivate: [superAdminGuard],
     data: { titleKey: 'nav.categoriesMain' },
+  },
+  {
+    path: 'subcategories',
+    loadComponent: () => import('./catalog/subcategories/subcategories').then((m) => m.SuperAdminSubcategoriesComponent),
+    canActivate: [superAdminGuard],
+    data: { titleKey: 'nav.categoriesSub' },
   },
   {
     path: 'zones',

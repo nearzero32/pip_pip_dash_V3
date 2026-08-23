@@ -244,6 +244,14 @@ export const NAV_ITEMS: readonly NavItem[] = [
     ],
   },
   {
+    id: 'stores-super',
+    labelKey: 'nav.stores',
+    audience: 'super',
+    route: '/stores',
+    svgPath:
+      '<path d="M3 9l2-5h14l2 5"></path><path d="M3 9v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V9"></path><path d="M10 21V12h4v9"></path>',
+  },
+  {
     id: 'stores',
     labelKey: 'nav.stores',
     svgPath:
