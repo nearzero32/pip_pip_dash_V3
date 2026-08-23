@@ -1,4 +1,10 @@
-export type MediaPurpose = 'CATEGORY_IMAGE' | 'STORE_LOGO' | 'STORE_IMAGE' | 'PRODUCT_IMAGE';
+export type MediaPurpose =
+  | 'CATEGORY_IMAGE'
+  | 'STORE_LOGO'
+  | 'STORE_IMAGE'
+  | 'PRODUCT_IMAGE'
+  | 'DRIVER_PHOTO'
+  | 'DRIVER_DOCUMENT';
 
 export type MediaStatus = 'PENDING_UPLOAD' | 'READY' | 'DELETE_PENDING' | 'DELETED';
 

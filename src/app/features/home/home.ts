@@ -57,6 +57,13 @@ const SUPER_ADMIN_GROUPS: readonly HomeActionGroup[] = [
         route: '/city-admins',
         icon: 'admins',
       },
+      {
+        id: 'driver-management',
+        labelKey: 'nav.drivers',
+        descriptionKey: 'home.action.driverManagement',
+        route: '/driver-management',
+        icon: 'drivers',
+      },
     ],
   },
   {

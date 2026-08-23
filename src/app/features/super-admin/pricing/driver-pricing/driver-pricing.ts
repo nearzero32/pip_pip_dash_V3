@@ -10,12 +10,13 @@ import { NotificationService } from '../../../../shared/services/notification.se
 import { TranslatePipe } from '../../../../i18n/translate.pipe';
 import { apiErrorMessage, getApiErrorStatus, isApiErrorCode } from '../../../../core/http/api-error';
 import { DriverPricingFormComponent, DriverPricingFormValue } from './driver-pricing-form';
+import { SelectControlComponent, type SelectControlOption } from '../../../../shared/components/select-control/select-control';
 
 
 @Component({
   selector: 'app-driver-pricing',
   standalone: true,
-  imports: [CommonModule, FormsModule, DriverPricingFormComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, DriverPricingFormComponent, TranslatePipe, SelectControlComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './driver-pricing.html',
   styleUrl: './driver-pricing.css',
@@ -59,6 +60,10 @@ export class DriverPricingComponent implements OnInit {
     this.cityId.set(id);
     this.current.set(null);
     this.load();
+  }
+
+  cityOptions(): readonly SelectControlOption[] {
+    return this.cities().map((city) => ({ value: city.id, label: this.language.lang() === 'ar' ? city.nameAr : city.nameEn }));
   }
 
   async load() {

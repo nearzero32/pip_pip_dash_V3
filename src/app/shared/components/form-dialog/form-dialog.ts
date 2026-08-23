@@ -18,6 +18,7 @@ import { LanguageService } from '../../../i18n/language.service';
 import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { LocationPickerMapComponent, MapPoint } from '../location-picker-map/location-picker-map';
 import { CityBoundaryMapComponent } from '../city-boundary-map/city-boundary-map';
+import { SelectControlComponent, SelectControlOption } from '../select-control/select-control';
 import { registerDialogOverlay } from '../dialog-layer';
 
 const FOCUSABLE =
@@ -34,7 +35,7 @@ const PASSWORD_ALPHABET = PASSWORD_CHARACTER_SETS.join('');
 @Component({
   selector: 'app-form-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, LocationPickerMapComponent, CityBoundaryMapComponent],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, LocationPickerMapComponent, CityBoundaryMapComponent, SelectControlComponent],
   templateUrl: './form-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './form-dialog.css',
@@ -47,6 +48,8 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() submitButtonText: string = '';
   @Input() cancelButtonText: string = '';
   @Input() steps: string[] = [];
+  /** Enables the shared modern select control without changing legacy forms. */
+  @Input() modernSelect = false;
 
   @Output() onClose = new EventEmitter<void>();
   @Output() onSubmit = new EventEmitter<any>();
@@ -322,6 +325,9 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
     if (control?.hasError('email')) {
       return this.language.t('common.invalidEmail');
     }
+    if (control?.hasError('pattern')) {
+      return this.language.t('common.invalidFormat');
+    }
     return '';
   }
 
@@ -357,6 +363,14 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   isMultiOptionSelected(fieldName: string, value: string | number | boolean): boolean {
     const selected = this.form.get(fieldName)?.value;
     return Array.isArray(selected) && selected.map(String).includes(String(value));
+  }
+
+  selectOptions(field: FormField): readonly SelectControlOption[] {
+    return (field.options ?? []).map((option) => ({
+      value: String(option[field.optionValue || 'value']),
+      label: String(option[field.optionLabel || 'label']),
+      disabled: Boolean(option.disabled),
+    }));
   }
 
   toggleMultiOption(fieldName: string, value: string | number | boolean, checked: boolean) {

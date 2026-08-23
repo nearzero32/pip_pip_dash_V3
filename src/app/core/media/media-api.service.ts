@@ -43,6 +43,11 @@ export class MediaApiService {
     return response.data;
   }
 
+  async getDownloadUrl(assetId: string, cityId?: string): Promise<string> {
+    const response = await this.api.client.get<{ url: string }>(`/api/v1/dashboard/media/${assetId}/download`, { params: cityId ? { cityId } : {} });
+    return response.data.url;
+  }
+
   async deleteUnattached(assetId: string, cityId?: string): Promise<void> {
     await this.api.client.delete(`/api/v1/dashboard/media/${assetId}`, { params: cityId ? { cityId } : {} });
   }
@@ -52,7 +57,7 @@ export class MediaApiService {
    */
   async uploadImage(
     file: File,
-    purpose: Extract<MediaPurpose, 'STORE_LOGO' | 'STORE_IMAGE' | 'CATEGORY_IMAGE' | 'PRODUCT_IMAGE'>,
+    purpose: Extract<MediaPurpose, 'STORE_LOGO' | 'STORE_IMAGE' | 'CATEGORY_IMAGE' | 'PRODUCT_IMAGE' | 'DRIVER_PHOTO' | 'DRIVER_DOCUMENT'>,
     cityId?: string,
   ): Promise<MediaAsset> {
     if (!isAllowedImageType(file.type)) {

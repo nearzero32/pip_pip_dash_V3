@@ -1,6 +1,9 @@
 <section class="feature-page">
   <div class="page-toolbar"><div class="page-toolbar__context"><p class="hint">{{ 'nav.categoriesSub' | t }}</p></div><div class="page-toolbar__actions"><button class="add-btn" type="button" [disabled]="!mainId()" (click)="create()">{{ 'common.add' | t }}</button></div></div>
-  <div class="filters"><label>{{ 'nav.cities' | t }}<select [ngModel]="cityId()" (ngModelChange)="selectCity($event)"><option value="">—</option>@for (city of cities(); track city.id) { <option [value]="city.id">{{ cityLabel(city) }}</option> }</select></label><label>{{ 'catalog.parent' | t }}<select [disabled]="!cityId()" [ngModel]="mainId()" (ngModelChange)="selectMain($event)"><option value="">—</option>@for (main of mains(); track main.id) { <option [value]="main.id">{{ label(main) }}</option> }</select></label></div>
+  <div class="filters">
+    <app-select-control [label]="'nav.cities' | t" [placeholder]="'common.select' | t" [value]="cityId()" [options]="cityOptions()" (valueChange)="selectCity($event)"></app-select-control>
+    <app-select-control [label]="'catalog.parent' | t" [placeholder]="'common.select' | t" [value]="mainId()" [options]="mainOptions()" [disabled]="!cityId()" (valueChange)="selectMain($event)"></app-select-control>
+  </div>
   @if (mainId()) { <app-table [data]="rows()" [columns]="columns" [isLoading]="loading()" [allowDelete]="false" rowKey="id" (onEdit)="edit($event)"></app-table> }
 </section>
-@if (open()) { <app-form-dialog [title]="(editing() ? 'catalog.editSub' : 'catalog.addSub') | t" [fields]="fields()" [initialData]="initialData()" [isSubmitting]="saving()" [steps]="['Details', 'Settings']" (onClose)="open.set(false)" (onSubmit)="save($event)"></app-form-dialog> }
+@if (open()) { <app-form-dialog [modernSelect]="true" [title]="(editing() ? 'catalog.editSub' : 'catalog.addSub') | t" [fields]="fields()" [initialData]="initialData()" [isSubmitting]="saving()" [steps]="['Details', 'Settings']" (onClose)="open.set(false)" (onSubmit)="save($event)"></app-form-dialog> }

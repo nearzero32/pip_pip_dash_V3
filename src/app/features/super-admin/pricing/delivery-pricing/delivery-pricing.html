@@ -15,32 +15,8 @@
           [attr.aria-label]="'pricing.search' | t"
         />
       </label>
-      <label class="filter-field">
-        <span class="filter-field__label">{{ 'geo.status' | t }}</span>
-        <select
-          class="city-picker"
-          [ngModel]="statusFilter()"
-          (ngModelChange)="onStatusChange($event)"
-        >
-          <option value="">{{ 'pricing.allStatuses' | t }}</option>
-          <option value="DRAFT">{{ 'status.DRAFT' | t }}</option>
-          <option value="ACTIVE">{{ 'status.ACTIVE' | t }}</option>
-          <option value="INACTIVE">{{ 'status.INACTIVE' | t }}</option>
-        </select>
-      </label>
-      <label class="filter-field">
-        <span class="filter-field__label">{{ 'common.city' | t }}</span>
-        <select
-          class="city-picker"
-          [ngModel]="cityId()"
-          (ngModelChange)="onCityChange($event)"
-          [attr.aria-label]="'common.city' | t"
-        >
-          @for (city of cities(); track city.id) {
-            <option [value]="city.id">{{ city.nameEn }}</option>
-          }
-        </select>
-      </label>
+      <app-select-control class="filter-field" [label]="'geo.status' | t" [placeholder]="'pricing.allStatuses' | t" [value]="statusFilter()" [options]="statusOptions()" (valueChange)="onStatusChange($event)"></app-select-control>
+      <app-select-control class="filter-field" [label]="'common.city' | t" [value]="cityId()" [options]="cityOptions()" (valueChange)="onCityChange($event)"></app-select-control>
       <button class="add-btn" type="button" (click)="showForm.set(true)">{{ 'pricing.addAndActivate' | t }}</button>
     </div>
   </div>
@@ -60,6 +36,7 @@
 
 @if (showForm()) {
   <app-form-dialog
+    [modernSelect]="true"
     [title]="'pricing.addAndActivate' | t"
     [fields]="fields"
     [isSubmitting]="submitting()"

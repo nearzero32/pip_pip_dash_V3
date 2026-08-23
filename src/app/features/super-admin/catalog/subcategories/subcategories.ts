@@ -10,6 +10,7 @@ import { GeographyService } from '../../geography/geography.service';
 import type { City } from '../../geography/geography.models';
 import { TableComponent } from '../../../../shared/components/table/table';
 import { FormDialogComponent } from '../../../../shared/components/form-dialog/form-dialog';
+import { SelectControlComponent, type SelectControlOption } from '../../../../shared/components/select-control/select-control';
 import type { TableColumn } from '../../../../shared/models/table-column.interface';
 import type { FormField } from '../../../../shared/models/form-field.interface';
 
@@ -20,7 +21,7 @@ type Page<T> = { data: T[]; page: number; limit: number; total: number };
 
 @Component({
   selector: 'app-super-admin-subcategories', standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, TableComponent, FormDialogComponent],
+  imports: [CommonModule, FormsModule, TranslatePipe, TableComponent, FormDialogComponent, SelectControlComponent],
   templateUrl: './subcategories.html', styleUrl: './subcategories.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -42,6 +43,8 @@ export class SuperAdminSubcategoriesComponent {
 
   async ngOnInit() { await this.loadCities(); }
   cityLabel(city: City) { return this.language.lang() === 'en' ? city.nameEn : city.nameAr; }
+  cityOptions(): readonly SelectControlOption[] { return this.cities().map((city) => ({ value: city.id, label: this.cityLabel(city) })); }
+  mainOptions(): readonly SelectControlOption[] { return this.mains().map((main) => ({ value: main.id, label: this.label(main) })); }
   label(item: { name: string; translations?: Translation[] }) { const locale = this.language.lang(); return item.translations?.find((x) => x.locale === locale)?.name ?? item.name; }
   async selectCity(id: string) { this.cityId.set(id); this.mainId.set(''); this.rows.set([]); if (!id) return; await this.loadMains(); }
   async selectMain(id: string) { this.mainId.set(id); if (id) await this.loadRows(); else this.rows.set([]); }

@@ -4,19 +4,7 @@
       <p class="hint">{{ 'pricing.driverHint' | t }}</p>
     </div>
     <div class="page-toolbar__actions">
-      <label class="filter-field">
-        <span class="filter-field__label">{{ 'common.city' | t }}</span>
-        <select
-          class="city-picker"
-          [ngModel]="cityId()"
-          (ngModelChange)="onCityChange($event)"
-          [attr.aria-label]="'common.city' | t"
-        >
-          @for (city of cities(); track city.id) {
-            <option [value]="city.id">{{ city.nameEn }}</option>
-          }
-        </select>
-      </label>
+      <app-select-control class="filter-field" [label]="'common.city' | t" [value]="cityId()" [options]="cityOptions()" (valueChange)="onCityChange($event)"></app-select-control>
       <button class="add-btn" type="button" (click)="openForm()">{{ 'pricing.savePricing' | t }}</button>
     </div>
   </div>

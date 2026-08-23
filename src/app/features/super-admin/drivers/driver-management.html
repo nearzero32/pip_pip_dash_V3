@@ -1,0 +1,49 @@
+<section class="feature-page">
+  <div class="page-toolbar">
+    <div class="page-toolbar__context">
+      <p class="hint">{{ 'drivers.managementHint' | t }}</p>
+    </div>
+    <div class="page-toolbar__actions">
+      <app-select-control
+        class="driver-management__city"
+        id="driver-management-city"
+        [label]="'common.city' | t"
+        [placeholder]="'drivers.allCities' | t"
+        [value]="selectedCityId()"
+        [options]="cityOptions()"
+        (valueChange)="onCityChanged($event)"
+      ></app-select-control>
+      <button class="add-btn" type="button" [disabled]="!selectedCityId()" (click)="openCreate()">
+        {{ 'drivers.add' | t }}
+      </button>
+    </div>
+  </div>
+
+  <app-table
+    [data]="data()"
+    [columns]="columns"
+    [pagination]="pagination()"
+    [isLoading]="isLoading()"
+    [allowDelete]="false"
+    [allowView]="true"
+    [allowPassword]="true"
+    rowKey="accountId"
+    (pageChange)="load($event)"
+    (onEdit)="openEdit($event)"
+    (onView)="openDocuments($event)"
+    (onPassword)="openAccessCode($event)"
+  ></app-table>
+</section>
+@if (documentsOpen()) { <div class="modal-overlay" (click)="documentsOpen.set(false)"><section class="modal-content" (click)="$event.stopPropagation()"><header class="modal-header"><h2>وثائق السائق</h2><button type="button" (click)="documentsOpen.set(false)">×</button></header><div class="modal-body"><div class="form-grid">@for (document of documentLinks(); track document.url) { <a [href]="document.url" target="_blank" rel="noopener" class="add-btn">{{ document.label }}</a> }</div></div></section></div> }
+
+@if (showForm()) {
+  <app-form-dialog
+    [modernSelect]="true"
+    [title]="formTitle()"
+    [fields]="fields()"
+    [initialData]="formMode() === 'edit' ? editing() : null"
+    [isSubmitting]="submitting()"
+    (onClose)="closeForm()"
+    (onSubmit)="save($event)"
+  ></app-form-dialog>
+}

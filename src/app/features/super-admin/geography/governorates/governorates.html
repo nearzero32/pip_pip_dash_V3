@@ -21,6 +21,7 @@
 
 @if (showForm()) {
   <app-form-dialog
+    [modernSelect]="true"
     [title]="'geo.editGovernorate' | t"
     [fields]="fields"
     [initialData]="editing()"

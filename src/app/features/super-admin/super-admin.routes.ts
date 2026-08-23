@@ -10,7 +10,7 @@ export const SUPER_ADMIN_ROUTES: Routes = [
   },
   {
     path: 'main-categories',
-    loadComponent: () => import('../admin/catalog/main-categories/main-categories').then((m) => m.MainCategoriesComponent),
+    loadComponent: () => import('./catalog/main-categories/main-categories').then((m) => m.SuperAdminMainCategoriesComponent),
     canActivate: [superAdminGuard],
     data: { titleKey: 'nav.categoriesMain' },
   },
@@ -22,7 +22,7 @@ export const SUPER_ADMIN_ROUTES: Routes = [
   },
   {
     path: 'zones',
-    loadComponent: () => import('../admin/zones/zones').then((m) => m.ZonesComponent),
+    loadComponent: () => import('./zones/zones').then((m) => m.SuperAdminZonesComponent),
     canActivate: [superAdminGuard],
     data: { titleKey: 'nav.zones' },
   },
@@ -46,6 +46,13 @@ export const SUPER_ADMIN_ROUTES: Routes = [
       import('./city-admins/city-admins').then((m) => m.CityAdminsComponent),
     canActivate: [superAdminGuard],
     data: { titleKey: 'nav.cityAdmins' },
+  },
+  {
+    path: 'driver-management',
+    loadComponent: () =>
+      import('./drivers/driver-management').then((m) => m.DriverManagementComponent),
+    canActivate: [superAdminGuard],
+    data: { titleKey: 'nav.drivers' },
   },
   {
     path: 'delivery-pricing',

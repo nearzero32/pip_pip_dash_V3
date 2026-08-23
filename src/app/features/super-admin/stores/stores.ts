@@ -8,6 +8,7 @@ import { LanguageService } from '../../../i18n/language.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { MediaApiService } from '../../../core/media/media-api.service';
 import { FormDialogComponent } from '../../../shared/components/form-dialog/form-dialog';
+import { SelectControlComponent, type SelectControlOption } from '../../../shared/components/select-control/select-control';
 import type { FormField } from '../../../shared/models/form-field.interface';
 import { GeographyService } from '../geography/geography.service';
 import type { City } from '../geography/geography.models';
@@ -29,7 +30,7 @@ type Zone = { id: string; name: string; translations: Translation[]; status: str
 @Component({
   selector: 'app-super-admin-stores',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, FormDialogComponent],
+  imports: [CommonModule, FormsModule, TranslatePipe, FormDialogComponent, SelectControlComponent],
   templateUrl: './stores.html',
   styleUrl: './stores.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -69,6 +70,10 @@ export class SuperAdminStoresComponent {
   async ngOnInit() { await this.loadCities(); }
 
   cityLabel(city: City) { return this.language.lang() === 'en' ? city.nameEn : city.nameAr; }
+  cityOptions(): readonly SelectControlOption[] { return this.cities().map((city) => ({ value: city.id, label: this.cityLabel(city) })); }
+  statusOptions(): readonly SelectControlOption[] {
+    return (['DRAFT', 'ACTIVE', 'INACTIVE', 'ARCHIVED'] as const).map((value) => ({ value, label: this.language.t(`status.${value}`) }));
+  }
   storeLabel(store: { name: string; translations: Translation[] }) { return this.localized(store.name, store.translations); }
   categoryLabel(category: Store['mainCategory']) { return this.localized(category.name, category.translations ?? []); }
 
@@ -78,6 +83,7 @@ export class SuperAdminStoresComponent {
   }
 
   async applyFilters() { this.page.set(1); await this.load(); }
+  onStatusChanged(status: string) { this.status.set(status as '' | StoreStatus); void this.applyFilters(); }
   async previous() { if (!this.hasPrevious()) return; this.page.update((value) => value - 1); await this.load(); }
   async next() { if (!this.hasNext()) return; this.page.update((value) => value + 1); await this.load(); }
 

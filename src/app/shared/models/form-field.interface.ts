@@ -9,6 +9,8 @@ export interface FormField {
   name: string;
   label: string;
   type: 'text' | 'password' | 'number' | 'time' | 'textarea' | 'select' | 'multiselect' | 'file' | 'map' | 'boundary-map';
+  /** Set to false for fixed-format secrets such as numeric access codes. */
+  allowGeneratePassword?: boolean;
   placeholder?: string;
   icon?: string; // SVG path
   required?: boolean;

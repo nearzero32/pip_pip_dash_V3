@@ -54,6 +54,14 @@ export const NAV_ITEMS: readonly NavItem[] = [
       '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>',
   },
   {
+    id: 'driver-management',
+    labelKey: 'nav.drivers',
+    audience: 'super',
+    route: '/driver-management',
+    svgPath:
+      '<circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon>',
+  },
+  {
     id: 'pricing',
     labelKey: 'nav.pricing',
     audience: 'super',

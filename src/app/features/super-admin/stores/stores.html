@@ -5,9 +5,9 @@
   </header>
 
   <div class="filters">
-    <label><span>{{ 'nav.cities' | t }}</span><select [ngModel]="cityId()" (ngModelChange)="selectCity($event)"><option value="">—</option>@for (city of cities(); track city.id) { <option [value]="city.id">{{ cityLabel(city) }}</option> }</select></label>
+    <app-select-control [label]="'nav.cities' | t" [placeholder]="'common.select' | t" [value]="cityId()" [options]="cityOptions()" (valueChange)="selectCity($event)"></app-select-control>
     <label><span>{{ 'common.search' | t }}</span><input [disabled]="!cityId()" [ngModel]="search()" (ngModelChange)="search.set($event)" (keyup.enter)="applyFilters()" /></label>
-    <label><span>{{ 'geo.status' | t }}</span><select [disabled]="!cityId()" [ngModel]="status()" (ngModelChange)="status.set($event); applyFilters()"><option value="">—</option><option value="DRAFT">{{ 'status.DRAFT' | t }}</option><option value="ACTIVE">{{ 'status.ACTIVE' | t }}</option><option value="INACTIVE">{{ 'status.INACTIVE' | t }}</option><option value="ARCHIVED">{{ 'status.ARCHIVED' | t }}</option></select></label>
+    <app-select-control [label]="'geo.status' | t" [placeholder]="'common.select' | t" [value]="status()" [options]="statusOptions()" [disabled]="!cityId()" (valueChange)="onStatusChanged($event)"></app-select-control>
     <button type="button" class="add-btn" [disabled]="!cityId() || loading()" (click)="applyFilters()">{{ 'common.search' | t }}</button>
   </div>
 
@@ -17,6 +17,7 @@
 </section>
 @if (createOpen()) {
   <app-form-dialog
+    [modernSelect]="true"
     [title]="(editing() ? 'stores.edit' : 'stores.create') | t"
     [fields]="fields()"
     [initialData]="formInitialData()"

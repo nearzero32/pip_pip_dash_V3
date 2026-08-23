@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TableComponent } from '../../../../shared/components/table/table';
 import { FormDialogComponent } from '../../../../shared/components/form-dialog/form-dialog';
+import { SelectControlComponent, type SelectControlOption } from '../../../../shared/components/select-control/select-control';
 import { FormField } from '../../../../shared/models/form-field.interface';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog';
 import { TableColumn } from '../../../../shared/models/table-column.interface';
@@ -32,6 +33,7 @@ import { PaginationConfig } from '../../../../shared/models/pagination.interface
     FormsModule,
     TableComponent,
     FormDialogComponent,
+    SelectControlComponent,
     ConfirmationDialogComponent,
     TranslatePipe,
   ],
@@ -116,6 +118,14 @@ export class DeliveryPricingComponent implements OnInit, OnDestroy {
     this.data.set([]);
     this.page.set(1);
     void this.load(1);
+  }
+
+  cityOptions(): readonly SelectControlOption[] {
+    return this.cities().map((city) => ({ value: city.id, label: this.language.lang() === 'ar' ? city.nameAr : city.nameEn }));
+  }
+
+  statusOptions(): readonly SelectControlOption[] {
+    return (['DRAFT', 'ACTIVE', 'INACTIVE'] as const).map((value) => ({ value, label: this.language.t(`status.${value}`) }));
   }
 
   onSearchInput(value: string) {

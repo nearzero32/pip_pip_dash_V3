@@ -1,0 +1,321 @@
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Validators } from '@angular/forms';
+
+import { apiErrorMessage } from '../../../core/http/api-error';
+import { LanguageService } from '../../../i18n/language.service';
+import { TranslatePipe } from '../../../i18n/translate.pipe';
+import { FormDialogComponent } from '../../../shared/components/form-dialog/form-dialog';
+import { TableComponent } from '../../../shared/components/table/table';
+import { SelectControlComponent, SelectControlOption } from '../../../shared/components/select-control/select-control';
+import { FormField } from '../../../shared/models/form-field.interface';
+import { PaginationConfig } from '../../../shared/models/pagination.interface';
+import { TableColumn } from '../../../shared/models/table-column.interface';
+import { NotificationService } from '../../../shared/services/notification.service';
+import { MediaApiService } from '../../../core/media/media-api.service';
+import { City } from '../geography/geography.models';
+import { GeographyService } from '../geography/geography.service';
+import {
+  DriverOperationalStatus,
+  ManagedDriver,
+} from './driver-management.models';
+import { DriverManagementService } from './driver-management.service';
+
+type DriverFormMode = 'create' | 'edit' | 'accessCode';
+
+@Component({
+  selector: 'app-super-admin-driver-management',
+  standalone: true,
+  imports: [CommonModule, TableComponent, FormDialogComponent, SelectControlComponent, TranslatePipe],
+  templateUrl: './driver-management.html',
+  styleUrl: './driver-management.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class DriverManagementComponent implements OnInit {
+  private drivers = inject(DriverManagementService);
+  private geography = inject(GeographyService);
+  private language = inject(LanguageService);
+  private notify = inject(NotificationService);
+  private media = inject(MediaApiService);
+
+  data = signal<ManagedDriver[]>([]);
+  isLoading = signal(true);
+  submitting = signal(false);
+  showForm = signal(false);
+  formMode = signal<DriverFormMode>('create');
+  editing = signal<ManagedDriver | null>(null);
+  fields = signal<FormField[]>([]);
+  pagination = signal<PaginationConfig | null>(null);
+  selectedCityId = signal('');
+  documentsOpen = signal(false);
+  documentLinks = signal<Array<{ label: string; url: string }>>([]);
+  columns: TableColumn[] = [];
+
+  private readonly limit = 20;
+  private page = 1;
+  readonly cities = signal<City[]>([]);
+
+  ngOnInit() {
+    this.columns = [
+      { key: 'phone', label: this.language.t('drivers.phone') },
+      { key: 'cityName', label: this.language.t('common.city') },
+      { key: 'vehicleDescription', label: this.language.t('drivers.vehicle') },
+      {
+        key: 'operationalStatus',
+        label: this.language.t('drivers.operationalStatus'),
+        type: 'badge',
+        valueMap: {
+          PENDING_ACTIVATION: this.language.t('drivers.pendingActivation'),
+          ACTIVE: this.language.t('geo.active'),
+          SUSPENDED: this.language.t('drivers.suspended'),
+          CLOSED: this.language.t('drivers.closed'),
+        },
+        badgeClassMap: {
+          PENDING_ACTIVATION: 'badge-warning',
+          ACTIVE: 'badge-success',
+          SUSPENDED: 'badge-danger',
+          CLOSED: 'badge-default',
+        },
+      },
+    ];
+    this.load();
+  }
+
+  async load(page = this.page) {
+    this.isLoading.set(true);
+    try {
+      const [result, cityPage] = await Promise.all([
+        this.drivers.list(page, this.limit, this.selectedCityId() || undefined),
+        this.cities().length ? Promise.resolve(null) : this.geography.listCities(1, 100),
+      ]);
+      if (cityPage) this.cities.set(cityPage.data);
+      this.page = result.page;
+      this.data.set(
+        result.data.map((driver) => ({
+          ...driver,
+          cityName: this.cityName(driver.cityId),
+        })),
+      );
+      const pages = Math.max(1, Math.ceil(result.total / result.limit));
+      this.pagination.set({
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        pages,
+        hasNext: result.page < pages,
+        hasPrev: result.page > 1,
+      });
+    } catch (error) {
+      this.data.set([]);
+      this.pagination.set(null);
+      this.notify.error(apiErrorMessage(error, this.language.t('common.unexpectedError')));
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  openCreate() {
+    if (!this.selectedCityId()) return;
+    this.formMode.set('create');
+    this.editing.set(null);
+    this.fields.set(this.buildFields('create'));
+    this.showForm.set(true);
+  }
+
+  openEdit(driver: ManagedDriver) {
+    if (driver.cityId) this.selectedCityId.set(driver.cityId);
+    this.formMode.set('edit');
+    this.editing.set(driver);
+    this.fields.set(this.buildFields('edit'));
+    this.showForm.set(true);
+  }
+
+  onCityChanged(cityId: string) {
+    this.selectedCityId.set(cityId);
+    this.load(1);
+  }
+
+  cityOptions(): readonly SelectControlOption[] {
+    return this.cities().map((city) => ({
+      value: city.id,
+      label: `${city.nameEn} / ${city.nameAr}`,
+    }));
+  }
+
+  openAccessCode(driver: ManagedDriver) {
+    this.formMode.set('accessCode');
+    this.editing.set(driver);
+    this.fields.set(this.buildFields('accessCode'));
+    this.showForm.set(true);
+  }
+  async openDocuments(driver: ManagedDriver) {
+    if (!driver.cityId) return;
+    try {
+      const docs = await this.drivers.documents(driver.accountId);
+      this.documentLinks.set(await Promise.all(docs.map(async (doc) => ({ label: `${doc.documentType} — ${doc.side}`, url: await this.media.getDownloadUrl(doc.assetId, driver.cityId!) }))));
+      this.documentsOpen.set(true);
+    } catch (error) { this.notify.error(apiErrorMessage(error, this.language.t('common.unexpectedError'))); }
+  }
+
+  closeForm() {
+    this.showForm.set(false);
+    this.editing.set(null);
+  }
+
+  formTitle(): string {
+    return this.language.t(
+      {
+        create: 'drivers.add',
+        edit: 'drivers.edit',
+        accessCode: 'drivers.changeAccessCode',
+      }[this.formMode()],
+    );
+  }
+
+  async save(value: Record<string, unknown>) {
+    this.submitting.set(true);
+    try {
+      const current = this.editing();
+      if (this.formMode() === 'accessCode') {
+        if (!current) return;
+        await this.drivers.resetAccessCode(current.accountId, String(value['accessCode']));
+      } else if (this.formMode() === 'edit') {
+        if (!current) return;
+        const photo = value['driverPhoto'];
+        const driverPhotoAssetId = photo instanceof File
+          ? (await this.media.uploadImage(photo, 'DRIVER_PHOTO', this.selectedCityId())).id
+          : undefined;
+        const documentFiles = [['nationalIdFront', 'nationalIdFrontAssetId'], ['nationalIdBack', 'nationalIdBackAssetId'], ['residenceCardFront', 'residenceCardFrontAssetId'], ['residenceCardBack', 'residenceCardBackAssetId'], ['contract', 'contractAssetId']] as const;
+        const documentAssets = await Promise.all(documentFiles.map(async ([field, key]) => value[field] instanceof File ? [key, (await this.media.uploadImage(value[field] as File, 'DRIVER_DOCUMENT', this.selectedCityId())).id] as const : null));
+        await this.drivers.update(current.accountId, {
+          phone: String(value['phone']),
+          operationalStatus: value['operationalStatus'] as DriverOperationalStatus,
+          ...(driverPhotoAssetId ? { driverPhotoAssetId } : {}),
+          vehicleDescription: String(value['vehicleDescription'] ?? '') || null,
+          driverName: String(value['driverName']), fatherName: String(value['fatherName']), motherName: String(value['motherName']), alternatePhone: String(value['alternatePhone']),
+          vehicleType: String(value['vehicleType'] ?? '') || null, vehicleNumber: String(value['vehicleNumber'] ?? '') || null,
+          ...Object.fromEntries(documentAssets.flatMap((asset) => asset ? [asset] : [])),
+        });
+      } else {
+        const photo = value['driverPhoto'];
+        const documentFields = ['nationalIdFront', 'nationalIdBack', 'residenceCardFront', 'residenceCardBack', 'contract'] as const;
+        if (!(photo instanceof File) || documentFields.some((field) => !(value[field] instanceof File))) return;
+        const driverPhotoAssetId = (
+          await this.media.uploadImage(photo, 'DRIVER_PHOTO', this.selectedCityId())
+        ).id;
+        const documents = await Promise.all(documentFields.map((field) => this.media.uploadImage(value[field] as File, 'DRIVER_DOCUMENT', this.selectedCityId())));
+        await this.drivers.create({
+          phone: String(value['phone']),
+          accessCode: String(value['accessCode']),
+          cityId: this.selectedCityId(),
+          driverPhotoAssetId,
+          driverName: String(value['driverName']), fatherName: String(value['fatherName']), motherName: String(value['motherName']), alternatePhone: String(value['alternatePhone']),
+          nationalIdFrontAssetId: documents[0]!.id, nationalIdBackAssetId: documents[1]!.id,
+          residenceCardFrontAssetId: documents[2]!.id, residenceCardBackAssetId: documents[3]!.id, contractAssetId: documents[4]!.id,
+          ...(value['vehicleType'] ? { vehicleType: String(value['vehicleType']) } : {}),
+          ...(value['vehicleNumber'] ? { vehicleNumber: String(value['vehicleNumber']) } : {}),
+          ...(value['vehicleDescription']
+            ? { vehicleDescription: String(value['vehicleDescription']) }
+            : {}),
+        });
+      }
+      this.notify.success(this.language.t('common.success'));
+      this.closeForm();
+      await this.load();
+    } catch (error) {
+      this.notify.error(apiErrorMessage(error, this.language.t('common.unexpectedError')));
+    } finally {
+      this.submitting.set(false);
+    }
+  }
+
+  private cityName(cityId: string | null): string {
+    if (!cityId) return '—';
+    const city = this.cities().find((item) => item.id === cityId);
+    if (!city) return cityId;
+    return this.language.lang() === 'ar'
+      ? city.nameAr || city.nameEn
+      : city.nameEn || city.nameAr;
+  }
+
+  private buildFields(mode: DriverFormMode): FormField[] {
+    if (mode === 'accessCode') {
+      return [
+        {
+          name: 'accessCode',
+          label: this.language.t('drivers.newAccessCode'),
+          type: 'password',
+          required: true,
+          width: 'full',
+          validators: [Validators.pattern(/^[0-9]{6,12}$/)],
+          hint: this.language.t('drivers.accessCodeHint'),
+          allowGeneratePassword: false,
+        },
+      ];
+    }
+
+    const fields: FormField[] = [
+      {
+        name: 'phone',
+        label: this.language.t('drivers.phone'),
+        type: 'text',
+        required: true,
+      },
+      { name: 'driverName', label: 'اسم السائق', type: 'text', required: mode === 'create' },
+      { name: 'fatherName', label: 'اسم الأب', type: 'text', required: mode === 'create' },
+      { name: 'motherName', label: 'اسم الأم', type: 'text', required: mode === 'create' },
+      { name: 'alternatePhone', label: 'رقم هاتف آخر', type: 'text', required: mode === 'create' },
+      {
+        name: 'driverPhoto',
+        label: this.language.t('drivers.photo'),
+        type: 'file',
+        required: mode === 'create',
+        width: 'full',
+      },
+      {
+        name: 'vehicleDescription',
+        label: this.language.t('drivers.vehicle'),
+        type: 'textarea',
+        width: 'full',
+      },
+      { name: 'vehicleType', label: 'نوع الدراجة', type: 'text' },
+      { name: 'vehicleNumber', label: 'رقم الدراجة', type: 'text' },
+    ];
+    if (mode === 'create') {
+      fields.push(
+        { name: 'nationalIdFront', label: 'صورة البطاقة الوطنية الأمامية', type: 'file', required: true, width: 'full' },
+        { name: 'nationalIdBack', label: 'صورة البطاقة الوطنية الخلفية', type: 'file', required: true, width: 'full' },
+        { name: 'residenceCardFront', label: 'صورة بطاقة السكن الأمامية', type: 'file', required: true, width: 'full' },
+        { name: 'residenceCardBack', label: 'صورة بطاقة السكن الخلفية', type: 'file', required: true, width: 'full' },
+        { name: 'contract', label: 'صورة العقد', type: 'file', required: true, width: 'full' },
+      );
+      fields.splice(1, 0, {
+        name: 'accessCode',
+        label: this.language.t('drivers.accessCode'),
+        type: 'password',
+        required: true,
+        validators: [Validators.pattern(/^[0-9]{6,12}$/)],
+        hint: this.language.t('drivers.accessCodeHint'),
+        allowGeneratePassword: false,
+      });
+    } else {
+      fields.push(
+        { name: 'nationalIdFront', label: 'استبدال البطاقة الوطنية الأمامية', type: 'file', width: 'full' }, { name: 'nationalIdBack', label: 'استبدال البطاقة الوطنية الخلفية', type: 'file', width: 'full' },
+        { name: 'residenceCardFront', label: 'استبدال بطاقة السكن الأمامية', type: 'file', width: 'full' }, { name: 'residenceCardBack', label: 'استبدال بطاقة السكن الخلفية', type: 'file', width: 'full' }, { name: 'contract', label: 'استبدال العقد', type: 'file', width: 'full' },
+      );
+      fields.push({
+        name: 'operationalStatus',
+        label: this.language.t('drivers.operationalStatus'),
+        type: 'select',
+        required: true,
+        options: [
+          { value: 'PENDING_ACTIVATION', label: this.language.t('drivers.pendingActivation') },
+          { value: 'ACTIVE', label: this.language.t('geo.active') },
+          { value: 'SUSPENDED', label: this.language.t('drivers.suspended') },
+          { value: 'CLOSED', label: this.language.t('drivers.closed') },
+        ],
+      });
+    }
+    return fields;
+  }
+}

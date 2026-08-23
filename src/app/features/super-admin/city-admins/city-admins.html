@@ -24,6 +24,7 @@
 
 @if (showForm()) {
   <app-form-dialog
+    [modernSelect]="true"
     [title]="formTitle()"
     [fields]="fields()"
     [initialData]="formMode() === 'password' ? null : editing()"

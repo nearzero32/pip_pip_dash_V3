@@ -26,6 +26,7 @@
 
 @if (showForm()) {
   <app-form-dialog
+    [modernSelect]="true"
     [title]="(editing() ? 'geo.editCity' : 'geo.addCity') | t"
     [fields]="fields()"
     [initialData]="editing()"
