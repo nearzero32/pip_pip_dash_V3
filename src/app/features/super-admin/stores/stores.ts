@@ -7,6 +7,8 @@ import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { LanguageService } from '../../../i18n/language.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { MediaApiService } from '../../../core/media/media-api.service';
+import { FormDialogComponent } from '../../../shared/components/form-dialog/form-dialog';
+import type { FormField } from '../../../shared/models/form-field.interface';
 import { GeographyService } from '../geography/geography.service';
 import type { City } from '../geography/geography.models';
 
@@ -25,7 +27,7 @@ type Zone = { id: string; name: string; translations: Translation[]; status: str
 @Component({
   selector: 'app-super-admin-stores',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, FormDialogComponent],
   templateUrl: './stores.html',
   styleUrl: './stores.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,13 +58,15 @@ export class SuperAdminStoresComponent {
   readonly phone = signal(''); readonly latitude = signal<number | null>(null); readonly longitude = signal<number | null>(null);
   readonly displayOrder = signal(1); readonly mainCategoryId = signal(''); readonly subcategoryIds = signal<string[]>([]); readonly zoneIds = signal<string[]>([]);
   readonly logoFile = signal<File | null>(null); readonly formError = signal('');
+  readonly fields = signal<FormField[]>([]);
+  readonly formInitialData = signal<Record<string, unknown>>({});
   readonly pageSize = 25;
   readonly hasPrevious = computed(() => this.page() > 1);
   readonly hasNext = computed(() => this.page() * this.pageSize < this.total());
 
   async ngOnInit() { await this.loadCities(); }
 
-  cityLabel(city: City) { return this.localized(city.name, city.translations); }
+  cityLabel(city: City) { return this.language.lang() === 'en' ? city.nameEn : city.nameAr; }
   storeLabel(store: { name: string; translations: Translation[] }) { return this.localized(store.name, store.translations); }
   categoryLabel(category: Store['mainCategory']) { return this.localized(category.name, category.translations ?? []); }
 
@@ -98,7 +102,7 @@ export class SuperAdminStoresComponent {
     this.nameAr.set(''); this.nameEn.set(''); this.addressAr.set(''); this.addressEn.set(''); this.phone.set('');
     this.latitude.set(null); this.longitude.set(null); this.mainCategoryId.set(''); this.subcategoryIds.set([]); this.zoneIds.set([]);
     this.editing.set(null); this.logoFile.set(null); this.formError.set(''); this.displayOrder.set(this.rows().reduce((max, store) => Math.max(max, store.displayOrder), 0) + 1);
-    this.createOpen.set(true);
+    this.formInitialData.set({ displayOrder: this.displayOrder(), subcategoryIds: [], zoneIds: [] }); this.fields.set(this.buildFields(true)); this.createOpen.set(true);
   }
 
   openEdit(store: Store) {
@@ -106,7 +110,9 @@ export class SuperAdminStoresComponent {
     this.addressAr.set(store.translations.find((item) => item.locale === 'ar')?.address ?? store.address); this.addressEn.set(store.translations.find((item) => item.locale === 'en')?.address ?? '');
     this.phone.set(store.phone); this.latitude.set(store.location.latitude); this.longitude.set(store.location.longitude); this.displayOrder.set(store.displayOrder);
     this.zoneIds.set([...store.zoneIds]); this.subcategoryIds.set([...store.subcategoryIds]); this.logoFile.set(null); this.formError.set('');
-    void this.selectMainCategory(store.mainCategory.id); this.createOpen.set(true);
+    void this.loadSubcategories(store.mainCategory.id);
+    this.formInitialData.set({ nameAr: this.nameAr(), nameEn: this.nameEn(), addressAr: this.addressAr(), addressEn: this.addressEn(), phone: store.phone, latitude: store.location.latitude, longitude: store.location.longitude, displayOrder: store.displayOrder, mainCategoryId: store.mainCategory.id, subcategoryIds: store.subcategoryIds, zoneIds: store.zoneIds });
+    this.fields.set(this.buildFields(false)); this.createOpen.set(true);
   }
 
   async selectMainCategory(mainCategoryId: string) {
@@ -118,23 +124,31 @@ export class SuperAdminStoresComponent {
     } catch (error) { this.notify.error(apiErrorMessage(error, this.language.t('common.unexpectedError'))); }
   }
 
+  async onFormFieldChange(change: { fieldName: string; value: unknown }) {
+    if (change.fieldName !== 'mainCategoryId') return;
+    await this.loadSubcategories(String(change.value ?? ''));
+    this.fields.set(this.buildFields(this.editing() == null));
+  }
+
   toggleSubcategory(id: string, checked: boolean) { this.subcategoryIds.update((ids) => checked ? [...new Set([...ids, id])] : ids.filter((value) => value !== id)); }
   toggleZone(id: string, checked: boolean) { this.zoneIds.update((ids) => checked ? [...new Set([...ids, id])] : ids.filter((value) => value !== id)); }
   chooseLogo(event: Event) { this.logoFile.set((event.target as HTMLInputElement).files?.[0] ?? null); }
 
-  async save() {
-    const cityId = this.cityId(); const logo = this.logoFile();
+  async save(value: Record<string, unknown>) {
+    const cityId = this.cityId(); const logo = value['logoFile'] as File | null;
     const isCreate = this.editing() == null;
-    if (!cityId || (isCreate && !logo) || !this.nameAr().trim() || !this.nameEn().trim() || !this.addressAr().trim() || !this.addressEn().trim() || !this.phone().trim() || !this.mainCategoryId() || !this.subcategoryIds().length || !this.zoneIds().length || this.latitude() == null || this.longitude() == null) {
+    const nameAr = String(value['nameAr'] ?? '').trim(), nameEn = String(value['nameEn'] ?? '').trim(), addressAr = String(value['addressAr'] ?? '').trim(), addressEn = String(value['addressEn'] ?? '').trim();
+    const subcategoryIds = Array.isArray(value['subcategoryIds']) ? value['subcategoryIds'].map(String) : [], zoneIds = Array.isArray(value['zoneIds']) ? value['zoneIds'].map(String) : [];
+    if (!cityId || (isCreate && !logo) || !nameAr || !nameEn || !addressAr || !addressEn || !String(value['phone'] ?? '').trim() || !value['mainCategoryId'] || !subcategoryIds.length || !zoneIds.length || value['latitude'] == null || value['longitude'] == null) {
       this.formError.set(this.language.t('common.requiredFields')); return;
     }
     this.saving.set(true); this.formError.set(''); let logoAssetId: string | null = null;
     try {
       if (logo) { const asset = await this.media.uploadImage(logo, 'STORE_LOGO', cityId); logoAssetId = asset.id; }
       const body = {
-        mainCategoryId: this.mainCategoryId(), phone: this.phone().trim(), latitude: this.latitude(), longitude: this.longitude(),
-        displayOrder: this.displayOrder(), zoneIds: this.zoneIds(), subcategoryIds: this.subcategoryIds(),
-        translations: [{ locale: 'ar', name: this.nameAr().trim(), address: this.addressAr().trim() }, { locale: 'en', name: this.nameEn().trim(), address: this.addressEn().trim() }],
+        mainCategoryId: String(value['mainCategoryId']), phone: String(value['phone']).trim(), latitude: Number(value['latitude']), longitude: Number(value['longitude']),
+        displayOrder: Number(value['displayOrder']), zoneIds, subcategoryIds,
+        translations: [{ locale: 'ar', name: nameAr, address: addressAr }, { locale: 'en', name: nameEn, address: addressEn }],
         ...(logoAssetId ? { logoAssetId } : {}),
         ...(isCreate ? { status: 'ACTIVE' as const, orderAcceptanceStatus: 'ACCEPTING' as const, workingHours: [] } : {}),
       };
@@ -150,6 +164,25 @@ export class SuperAdminStoresComponent {
 
   private localized(fallback: string, translations: Translation[]) {
     return translations.find((item) => item.locale === this.language.lang())?.name ?? fallback;
+  }
+
+  private buildFields(isCreate: boolean): FormField[] {
+    return [
+      { name: 'nameAr', label: this.language.t('geo.nameAr'), type: 'text', required: true, step: 0 }, { name: 'nameEn', label: this.language.t('geo.nameEn'), type: 'text', required: true, step: 0 },
+      { name: 'addressAr', label: this.language.t('stores.address'), type: 'text', required: true, step: 0 }, { name: 'addressEn', label: 'Address (EN)', type: 'text', required: true, step: 0 },
+      { name: 'phone', label: this.language.t('stores.phone'), type: 'text', required: true, step: 0 }, { name: 'displayOrder', label: this.language.t('catalog.displayOrder'), type: 'number', required: true, step: 0 },
+      { name: 'mainCategoryId', label: this.language.t('stores.mainCategory'), type: 'select', required: true, options: this.mains().map((item) => ({ value: item.id, label: this.categoryLabel(item) })), step: 1 },
+      { name: 'subcategoryIds', label: this.language.t('stores.subcategories'), type: 'multiselect', required: true, options: this.subs().map((item) => ({ value: item.id, label: this.storeLabel(item) })), step: 1, width: 'full' },
+      { name: 'zoneIds', label: this.language.t('nav.zones'), type: 'multiselect', required: true, options: this.zones().map((item) => ({ value: item.id, label: this.storeLabel(item) })), step: 1, width: 'full' },
+      { name: 'locationMap', label: this.language.t('geo.mapLabel'), type: 'map', latitudeField: 'latitude', longitudeField: 'longitude', step: 2 }, { name: 'latitude', label: this.language.t('geo.latitude'), type: 'number', required: true, step: 2 }, { name: 'longitude', label: this.language.t('geo.longitude'), type: 'number', required: true, step: 2 },
+      { name: 'logoFile', label: this.language.t('stores.logo'), type: 'file', required: isCreate, width: 'full', step: 3 },
+    ];
+  }
+
+  private async loadSubcategories(mainCategoryId: string) {
+    if (!mainCategoryId || !this.cityId()) { this.subs.set([]); return; }
+    const result = await this.api.get<Page<Subcategory>>('/api/v1/dashboard/subcategories', { params: { cityId: this.cityId(), mainCategoryId, page: 1, limit: 100, status: 'ACTIVE' } });
+    this.subs.set(result.data.data ?? []);
   }
 
   private async loadCities() {

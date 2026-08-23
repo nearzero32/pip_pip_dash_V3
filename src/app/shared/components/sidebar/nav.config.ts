@@ -298,6 +298,12 @@ export const NAV_ITEMS: readonly NavItem[] = [
         route: '/main-categories',
         svgPath: '<rect x="3" y="3" width="7" height="7"></rect>',
       },
+      {
+        id: 'subcategories-super',
+        labelKey: 'nav.categoriesSub',
+        route: '/subcategories',
+        svgPath: '<rect x="14" y="14" width="7" height="7"></rect>',
+      },
     ],
   },
   {

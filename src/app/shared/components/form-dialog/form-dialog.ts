@@ -103,7 +103,7 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       }
 
-      initialValue = initialValue !== undefined && initialValue !== null ? initialValue : '';
+      initialValue = initialValue !== undefined && initialValue !== null ? initialValue : field.type === 'multiselect' ? [] : '';
       formControls[field.name] = [initialValue, validators];
     });
 
@@ -342,6 +342,11 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
       value,
       formValue: this.form.value,
     });
+  }
+
+  onMultiSelectChange(fieldName: string, event: Event) {
+    const values = Array.from((event.target as HTMLSelectElement).selectedOptions, (option) => option.value);
+    this.onFieldValueChange(fieldName, values);
   }
 
   updateFieldValue(fieldName: string, value: any) {

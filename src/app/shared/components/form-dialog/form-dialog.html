@@ -212,6 +212,26 @@
                   </div>
                 }
 
+                @if (field.type === 'multiselect') {
+                  <select
+                    [id]="field.name"
+                    class="form-input form-select"
+                    [formControlName]="field.name"
+                    multiple
+                    [class.error]="isInvalid(field)"
+                    [attr.aria-invalid]="isInvalid(field)"
+                    [attr.aria-required]="field.required || null"
+                    [attr.aria-describedby]="describedBy(field)"
+                    (change)="onMultiSelectChange(field.name, $event)"
+                  >
+                    @for (option of field.options; track $index) {
+                      <option [value]="option[field.optionValue || 'value']">
+                        {{ option[field.optionLabel || 'label'] }}
+                      </option>
+                    }
+                  </select>
+                }
+
                 @if (isInvalid(field)) {
                   <span class="error-message" [id]="errorId(field.name)" role="alert">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
