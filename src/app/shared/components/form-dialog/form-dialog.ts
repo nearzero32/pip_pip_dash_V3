@@ -336,6 +336,11 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onFieldValueChange(fieldName: string, value: any) {
     this.form.get(fieldName)?.setValue(value);
+    const field = this.fields.find((item) => item.name === fieldName);
+    for (const dependentField of field?.resetWhen ?? []) {
+      this.form.get(dependentField)?.setValue([]);
+      this.form.get(dependentField)?.markAsDirty();
+    }
 
     this.onFieldChange.emit({
       fieldName,
@@ -347,6 +352,19 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   onMultiSelectChange(fieldName: string, event: Event) {
     const values = Array.from((event.target as HTMLSelectElement).selectedOptions, (option) => option.value);
     this.onFieldValueChange(fieldName, values);
+  }
+
+  isMultiOptionSelected(fieldName: string, value: string | number | boolean): boolean {
+    const selected = this.form.get(fieldName)?.value;
+    return Array.isArray(selected) && selected.map(String).includes(String(value));
+  }
+
+  toggleMultiOption(fieldName: string, value: string | number | boolean, checked: boolean) {
+    const existing = this.form.get(fieldName)?.value;
+    const selected = Array.isArray(existing) ? existing.map(String) : [];
+    const next = checked ? [...new Set([...selected, String(value)])] : selected.filter((item) => item !== String(value));
+    this.onFieldValueChange(fieldName, next);
+    this.form.get(fieldName)?.markAsTouched();
   }
 
   updateFieldValue(fieldName: string, value: any) {

@@ -213,23 +213,16 @@
                 }
 
                 @if (field.type === 'multiselect') {
-                  <select
-                    [id]="field.name"
-                    class="form-input form-select"
-                    [formControlName]="field.name"
-                    multiple
-                    [class.error]="isInvalid(field)"
-                    [attr.aria-invalid]="isInvalid(field)"
-                    [attr.aria-required]="field.required || null"
-                    [attr.aria-describedby]="describedBy(field)"
-                    (change)="onMultiSelectChange(field.name, $event)"
-                  >
-                    @for (option of field.options; track $index) {
-                      <option [value]="option[field.optionValue || 'value']">
-                        {{ option[field.optionLabel || 'label'] }}
-                      </option>
+                  <div class="multi-option-grid" [class.error]="isInvalid(field)" [attr.aria-describedby]="describedBy(field)">
+                    @for (option of field.options; track option[field.optionValue || 'value']) {
+                      <label class="multi-option" [class.multi-option--selected]="isMultiOptionSelected(field.name, option[field.optionValue || 'value'])">
+                        <input type="checkbox" [checked]="isMultiOptionSelected(field.name, option[field.optionValue || 'value'])" (change)="toggleMultiOption(field.name, option[field.optionValue || 'value'], $any($event.target).checked)" />
+                        <span>{{ option[field.optionLabel || 'label'] }}</span>
+                      </label>
+                    } @empty {
+                      <p class="multi-option-empty">{{ 'common.noData' | t }}</p>
                     }
-                  </select>
+                  </div>
                 }
 
                 @if (isInvalid(field)) {

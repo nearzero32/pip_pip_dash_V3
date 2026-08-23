@@ -543,6 +543,33 @@ textarea.form-input.ng-invalid.ng-touched {
 
 .btn-submit:focus-visible { box-shadow: var(--focus-ring); }
 
+.multi-option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+.multi-option-grid.error { border-color: var(--color-danger); }
+.multi-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.multi-option:hover { border-color: var(--color-brand-primary); }
+.multi-option--selected { border-color: var(--color-brand-primary); background: color-mix(in srgb, var(--color-brand-primary) 10%, var(--color-surface)); }
+.multi-option input { accent-color: var(--color-brand-primary); }
+.multi-option-empty { grid-column: 1 / -1; margin: var(--space-2); color: var(--color-text-muted); }
+
 /* ── RESPONSIVE ─────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .form-grid {

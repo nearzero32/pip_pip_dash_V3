@@ -28,4 +28,6 @@ export interface FormField {
   longitudeField?: string;
   /** Optional zero-based wizard step. */
   step?: number;
+  /** Controls cleared when this field changes (for dependent selects). */
+  resetWhen?: string[];
 }
