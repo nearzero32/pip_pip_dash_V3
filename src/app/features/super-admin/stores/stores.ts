@@ -14,10 +14,12 @@ import type { City } from '../geography/geography.models';
 
 type Translation = { locale: string; name: string; address?: string };
 type StoreStatus = 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
+const WEEKDAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const;
+type Weekday = typeof WEEKDAYS[number];
 type Store = {
   id: string; name: string; translations: Translation[]; phone: string; address: string;
   status: StoreStatus; displayOrder: number; mainCategory: { id: string; name: string; translations?: Translation[] };
-  zoneIds: string[]; subcategoryIds: string[]; location: { latitude: number; longitude: number }; updatedAt: string;
+  zoneIds: string[]; subcategoryIds: string[]; location: { latitude: number; longitude: number }; workingHours: Array<{ dayOfWeek: Weekday; opensAt: string; closesAt: string }>; updatedAt: string;
 };
 type Page<T> = { data: T[]; pagination?: { page: number; limit: number; total: number }; page?: number; limit?: number; total?: number };
 type MainCategory = { id: string; name: string; translations: Translation[]; status: string };
@@ -111,7 +113,7 @@ export class SuperAdminStoresComponent {
     this.phone.set(store.phone); this.latitude.set(store.location.latitude); this.longitude.set(store.location.longitude); this.displayOrder.set(store.displayOrder);
     this.zoneIds.set([...store.zoneIds]); this.subcategoryIds.set([...store.subcategoryIds]); this.logoFile.set(null); this.formError.set('');
     void this.loadSubcategories(store.mainCategory.id);
-    this.formInitialData.set({ nameAr: this.nameAr(), nameEn: this.nameEn(), addressAr: this.addressAr(), addressEn: this.addressEn(), phone: store.phone, latitude: store.location.latitude, longitude: store.location.longitude, displayOrder: store.displayOrder, mainCategoryId: store.mainCategory.id, subcategoryIds: store.subcategoryIds, zoneIds: store.zoneIds });
+    this.formInitialData.set({ nameAr: this.nameAr(), nameEn: this.nameEn(), addressAr: this.addressAr(), addressEn: this.addressEn(), phone: store.phone, latitude: store.location.latitude, longitude: store.location.longitude, displayOrder: store.displayOrder, mainCategoryId: store.mainCategory.id, subcategoryIds: store.subcategoryIds, zoneIds: store.zoneIds, ...Object.fromEntries(store.workingHours.flatMap((period) => [[`${period.dayOfWeek}_open`, period.opensAt], [`${period.dayOfWeek}_close`, period.closesAt]])) });
     this.fields.set(this.buildFields(false)); this.createOpen.set(true);
   }
 
@@ -119,7 +121,7 @@ export class SuperAdminStoresComponent {
     this.mainCategoryId.set(mainCategoryId); this.subcategoryIds.set([]);
     if (!mainCategoryId || !this.cityId()) { this.subs.set([]); return; }
     try {
-      const result = await this.api.get<Page<Subcategory>>('/api/v1/dashboard/subcategories', { params: { cityId: this.cityId(), mainCategoryId, page: 1, limit: 100, status: 'ACTIVE' } });
+      const result = await this.api.get<Page<Subcategory>>('/api/v1/super-admin/subcategories', { params: { cityId: this.cityId(), mainCategoryId, page: 1, limit: 100, status: 'ACTIVE' } });
       this.subs.set(result.data.data ?? []);
     } catch (error) { this.notify.error(apiErrorMessage(error, this.language.t('common.unexpectedError'))); }
   }
@@ -139,6 +141,18 @@ export class SuperAdminStoresComponent {
     const isCreate = this.editing() == null;
     const nameAr = String(value['nameAr'] ?? '').trim(), nameEn = String(value['nameEn'] ?? '').trim(), addressAr = String(value['addressAr'] ?? '').trim(), addressEn = String(value['addressEn'] ?? '').trim();
     const subcategoryIds = Array.isArray(value['subcategoryIds']) ? value['subcategoryIds'].map(String) : [], zoneIds = Array.isArray(value['zoneIds']) ? value['zoneIds'].map(String) : [];
+    const phoneRaw = String(value['phone'] ?? '').replace(/[\s()-]/g, '');
+    const phone = /^0\d{9,10}$/.test(phoneRaw) ? `+964${phoneRaw.slice(1)}` : phoneRaw;
+    const workingHours: Array<{ dayOfWeek: Weekday; opensAt: string; closesAt: string }> = [];
+    for (const day of WEEKDAYS) {
+      const opensAt = String(value[`${day}_open`] ?? '').trim(), closesAt = String(value[`${day}_close`] ?? '').trim();
+      if (!opensAt && !closesAt) continue;
+      if (!opensAt || !closesAt) {
+        this.formError.set(`Please provide both opening and closing times for ${day.toLowerCase()}.`);
+        return;
+      }
+      workingHours.push({ dayOfWeek: day, opensAt, closesAt });
+    }
     if (!cityId || (isCreate && !logo) || !nameAr || !nameEn || !addressAr || !addressEn || !String(value['phone'] ?? '').trim() || !value['mainCategoryId'] || !subcategoryIds.length || !zoneIds.length || value['latitude'] == null || value['longitude'] == null) {
       this.formError.set(this.language.t('common.requiredFields')); return;
     }
@@ -146,11 +160,12 @@ export class SuperAdminStoresComponent {
     try {
       if (logo) { const asset = await this.media.uploadImage(logo, 'STORE_LOGO', cityId); logoAssetId = asset.id; }
       const body = {
-        mainCategoryId: String(value['mainCategoryId']), phone: String(value['phone']).trim(), latitude: Number(value['latitude']), longitude: Number(value['longitude']),
+        mainCategoryId: String(value['mainCategoryId']), phone, latitude: Number(value['latitude']), longitude: Number(value['longitude']),
         displayOrder: Number(value['displayOrder']), zoneIds, subcategoryIds,
         translations: [{ locale: 'ar', name: nameAr, address: addressAr }, { locale: 'en', name: nameEn, address: addressEn }],
         ...(logoAssetId ? { logoAssetId } : {}),
-        ...(isCreate ? { status: 'ACTIVE' as const, orderAcceptanceStatus: 'ACCEPTING' as const, workingHours: [] } : {}),
+        ...(isCreate ? { status: 'ACTIVE' as const, orderAcceptanceStatus: 'ACCEPTING' as const } : {}),
+        workingHours,
       };
       const editing = this.editing();
       if (editing) await this.api.patch(`/api/v1/super-admin/stores/${editing.id}`, body, { params: { cityId } });
@@ -174,14 +189,15 @@ export class SuperAdminStoresComponent {
       { name: 'mainCategoryId', label: this.language.t('stores.mainCategory'), type: 'select', required: true, options: this.mains().map((item) => ({ value: item.id, label: this.categoryLabel(item) })), step: 1, resetWhen: ['subcategoryIds'] },
       { name: 'subcategoryIds', label: this.language.t('stores.subcategories'), type: 'multiselect', required: true, options: this.subs().map((item) => ({ value: item.id, label: this.storeLabel(item) })), step: 1, width: 'full' },
       { name: 'zoneIds', label: this.language.t('nav.zones'), type: 'multiselect', required: true, options: this.zones().map((item) => ({ value: item.id, label: this.storeLabel(item) })), step: 1, width: 'full' },
-      { name: 'locationMap', label: this.language.t('geo.mapLabel'), type: 'map', latitudeField: 'latitude', longitudeField: 'longitude', step: 2 }, { name: 'latitude', label: this.language.t('geo.latitude'), type: 'number', required: true, step: 2 }, { name: 'longitude', label: this.language.t('geo.longitude'), type: 'number', required: true, step: 2 },
-      { name: 'logoFile', label: this.language.t('stores.logo'), type: 'file', required: isCreate, width: 'full', step: 3 },
+      ...WEEKDAYS.flatMap((day) => [{ name: `${day}_open`, label: `${this.language.t(`stores.weekday.${day}`)} — Open`, type: 'time' as const, step: 2 }, { name: `${day}_close`, label: `${this.language.t(`stores.weekday.${day}`)} — Close`, type: 'time' as const, step: 2 }]),
+      { name: 'locationMap', label: this.language.t('geo.mapLabel'), type: 'map', latitudeField: 'latitude', longitudeField: 'longitude', step: 3 }, { name: 'latitude', label: this.language.t('geo.latitude'), type: 'number', required: true, step: 3 }, { name: 'longitude', label: this.language.t('geo.longitude'), type: 'number', required: true, step: 3 },
+      { name: 'logoFile', label: this.language.t('stores.logo'), type: 'file', required: isCreate, width: 'full', step: 4 },
     ];
   }
 
   private async loadSubcategories(mainCategoryId: string) {
     if (!mainCategoryId || !this.cityId()) { this.subs.set([]); return; }
-    const result = await this.api.get<Page<Subcategory>>('/api/v1/dashboard/subcategories', { params: { cityId: this.cityId(), mainCategoryId, page: 1, limit: 100, status: 'ACTIVE' } });
+    const result = await this.api.get<Page<Subcategory>>('/api/v1/super-admin/subcategories', { params: { cityId: this.cityId(), mainCategoryId, page: 1, limit: 100, status: 'ACTIVE' } });
     this.subs.set(result.data.data ?? []);
   }
 

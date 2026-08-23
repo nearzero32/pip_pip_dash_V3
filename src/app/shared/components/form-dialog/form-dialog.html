@@ -73,9 +73,9 @@
                   </div>
                 }
 
-                @if (field.type === 'text' || field.type === 'number') {
+                @if (field.type === 'text' || field.type === 'number' || field.type === 'time') {
                   <input
-                    [type]="inputType(field)"
+                    [type]="field.type === 'time' ? 'time' : inputType(field)"
                     [id]="field.name"
                     class="form-input"
                     [formControlName]="field.name"
@@ -214,7 +214,7 @@
 
                 @if (field.type === 'multiselect') {
                   <div class="multi-option-grid" [class.error]="isInvalid(field)" [attr.aria-describedby]="describedBy(field)">
-                    @for (option of field.options; track option[field.optionValue || 'value']) {
+                    @for (option of field.options; track $index) {
                       <label class="multi-option" [class.multi-option--selected]="isMultiOptionSelected(field.name, option[field.optionValue || 'value'])">
                         <input type="checkbox" [checked]="isMultiOptionSelected(field.name, option[field.optionValue || 'value'])" (change)="toggleMultiOption(field.name, option[field.optionValue || 'value'], $any($event.target).checked)" />
                         <span>{{ option[field.optionLabel || 'label'] }}</span>
