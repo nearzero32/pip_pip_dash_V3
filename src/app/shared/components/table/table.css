@@ -7,8 +7,8 @@
 .table-container {
   background: var(--color-surface-card);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border-subtle);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-default);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
 }
 
@@ -36,7 +36,7 @@
 
 /* ── HEADER ─────────────────────────────────────────────────── */
 .custom-table thead {
-  background: var(--color-surface-subtle);
+  background: linear-gradient(180deg, #FAF9FC, var(--color-surface-subtle));
   border-bottom: 1.5px solid var(--color-border-default);
 }
 
@@ -45,7 +45,7 @@
   text-align: start;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-secondary);
+  color: var(--color-brand-secondary);
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -69,7 +69,7 @@
 }
 
 .custom-table tbody tr:hover {
-  background: var(--color-surface-hover);
+  background: color-mix(in srgb, var(--brand-orange-soft) 52%, white);
 }
 
 .custom-table tbody tr:last-child {

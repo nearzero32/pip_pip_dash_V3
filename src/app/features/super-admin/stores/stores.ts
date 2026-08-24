@@ -99,6 +99,15 @@ export class SuperAdminStoresComponent {
   readonly pageSize = 25;
   readonly hasPrevious = computed(() => this.page() > 1);
   readonly hasNext = computed(() => this.page() * this.pageSize < this.total());
+  readonly activeOnPage = computed(() =>
+    this.rows().filter((store) => store.status === 'ACTIVE').length,
+  );
+  readonly acceptingOnPage = computed(() =>
+    this.rows().filter((store) => store.availability.isAcceptingOrders).length,
+  );
+  readonly openOnPage = computed(() =>
+    this.rows().filter((store) => store.availability.isOpen).length,
+  );
 
   async ngOnInit() { await this.loadCities(); }
 

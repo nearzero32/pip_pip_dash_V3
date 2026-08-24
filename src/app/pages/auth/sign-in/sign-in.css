@@ -5,9 +5,9 @@
   justify-content: center;
   padding: var(--space-6);
   background:
-    radial-gradient(circle at top right, var(--brand-orange-tint), transparent 40%),
-    radial-gradient(circle at bottom left, color-mix(in srgb, var(--brand-purple) 18%, transparent), transparent 45%),
-    var(--color-surface-page);
+    radial-gradient(circle at 14% 14%, rgba(252, 203, 48, 0.35), transparent 17rem),
+    radial-gradient(circle at 88% 85%, rgba(254, 81, 4, 0.30), transparent 22rem),
+    linear-gradient(145deg, var(--brand-purple), #261746 72%);
   position: relative;
 }
 
@@ -19,8 +19,10 @@
   height: var(--control-height-sm);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border-default);
-  background: var(--color-surface-card);
-  color: var(--color-brand-secondary);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
 }
@@ -31,12 +33,13 @@
 
 .sign-in-card {
   width: 100%;
-  max-width: 420px;
-  background: var(--color-surface-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-xl);
-  padding: var(--space-8);
-  box-shadow: var(--shadow-lg);
+  max-width: 440px;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 28px;
+  padding: var(--space-10);
+  box-shadow: 0 35px 80px -28px rgba(12, 6, 28, 0.72);
+  backdrop-filter: blur(18px);
 }
 
 .brand {
@@ -45,11 +48,14 @@
 }
 
 .logo {
-  width: 72px;
-  height: 72px;
-  border-radius: var(--radius-lg);
+  width: 82px;
+  height: 82px;
+  border-radius: 24px;
   object-fit: contain;
-  margin: 0 auto var(--space-4);
+  margin: 0 auto var(--space-5);
+  padding: 5px;
+  background: #fff;
+  box-shadow: 0 14px 30px -18px rgba(51, 33, 95, 0.75);
 }
 
 .brand h1 {
@@ -119,7 +125,7 @@
   margin-top: var(--space-2);
   border: none;
   border-radius: var(--radius-md);
-  background: var(--color-brand-primary);
+  background: linear-gradient(135deg, var(--brand-orange), #E84A03);
   color: var(--color-text-on-brand);
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
@@ -127,6 +133,13 @@
 
 .submit:hover:not(:disabled) {
   background: var(--color-brand-primary-hover);
+  box-shadow: 0 14px 24px -14px rgba(254, 81, 4, 0.9);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 520px) {
+  .sign-in-page { padding: var(--space-4); }
+  .sign-in-card { padding: var(--space-6); border-radius: var(--radius-xl); }
 }
 
 .submit:disabled {

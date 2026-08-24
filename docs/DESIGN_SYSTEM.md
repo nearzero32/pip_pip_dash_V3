@@ -24,7 +24,7 @@ Status: `--color-success`, `--color-warning`, `--color-danger`, `--color-info` (
 
 Overlay: `--color-overlay`
 
-Legacy names (`--primary-color`, `--bg-page`, `--bg-card`, `--border-color`) alias these tokens so sidebar/layout can stay unchanged until Phase 8.
+Legacy names (`--primary-color`, `--bg-page`, `--bg-card`, `--border-color`) alias these tokens while older feature styles are migrated.
 
 ## Typography
 
@@ -86,7 +86,7 @@ Soft fill + strong text. `ACTIVE` → success. `ARCHIVED`/`INACTIVE` → default
 
 ## RTL
 
-Prefer `margin-inline`, `padding-inline`, `inset-inline-*`, `border-inline-start`. Sidebar/layout structure is frozen until Phase 8.
+Prefer `margin-inline`, `padding-inline`, `inset-inline-*`, `border-inline-start`. The shell and navigation use the same logical-property contract.
 
 ## Files
 
