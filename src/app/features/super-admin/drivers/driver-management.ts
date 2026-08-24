@@ -21,13 +21,14 @@ import {
   ManagedDriver,
 } from './driver-management.models';
 import { DriverManagementService } from './driver-management.service';
+import { ExportButtonComponent } from '../../../shared/components/export-button/export-button';
 
 type DriverFormMode = 'create' | 'edit' | 'accessCode';
 
 @Component({
   selector: 'app-super-admin-driver-management',
   standalone: true,
-  imports: [CommonModule, TableComponent, FormDialogComponent, DetailDialogComponent, SelectControlComponent, TranslatePipe],
+  imports: [CommonModule, TableComponent, FormDialogComponent, DetailDialogComponent, SelectControlComponent, TranslatePipe, ExportButtonComponent],
   templateUrl: './driver-management.html',
   styleUrl: './driver-management.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -114,6 +115,10 @@ export class DriverManagementComponent implements OnInit {
     } finally {
       this.isLoading.set(false);
     }
+  }
+  async restore(row: ManagedDriver) {
+    try { await this.drivers.update(row.accountId, { operationalStatus: 'ACTIVE' }); await this.load(this.page); this.notify.success(this.language.t('common.success')); }
+    catch (error) { this.notify.error(apiErrorMessage(error, this.language.t('common.unexpectedError'))); }
   }
 
   openCreate() {

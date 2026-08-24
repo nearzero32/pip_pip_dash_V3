@@ -24,6 +24,8 @@ export class TableComponent<T extends object = object> {
   @Input() allowEdit: boolean = true;
   @Input() allowView: boolean = false;
   @Input() allowPassword: boolean = false;
+  @Input() allowRestore: boolean = false;
+  @Input() statusKey: string = 'status';
   @Input() showActions: boolean = true;
   @Input() rowKey: string = '_id';
   @Input() selectable = false;
@@ -34,6 +36,7 @@ export class TableComponent<T extends object = object> {
   @Output() onDelete = new EventEmitter<T>();
   @Output() onView = new EventEmitter<T>();
   @Output() onPassword = new EventEmitter<T>();
+  @Output() onRestore = new EventEmitter<T>();
   @Output() selectedKeysChange = new EventEmitter<string[]>();
 
   rowId(row: T): string { return String(this.resolveValue(row, this.rowKey) ?? ''); }
@@ -84,6 +87,10 @@ export class TableComponent<T extends object = object> {
   imageSrc(row: T, column: TableColumn): string | null {
     const value = this.resolveValue(row, column.key);
     return typeof value === 'string' && value.trim() ? value : null;
+  }
+
+  canRestore(row: T): boolean {
+    return this.allowRestore && String(this.resolveValue(row, this.statusKey) ?? '').toUpperCase() !== 'ACTIVE';
   }
 
   getRowNumber(index: number): number {

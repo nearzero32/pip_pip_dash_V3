@@ -13,6 +13,7 @@ import {
 } from '../../../shared/components/select-control/select-control';
 import { InputControlComponent } from '../../../shared/components/input-control/input-control';
 import { DetailDialogComponent, DetailSection } from '../../../shared/components/detail-dialog/detail-dialog';
+import { ExportButtonComponent } from '../../../shared/components/export-button/export-button';
 import { FormField } from '../../../shared/models/form-field.interface';
 import { TableColumn } from '../../../shared/models/table-column.interface';
 import { GeographyService } from '../geography/geography.service';
@@ -40,6 +41,7 @@ type Store = { id: string; name: string };
     SelectControlComponent,
     InputControlComponent,
     DetailDialogComponent,
+    ExportButtonComponent,
   ],
   templateUrl: './merchants.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -243,6 +245,10 @@ export class SuperMerchantsComponent implements OnInit {
     } finally {
       this.saving.set(false);
     }
+  }
+  async restore(row: Merchant) {
+    try { await this.api.patch(`/api/v1/dashboard/merchants/${row.accountId}`, { cityId: row.cityId, status: 'ACTIVE' }); await this.load(); this.notify.success(this.lang.t('common.success')); }
+    catch (e) { this.notify.error(apiErrorMessage(e, this.lang.t('common.unexpectedError'))); }
   }
   private async loadCities() {
     try {

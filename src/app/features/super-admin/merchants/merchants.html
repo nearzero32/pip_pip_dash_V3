@@ -22,7 +22,7 @@
         [options]="statusOptions()"
         (valueChange)="setStatus($event)"
       ></app-select-control
-      ><button class="add-btn" [disabled]="!cityId()" (click)="create()">
+      ><app-export-button endpoint="/api/v1/dashboard/merchants/export" filename="merchants.xlsx" [params]="{ cityId: cityId(), search: search(), status: status() }" [disabled]="!cityId()"></app-export-button><button class="add-btn" [disabled]="!cityId()" (click)="create()">
         {{ 'merchants.create' | t }}
       </button>
     </div>
@@ -32,10 +32,12 @@
     [columns]="columns"
     [isLoading]="loading()"
     [allowDelete]="false"
+    [allowRestore]="true"
     [allowPassword]="true"
     [allowView]="true"
     rowKey="accountId"
     (onEdit)="edit($event)"
+    (onRestore)="restore($event)"
     (onPassword)="password($event)"
     (onView)="openDetails($event)"
   ></app-table>

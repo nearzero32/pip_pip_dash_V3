@@ -16,8 +16,10 @@
     [columns]="columns"
     [isLoading]="isLoading()"
     [allowDelete]="false"
+    [allowRestore]="true"
     [allowPassword]="true"
     (onEdit)="onEdit($event)"
+    (onRestore)="restore($event)"
     (onPassword)="onPassword($event)"
   ></app-table>
 </section>

@@ -1,6 +1,11 @@
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslatePipe } from '../../../i18n/translate.pipe';
+import { ApiService } from '../../../core/http/api.service';
+import { apiErrorMessage } from '../../../core/http/api-error';
+import { downloadBlob } from '../../../core/utils/download';
+import { LanguageService } from '../../../i18n/language.service';
+import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-export-button',
@@ -9,8 +14,8 @@ import { TranslatePipe } from '../../../i18n/translate.pipe';
   styleUrl: './export-button.css',
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <button class="filter-btn" (click)="onClick()" [disabled]="isLoading">
-      @if (isLoading) {
+    <button class="filter-btn" type="button" (click)="onClick()" [disabled]="disabled || isLoading || downloading()">
+      @if (isLoading || downloading()) {
         <div class="spinner-sm"></div>
         <span>{{ 'common.exporting' | t }}</span>
       } @else {
@@ -21,11 +26,31 @@ import { TranslatePipe } from '../../../i18n/translate.pipe';
   `
 })
 export class ExportButtonComponent {
+  private readonly api = inject(ApiService).client;
+  private readonly language = inject(LanguageService);
+  private readonly notify = inject(NotificationService);
   @Input() isLoading: boolean = false;
   @Input() label: string = '';
+  @Input() endpoint = '';
+  @Input() filename = 'export.xlsx';
+  @Input() params: Record<string, unknown> = {};
+  @Input() disabled = false;
   @Output() action = new EventEmitter<void>();
+  readonly downloading = signal(false);
 
-  onClick() {
+  async onClick() {
+    if (this.endpoint) {
+      this.downloading.set(true);
+      try {
+        const response = await this.api.get<Blob>(this.endpoint, { params: this.params, responseType: 'blob' });
+        downloadBlob(response.data, this.filename);
+      } catch (error) {
+        this.notify.error(apiErrorMessage(error, this.language.t('common.unexpectedError')));
+      } finally {
+        this.downloading.set(false);
+      }
+      return;
+    }
     this.action.emit();
   }
 }

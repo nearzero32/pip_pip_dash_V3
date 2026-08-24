@@ -23,6 +23,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
 import { TranslatePipe } from '../../../../i18n/translate.pipe';
 import { apiErrorMessage } from '../../../../core/http/api-error';
 import { PaginationConfig } from '../../../../shared/models/pagination.interface';
+import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button';
 
 
 @Component({
@@ -36,6 +37,7 @@ import { PaginationConfig } from '../../../../shared/models/pagination.interface
     SelectControlComponent,
     ConfirmationDialogComponent,
     TranslatePipe,
+    ExportButtonComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './delivery-pricing.html',
@@ -228,5 +230,9 @@ export class DeliveryPricingComponent implements OnInit, OnDestroy {
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     }
+  }
+  async restore(row: DeliveryPricingVersion) {
+    try { await this.pricing.activateDeliveryVersion(this.cityId(), row.id); await this.load(); this.notify.success(this.language.t('common.success')); }
+    catch (err) { this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError'))); }
   }
 }

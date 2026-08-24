@@ -11,12 +11,13 @@ import { TranslatePipe } from '../../../../i18n/translate.pipe';
 import { apiErrorMessage, getApiErrorStatus, isApiErrorCode } from '../../../../core/http/api-error';
 import { DriverPricingFormComponent, DriverPricingFormValue } from './driver-pricing-form';
 import { SelectControlComponent, type SelectControlOption } from '../../../../shared/components/select-control/select-control';
+import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button';
 
 
 @Component({
   selector: 'app-driver-pricing',
   standalone: true,
-  imports: [CommonModule, FormsModule, DriverPricingFormComponent, TranslatePipe, SelectControlComponent],
+  imports: [CommonModule, FormsModule, DriverPricingFormComponent, TranslatePipe, SelectControlComponent, ExportButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './driver-pricing.html',
   styleUrl: './driver-pricing.css',

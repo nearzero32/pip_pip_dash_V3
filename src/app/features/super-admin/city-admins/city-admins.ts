@@ -198,6 +198,10 @@ export class CityAdminsComponent implements OnInit {
       // Non-blocking error handled in fetchCities
     }
   }
+  async restore(row: CityAdmin) {
+    try { await this.staff.updateAdmin(row.accountId, { status: 'ACTIVE' }); await this.load(); this.notify.success(this.language.t('common.success')); }
+    catch (err) { this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError'))); }
+  }
 
   onPassword(row: CityAdmin) {
     this.formMode.set('password');

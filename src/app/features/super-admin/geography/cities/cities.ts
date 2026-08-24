@@ -177,6 +177,10 @@ export class CitiesComponent implements OnInit {
   onView(row: City) {
     this.selected.set(row);
   }
+  async restore(row: City) {
+    try { await this.api.transitionCity(row.id, 'activate'); await this.load(this.page()); this.notify.success(this.language.t('common.success')); }
+    catch (err) { this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError'))); }
+  }
 
   closeForm() {
     this.showForm.set(false);

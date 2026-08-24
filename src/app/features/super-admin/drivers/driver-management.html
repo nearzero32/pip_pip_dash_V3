@@ -13,6 +13,7 @@
         [options]="cityOptions()"
         (valueChange)="onCityChanged($event)"
       ></app-select-control>
+      <app-export-button endpoint="/api/v1/dashboard/drivers/export" filename="drivers.xlsx" [params]="{ cityId: selectedCityId() }" [disabled]="!selectedCityId()"></app-export-button>
       <button class="add-btn" type="button" [disabled]="!selectedCityId()" (click)="openCreate()">
         {{ 'drivers.add' | t }}
       </button>
@@ -25,11 +26,14 @@
     [pagination]="pagination()"
     [isLoading]="isLoading()"
     [allowDelete]="false"
+    [allowRestore]="true"
+    statusKey="operationalStatus"
     [allowView]="true"
     [allowPassword]="true"
     rowKey="accountId"
     (pageChange)="load($event)"
     (onEdit)="openEdit($event)"
+    (onRestore)="restore($event)"
     (onView)="openDetails($event)"
     (onPassword)="openAccessCode($event)"
   ></app-table>

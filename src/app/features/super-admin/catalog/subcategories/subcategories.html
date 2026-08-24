@@ -1,9 +1,10 @@
 <section class="feature-page">
-  <div class="page-toolbar"><div class="page-toolbar__context"><p class="hint">{{ 'nav.categoriesSub' | t }}</p></div><div class="page-toolbar__actions"><button class="add-btn" type="button" [disabled]="!mainId()" (click)="create()">{{ 'common.add' | t }}</button></div></div>
+  <div class="page-toolbar"><div class="page-toolbar__context"><p class="hint">{{ 'nav.categoriesSub' | t }}</p></div><div class="page-toolbar__actions"><app-export-button endpoint="/api/v1/dashboard/subcategories/export" filename="subcategories.xlsx" [params]="{ cityId: cityId(), mainCategoryId: mainId() }" [disabled]="!cityId()"></app-export-button><button class="add-btn" type="button" [disabled]="!mainId()" (click)="create()">{{ 'common.add' | t }}</button></div></div>
   <div class="filters">
     <app-select-control [label]="'nav.cities' | t" [placeholder]="'common.select' | t" [value]="cityId()" [options]="cityOptions()" (valueChange)="selectCity($event)"></app-select-control>
     <app-select-control [label]="'catalog.parent' | t" [placeholder]="'common.select' | t" [value]="mainId()" [options]="mainOptions()" [disabled]="!cityId()" (valueChange)="selectMain($event)"></app-select-control>
+    <app-select-control [label]="'geo.status' | t" [placeholder]="'catalog.statusAll' | t" [value]="statusFilter()" [options]="statusOptions()" [disabled]="!mainId()" (valueChange)="selectStatus($event)"></app-select-control>
   </div>
-  @if (mainId()) { <app-table [data]="rows()" [columns]="columns" [isLoading]="loading()" [allowDelete]="false" rowKey="id" (onEdit)="edit($event)"></app-table> }
+  @if (mainId()) { <app-table [data]="rows()" [columns]="columns" [isLoading]="loading()" [allowDelete]="false" [allowRestore]="true" rowKey="id" (onEdit)="edit($event)" (onRestore)="restore($event)"></app-table> }
 </section>
 @if (open()) { <app-form-dialog [modernSelect]="true" [title]="(editing() ? 'catalog.editSub' : 'catalog.addSub') | t" [fields]="fields()" [initialData]="initialData()" [isSubmitting]="saving()" [steps]="['Details', 'Settings']" (onClose)="open.set(false)" (onSubmit)="save($event)"></app-form-dialog> }

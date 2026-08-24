@@ -100,6 +100,10 @@ export class GovernoratesComponent implements OnInit {
     this.editing.set(row);
     this.showForm.set(true);
   }
+  async restore(row: Governorate) {
+    try { await this.api.updateGovernorate(row.id, { status: 'ACTIVE' }); await this.load(this.pagination()?.page ?? 1); this.notify.success(this.language.t('common.success')); }
+    catch (err) { this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError'))); }
+  }
 
   closeForm() {
     this.showForm.set(false);

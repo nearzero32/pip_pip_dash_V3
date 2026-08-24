@@ -10,6 +10,7 @@ import { MediaApiService } from '../../../core/media/media-api.service';
 import { FormDialogComponent } from '../../../shared/components/form-dialog/form-dialog';
 import { DetailDialogComponent, DetailDialogAction, DetailSection } from '../../../shared/components/detail-dialog/detail-dialog';
 import { SelectControlComponent, type SelectControlOption } from '../../../shared/components/select-control/select-control';
+import { ExportButtonComponent } from '../../../shared/components/export-button/export-button';
 import type { FormField } from '../../../shared/models/form-field.interface';
 import { GeographyService } from '../geography/geography.service';
 import type { City } from '../geography/geography.models';
@@ -54,7 +55,7 @@ const boundaryContains = (boundary: unknown, point: Position): boolean | null =>
 @Component({
   selector: 'app-super-admin-stores',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, FormDialogComponent, DetailDialogComponent, SelectControlComponent],
+  imports: [CommonModule, FormsModule, TranslatePipe, FormDialogComponent, DetailDialogComponent, SelectControlComponent, ExportButtonComponent],
   templateUrl: './stores.html',
   styleUrl: './stores.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -120,6 +121,7 @@ export class SuperAdminStoresComponent {
 
   async setStatus(store: Store, status: Exclude<StoreStatus, 'ARCHIVED'>) {
     if (!this.cityId()) return;
+    if (store.status === 'ARCHIVED' && !store.logo?.assetId) { this.openEdit(store); return; }
     try {
       await this.api.patch(`/api/v1/super-admin/stores/${store.id}`, { status }, { params: { cityId: this.cityId() } });
       await this.load();
@@ -159,7 +161,7 @@ export class SuperAdminStoresComponent {
     if (!store) return [];
     return [
       { id: 'edit', label: this.language.t('common.edit') },
-      ...(store.status !== 'ACTIVE' && store.status !== 'ARCHIVED' ? [{ id: 'restore', label: this.language.t('common.restore'), tone: 'neutral' as const }] : []),
+      ...(store.status !== 'ACTIVE' ? [{ id: 'restore', label: this.language.t('common.restore'), tone: 'neutral' as const }] : []),
     ];
   });
   async onDetailAction(action: string) {
@@ -217,7 +219,8 @@ export class SuperAdminStoresComponent {
       }
       workingHours.push({ dayOfWeek: day, opensAt, closesAt });
     }
-    if (!cityId || (isCreate && !logo) || !nameAr || !nameEn || !addressAr || !addressEn || !String(value['phone'] ?? '').trim() || !value['mainCategoryId'] || !subcategoryIds.length || !zoneIds.length || value['latitude'] == null || value['longitude'] == null) {
+    const restoringArchived = this.editing()?.status === 'ARCHIVED';
+    if (!cityId || ((isCreate || (restoringArchived && !this.editing()?.logo?.assetId)) && !logo) || !nameAr || !nameEn || !addressAr || !addressEn || !String(value['phone'] ?? '').trim() || !value['mainCategoryId'] || !subcategoryIds.length || !zoneIds.length || value['latitude'] == null || value['longitude'] == null) {
       this.formError.set(this.language.t('common.requiredFields')); return;
     }
     const point: Position = [Number(value['longitude']), Number(value['latitude'])];
@@ -235,7 +238,7 @@ export class SuperAdminStoresComponent {
         displayOrder: Number(value['displayOrder']), zoneIds, subcategoryIds,
         translations: [{ locale: 'ar', name: nameAr, address: addressAr }, { locale: 'en', name: nameEn, address: addressEn }],
         ...(logoAssetId ? { logoAssetId } : {}),
-        ...(isCreate ? { status: 'ACTIVE' as const, orderAcceptanceStatus: 'ACCEPTING' as const } : {}),
+        ...(isCreate ? { status: 'ACTIVE' as const, orderAcceptanceStatus: 'ACCEPTING' as const } : restoringArchived ? { status: 'ACTIVE' as const } : {}),
         workingHours,
       };
       if (editing) await this.api.patch(`/api/v1/super-admin/stores/${editing.id}`, body, { params: { cityId } });
@@ -261,7 +264,7 @@ export class SuperAdminStoresComponent {
       { name: 'zoneIds', label: this.language.t('nav.zones'), type: 'multiselect', required: true, options: this.zones().map((item) => ({ value: item.id, label: this.storeLabel(item) })), step: 1, width: 'full' },
       ...WEEKDAYS.flatMap((day) => [{ name: `${day}_open`, label: `${this.language.t(`stores.weekday.${day}`)} — Open`, type: 'time' as const, step: 2 }, { name: `${day}_close`, label: `${this.language.t(`stores.weekday.${day}`)} — Close`, type: 'time' as const, step: 2 }]),
       { name: 'locationMap', label: this.language.t('geo.mapLabel'), type: 'map', latitudeField: 'latitude', longitudeField: 'longitude', step: 3 }, { name: 'latitude', label: this.language.t('geo.latitude'), type: 'number', required: true, step: 3 }, { name: 'longitude', label: this.language.t('geo.longitude'), type: 'number', required: true, step: 3 },
-      { name: 'logoFile', label: this.language.t('stores.logo'), type: 'file', required: isCreate, width: 'full', step: 4 },
+      { name: 'logoFile', label: this.language.t('stores.logo'), type: 'file', required: isCreate || (this.editing()?.status === 'ARCHIVED' && !this.editing()?.logo?.assetId), width: 'full', step: 4 },
     ];
   }
 

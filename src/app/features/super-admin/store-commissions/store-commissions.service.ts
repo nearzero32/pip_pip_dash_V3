@@ -18,4 +18,7 @@ export class SuperStoreCommissionsService {
   async update(cityId: string, storeId: string, body: { platformCommissionRate: number; reason: string; note?: string }) {
     return (await this.api.patch<StoreCommission>(`/api/v1/dashboard/store-commissions/${storeId}`, { ...body, cityId }, { headers: { 'Idempotency-Key': crypto.randomUUID() } })).data;
   }
+  async restore(cityId: string, storeId: string) {
+    await this.api.patch(`/api/v1/super-admin/stores/${storeId}`, { status: 'ACTIVE' }, { params: { cityId } });
+  }
 }

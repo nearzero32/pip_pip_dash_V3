@@ -14,8 +14,10 @@
     [pagination]="pagination()"
     [isLoading]="isLoading()"
     [allowDelete]="false"
+    [allowRestore]="true"
     (pageChange)="load($event)"
     (onEdit)="onEdit($event)"
+    (onRestore)="restore($event)"
   ></app-table>
 </section>
 

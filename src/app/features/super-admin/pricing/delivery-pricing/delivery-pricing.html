@@ -17,6 +17,7 @@
       </label>
       <app-select-control class="filter-field" [label]="'geo.status' | t" [placeholder]="'pricing.allStatuses' | t" [value]="statusFilter()" [options]="statusOptions()" (valueChange)="onStatusChange($event)"></app-select-control>
       <app-select-control class="filter-field" [label]="'common.city' | t" [value]="cityId()" [options]="cityOptions()" (valueChange)="onCityChange($event)"></app-select-control>
+      <app-export-button [endpoint]="'/api/v1/dashboard/cities/' + cityId() + '/delivery-pricing/versions/export'" filename="delivery-pricing.xlsx" [params]="{ search: search(), status: statusFilter() }" [disabled]="!cityId()"></app-export-button>
       <button class="add-btn" type="button" (click)="showForm.set(true)">{{ 'pricing.addAndActivate' | t }}</button>
     </div>
   </div>
@@ -27,8 +28,10 @@
     [pagination]="pagination()"
     [isLoading]="isLoading()"
     [allowDelete]="false"
+    [allowRestore]="true"
     (pageChange)="onPageChange($event)"
     (onEdit)="onEdit($event)"
+    (onRestore)="restore($event)"
   ></app-table>
 
   <p class="info-callout">{{ 'pricing.activateHint' | t }}</p>

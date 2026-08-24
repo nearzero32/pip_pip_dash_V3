@@ -5,6 +5,7 @@
     </div>
     <div class="page-toolbar__actions">
       <app-select-control class="filter-field" [label]="'common.city' | t" [value]="cityId()" [options]="cityOptions()" (valueChange)="onCityChange($event)"></app-select-control>
+      <app-export-button [endpoint]="'/api/v1/dashboard/cities/' + cityId() + '/driver-pricing/export'" filename="driver-pricing.xlsx" [disabled]="!cityId() || missing()"></app-export-button>
       <button class="add-btn" type="button" (click)="openForm()">{{ 'pricing.savePricing' | t }}</button>
     </div>
   </div>
