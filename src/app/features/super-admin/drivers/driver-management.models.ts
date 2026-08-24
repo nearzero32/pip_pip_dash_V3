@@ -22,6 +22,7 @@ export interface ManagedDriver {
   vehicleNumber: string | null;
   driverPhotoObjectKey: string | null;
   driverPhotoAssetId: string | null;
+  driverPhotoUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }

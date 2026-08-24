@@ -60,9 +60,13 @@ export class DriverManagementComponent implements OnInit {
 
   ngOnInit() {
     this.columns = [
+      { key: 'driverPhotoUrl', label: this.language.t('drivers.photo'), type: 'image' },
+      { key: 'driverName', label: this.language.t('drivers.driverName') },
       { key: 'phone', label: this.language.t('drivers.phone') },
+      { key: 'alternatePhone', label: this.language.t('drivers.alternatePhone') },
       { key: 'cityName', label: this.language.t('common.city') },
-      { key: 'vehicleDescription', label: this.language.t('drivers.vehicle') },
+      { key: 'vehicleType', label: this.language.t('drivers.vehicleType') },
+      { key: 'vehicleNumber', label: this.language.t('drivers.vehicleNumber') },
       {
         key: 'operationalStatus',
         label: this.language.t('drivers.operationalStatus'),
@@ -93,12 +97,7 @@ export class DriverManagementComponent implements OnInit {
       ]);
       if (cityPage) this.cities.set(cityPage.data);
       this.page = result.page;
-      this.data.set(
-        result.data.map((driver) => ({
-          ...driver,
-          cityName: this.cityName(driver.cityId),
-        })),
-      );
+      this.data.set(await Promise.all(result.data.map((driver) => this.tableDriver(driver))));
       const pages = Math.max(1, Math.ceil(result.total / result.limit));
       this.pagination.set({
         page: result.page,
@@ -115,6 +114,17 @@ export class DriverManagementComponent implements OnInit {
     } finally {
       this.isLoading.set(false);
     }
+  }
+  private async tableDriver(driver: ManagedDriver): Promise<ManagedDriver> {
+    let driverPhotoUrl: string | null = null;
+    if (driver.driverPhotoAssetId && driver.cityId) {
+      try {
+        driverPhotoUrl = await this.media.getDownloadUrl(driver.driverPhotoAssetId, driver.cityId);
+      } catch {
+        // A missing photo must not prevent the rest of the Driver table from loading.
+      }
+    }
+    return { ...driver, cityName: this.cityName(driver.cityId), driverPhotoUrl };
   }
   async restore(row: ManagedDriver) {
     try { await this.drivers.update(row.accountId, { operationalStatus: 'ACTIVE' }); await this.load(this.page); this.notify.success(this.language.t('common.success')); }
