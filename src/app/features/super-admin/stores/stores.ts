@@ -16,12 +16,15 @@ import type { City } from '../geography/geography.models';
 
 type Translation = { locale: string; name: string; address?: string };
 type StoreStatus = 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
+type StoreMedia = { assetId: string; url: string | null };
 const WEEKDAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const;
 type Weekday = typeof WEEKDAYS[number];
 type Store = {
   id: string; name: string; translations: Translation[]; phone: string; address: string;
   status: StoreStatus; displayOrder: number; mainCategory: { id: string; name: string; translations?: Translation[] };
-  zoneIds: string[]; subcategoryIds: string[]; location: { latitude: number; longitude: number }; workingHours: Array<{ dayOfWeek: Weekday; opensAt: string; closesAt: string }>; updatedAt: string;
+  zoneIds: string[]; subcategoryIds: string[]; location: { latitude: number; longitude: number }; logo: StoreMedia | null; cover: StoreMedia | null;
+  orderAcceptanceStatus: 'ACCEPTING' | 'PAUSED'; availability: { isOpen: boolean; isAcceptingOrders: boolean; nextOpeningAt: string | null; nextClosingAt: string | null };
+  workingHours: Array<{ dayOfWeek: Weekday; opensAt: string; closesAt: string }>; createdAt: string; updatedAt: string; archivedAt: string | null;
 };
 type Page<T> = { data: T[]; pagination?: { page: number; limit: number; total: number }; page?: number; limit?: number; total?: number };
 type MainCategory = { id: string; name: string; translations: Translation[]; status: string };
@@ -153,11 +156,17 @@ export class SuperAdminStoresComponent {
   openDetails(store: Store) { this.detailStore.set(store); }
   readonly detailActions = computed<readonly DetailDialogAction[]>(() => {
     const store = this.detailStore();
-    return store && store.status !== 'ARCHIVED' ? [{ id: 'edit', label: this.language.t('common.edit') }] : [];
+    if (!store) return [];
+    return [
+      { id: 'edit', label: this.language.t('common.edit') },
+      ...(store.status !== 'ACTIVE' && store.status !== 'ARCHIVED' ? [{ id: 'restore', label: this.language.t('common.restore'), tone: 'neutral' as const }] : []),
+    ];
   });
-  onDetailAction(action: string) {
+  async onDetailAction(action: string) {
     const store = this.detailStore();
-    if (action !== 'edit' || !store) return;
+    if (!store) return;
+    if (action === 'restore') { await this.setStatus(store, 'ACTIVE'); this.detailStore.set(null); return; }
+    if (action !== 'edit') return;
     this.detailStore.set(null);
     this.openEdit(store);
   }
@@ -165,8 +174,10 @@ export class SuperAdminStoresComponent {
     const store = this.detailStore();
     if (!store) return [];
     return [
-      { title: this.language.t('details.store'), items: [{ label: this.language.t('stores.phone'), value: store.phone }, { label: this.language.t('stores.address'), value: store.address }, { label: this.language.t('geo.status'), value: store.status }, { label: this.language.t('catalog.displayOrder'), value: store.displayOrder }] },
+      { title: this.language.t('details.store'), items: [{ label: this.language.t('stores.phone'), value: store.phone }, { label: this.language.t('stores.address'), value: store.address }, { label: this.language.t('geo.status'), value: this.language.t(`status.${store.status}`) }, { label: this.language.t('stores.orderAcceptance'), value: store.orderAcceptanceStatus }, { label: this.language.t('catalog.displayOrder'), value: store.displayOrder }] },
       { title: this.language.t('details.categoryCoverage'), items: [{ label: this.language.t('stores.mainCategory'), value: this.categoryLabel(store.mainCategory) }, { label: this.language.t('stores.subcategories'), value: store.subcategoryIds.length }, { label: this.language.t('nav.zones'), value: store.zoneIds.length }, { label: this.language.t('geo.latitude'), value: store.location.latitude }, { label: this.language.t('geo.longitude'), value: store.location.longitude }] },
+      { title: this.language.t('stores.workingHours'), items: store.workingHours.length ? store.workingHours.map((period) => ({ label: this.language.t(`stores.weekday.${period.dayOfWeek}`), value: `${period.opensAt} – ${period.closesAt}` })) : [{ label: this.language.t('stores.workingHours'), value: this.language.t('common.noData') }] },
+      { title: this.language.t('products.availability'), items: [{ label: this.language.t('products.availability'), value: store.availability.isOpen ? this.language.t('common.yes') : this.language.t('common.no') }, { label: this.language.t('stores.orderAcceptance'), value: store.availability.isAcceptingOrders ? this.language.t('common.yes') : this.language.t('common.no') }, { label: this.language.t('stores.updatedAt'), value: store.updatedAt }, { label: this.language.t('geo.createdAt'), value: store.createdAt }, ...(store.archivedAt ? [{ label: this.language.t('stores.archivedAt'), value: store.archivedAt }] : []), ...(store.cover?.url ? [{ label: this.language.t('stores.cover'), value: this.language.t('common.view'), url: store.cover.url }] : [])] },
     ];
   }
 
@@ -218,6 +229,7 @@ export class SuperAdminStoresComponent {
     this.saving.set(true); this.formError.set(''); let logoAssetId: string | null = null;
     try {
       if (logo) { const asset = await this.media.uploadImage(logo, 'STORE_LOGO', cityId); logoAssetId = asset.id; }
+      const editing = this.editing();
       const body = {
         mainCategoryId: String(value['mainCategoryId']), phone, latitude: Number(value['latitude']), longitude: Number(value['longitude']),
         displayOrder: Number(value['displayOrder']), zoneIds, subcategoryIds,
@@ -226,7 +238,6 @@ export class SuperAdminStoresComponent {
         ...(isCreate ? { status: 'ACTIVE' as const, orderAcceptanceStatus: 'ACCEPTING' as const } : {}),
         workingHours,
       };
-      const editing = this.editing();
       if (editing) await this.api.patch(`/api/v1/super-admin/stores/${editing.id}`, body, { params: { cityId } });
       else await this.api.post('/api/v1/super-admin/stores', { cityId, ...body, logoAssetId });
       this.createOpen.set(false); await this.load(); this.notify.success(this.language.t(editing ? 'stores.updated' : 'stores.created'));
