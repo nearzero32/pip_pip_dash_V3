@@ -42,6 +42,13 @@
         </ol>
       }
       <div class="modal-body">
+        @if (activeCopyActions().length) {
+          <div class="form-copy-actions">
+            @for (action of activeCopyActions(); track action.label) {
+              <button type="button" class="form-copy-action" (click)="applyCopyAction(action)" [disabled]="isSubmitting">{{ action.label }}</button>
+            }
+          </div>
+        }
         <div class="form-grid">
           @for (field of fields; track field.name) {
             @if (shouldShowField(field)) {

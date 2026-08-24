@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  ChangeDetectorRef,
   ElementRef,
   EventEmitter,
   Input,
@@ -21,6 +22,13 @@ import { CityBoundaryMapComponent } from '../city-boundary-map/city-boundary-map
 import { SelectControlComponent, SelectControlOption } from '../select-control/select-control';
 import { InputControlComponent } from '../input-control/input-control';
 import { registerDialogOverlay } from '../dialog-layer';
+
+export interface FormCopyAction {
+  step: number;
+  label: string;
+  sourceFields: readonly string[];
+  targetGroups: readonly (readonly string[])[];
+}
 
 const FOCUSABLE =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -49,6 +57,8 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() submitButtonText: string = '';
   @Input() cancelButtonText: string = '';
   @Input() steps: string[] = [];
+  /** Reusable action for copying a field group (for example, one day's hours) to matching groups. */
+  @Input() copyActions: readonly FormCopyAction[] = [];
   /** Enables the shared modern select control without changing legacy forms. */
   @Input() modernSelect = false;
   @Input() modernInput = true;
@@ -60,6 +70,7 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   private fb = inject(FormBuilder);
   private language = inject(LanguageService);
   private host = inject(ElementRef<HTMLElement>);
+  private cdr = inject(ChangeDetectorRef);
 
   form!: FormGroup;
   readonly visiblePasswords = signal<ReadonlySet<string>>(new Set());
@@ -278,6 +289,18 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   isLastStep(): boolean { return this.activeStep() >= this.steps.length - 1; }
+  activeCopyActions(): readonly FormCopyAction[] { return this.copyActions.filter((action) => action.step === this.activeStep()); }
+  applyCopyAction(action: FormCopyAction) {
+    const values = action.sourceFields.map((fieldName) => this.form.get(fieldName)?.value ?? '');
+    action.targetGroups.forEach((targetFields) => targetFields.forEach((fieldName, index) => {
+      const control = this.form.get(fieldName);
+      control?.setValue(values[index] ?? '');
+      control?.markAsDirty();
+      control?.markAsTouched();
+    }));
+    this.form.updateValueAndValidity();
+    this.cdr.markForCheck();
+  }
   nextStep() {
     const current = this.fields.filter((field) => field.type !== 'map' && field.step === this.activeStep());
     current.forEach((field) => this.form.get(field.name)?.markAsTouched());

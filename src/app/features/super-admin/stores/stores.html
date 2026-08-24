@@ -23,6 +23,7 @@
     [initialData]="formInitialData()"
     [isSubmitting]="saving()"
     [steps]="['Details', 'Coverage', 'Working hours', 'Location', 'Media']"
+    [copyActions]="workHoursCopyActions"
     (onClose)="createOpen.set(false)"
     (onFieldChange)="onFormFieldChange($event)"
     (onSubmit)="save($event)"

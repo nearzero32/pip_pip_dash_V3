@@ -25,7 +25,27 @@ type Store = {
 type Page<T> = { data: T[]; pagination?: { page: number; limit: number; total: number }; page?: number; limit?: number; total?: number };
 type MainCategory = { id: string; name: string; translations: Translation[]; status: string };
 type Subcategory = { id: string; name: string; translations: Translation[]; status: string };
-type Zone = { id: string; name: string; translations: Translation[]; status: string };
+type Zone = { id: string; name: string; translations: Translation[]; status: string; boundary?: unknown };
+
+type Position = readonly [number, number];
+const pointInRing = (point: Position, ring: readonly Position[]) => {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i]!, [xj, yj] = ring[j]!;
+    if ((yi > point[1]) !== (yj > point[1]) && point[0] < ((xj - xi) * (point[1] - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+};
+const boundaryContains = (boundary: unknown, point: Position): boolean | null => {
+  try {
+    const geometry = typeof boundary === 'string' ? JSON.parse(boundary) : boundary as { type?: string; coordinates?: unknown };
+    const coordinates = geometry?.coordinates;
+    const polygonContains = (polygon: unknown) => Array.isArray(polygon) && Array.isArray(polygon[0]) && pointInRing(point, polygon[0] as Position[]);
+    if (geometry?.type === 'Polygon') return polygonContains(coordinates);
+    if (geometry?.type === 'MultiPolygon' && Array.isArray(coordinates)) return coordinates.some(polygonContains);
+  } catch { /* Let the server remain the authority if a boundary cannot be read. */ }
+  return null;
+};
 
 @Component({
   selector: 'app-super-admin-stores',
@@ -41,6 +61,12 @@ export class SuperAdminStoresComponent {
   private readonly media = inject(MediaApiService);
   readonly language = inject(LanguageService);
   private readonly notify = inject(NotificationService);
+  readonly workHoursCopyActions = [{
+    step: 2,
+    label: this.language.t('stores.copyMondayHours'),
+    sourceFields: ['MONDAY_open', 'MONDAY_close'],
+    targetGroups: WEEKDAYS.slice(1).map((day) => [`${day}_open`, `${day}_close`]),
+  }];
 
   readonly cities = signal<City[]>([]);
   readonly cityId = signal('');
@@ -161,6 +187,12 @@ export class SuperAdminStoresComponent {
     }
     if (!cityId || (isCreate && !logo) || !nameAr || !nameEn || !addressAr || !addressEn || !String(value['phone'] ?? '').trim() || !value['mainCategoryId'] || !subcategoryIds.length || !zoneIds.length || value['latitude'] == null || value['longitude'] == null) {
       this.formError.set(this.language.t('common.requiredFields')); return;
+    }
+    const point: Position = [Number(value['longitude']), Number(value['latitude'])];
+    const zoneResults = this.zones().filter((zone) => zone.status === 'ACTIVE').map((zone) => boundaryContains(zone.boundary, point));
+    if (zoneResults.some((result) => result !== null) && !zoneResults.some((result) => result === true)) {
+      const message = this.language.t('stores.error.INVALID_STORE_LOCATION');
+      this.formError.set(message); this.notify.error(message); return;
     }
     this.saving.set(true); this.formError.set(''); let logoAssetId: string | null = null;
     try {

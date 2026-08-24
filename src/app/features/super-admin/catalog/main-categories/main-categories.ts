@@ -7,6 +7,7 @@ import { TranslatePipe } from '../../../../i18n/translate.pipe';
 import { LanguageService } from '../../../../i18n/language.service';
 import { FormDialogComponent } from '../../../../shared/components/form-dialog/form-dialog';
 import { SelectControlComponent, SelectControlOption } from '../../../../shared/components/select-control/select-control';
+import { InputControlComponent } from '../../../../shared/components/input-control/input-control';
 import { TableComponent } from '../../../../shared/components/table/table';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog';
 import { FormField } from '../../../../shared/models/form-field.interface';
@@ -18,7 +19,7 @@ import { City } from '../../geography/geography.models';
 type Category = { id: string; name: string; translations: { locale: string; name: string }[]; status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED'; displayOrder: number; image?: { url: string | null } };
 type Page = { data: Category[]; page: number; limit: number; total: number };
 
-@Component({ selector: 'app-super-main-categories', standalone: true, imports: [CommonModule, TranslatePipe, TableComponent, FormDialogComponent, ConfirmationDialogComponent, SelectControlComponent], templateUrl: './main-categories.html', changeDetection: ChangeDetectionStrategy.OnPush })
+@Component({ selector: 'app-super-main-categories', standalone: true, imports: [CommonModule, TranslatePipe, TableComponent, FormDialogComponent, ConfirmationDialogComponent, SelectControlComponent, InputControlComponent], templateUrl: './main-categories.html', changeDetection: ChangeDetectionStrategy.OnPush })
 export class SuperAdminMainCategoriesComponent implements OnInit {
   private api = inject(ApiService).client; private geography = inject(GeographyService); private media = inject(MediaApiService); private lang = inject(LanguageService); private notify = inject(NotificationService);
   readonly cities = signal<City[]>([]); readonly cityId = signal(''); readonly rows = signal<Category[]>([]); readonly loading = signal(false); readonly dialog = signal(false); readonly editing = signal<Category | null>(null); readonly saving = signal(false); readonly search = signal(''); readonly status = signal(''); readonly archiveTarget = signal<Category | null>(null);
