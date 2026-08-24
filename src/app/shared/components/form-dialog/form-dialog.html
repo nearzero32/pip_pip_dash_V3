@@ -73,7 +73,10 @@
                   </div>
                 }
 
-                @if (field.type === 'text' || field.type === 'number' || field.type === 'time') {
+                @if (modernInput && (field.type === 'text' || field.type === 'number' || field.type === 'time')) {
+                  <app-input-control [id]="field.name" [type]="field.type" [value]="form.get(field.name)?.value ?? ''" [placeholder]="field.placeholder || (field.type === 'number' ? '0' : '')" [disabled]="isSubmitting" [required]="field.required ?? false" [error]="isInvalid(field) ? getErrorMessage(field.name) : ''" (valueChange)="onFieldValueChange(field.name, $event)"></app-input-control>
+                }
+                @if (!modernInput && (field.type === 'text' || field.type === 'number' || field.type === 'time')) {
                   <input
                     [type]="field.type === 'time' ? 'time' : inputType(field)"
                     [id]="field.name"

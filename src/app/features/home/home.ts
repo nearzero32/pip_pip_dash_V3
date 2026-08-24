@@ -64,6 +64,20 @@ const SUPER_ADMIN_GROUPS: readonly HomeActionGroup[] = [
         route: '/driver-management',
         icon: 'drivers',
       },
+      {
+        id: 'merchants',
+        labelKey: 'nav.merchants',
+        descriptionKey: 'home.action.merchants',
+        route: '/merchants',
+        icon: 'stores',
+      },
+      {
+        id: 'store-commissions',
+        labelKey: 'nav.storesPercentage',
+        descriptionKey: 'home.action.storeCommissions',
+        route: '/store-commissions',
+        icon: 'pricing',
+      },
     ],
   },
   {

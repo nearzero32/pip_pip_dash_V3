@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { superAdminGuard } from '../../core/auth/auth.guard';
 
 export const SUPER_ADMIN_ROUTES: Routes = [
+  { path: 'store-commissions', loadComponent: () => import('./store-commissions/store-commissions').then((m) => m.SuperStoreCommissionsComponent), canActivate: [superAdminGuard], data: { titleKey: 'nav.storesPercentage' } },
+  { path: 'merchants', loadComponent: () => import('./merchants/merchants').then((m) => m.SuperMerchantsComponent), canActivate: [superAdminGuard], data: { titleKey: 'nav.merchants' } },
   {
     path: 'stores',
     loadComponent: () => import('./stores/stores').then((m) => m.SuperAdminStoresComponent),

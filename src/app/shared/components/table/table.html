@@ -5,6 +5,7 @@
       <thead>
         <tr>
           <th class="index-header">#</th>
+          @if (selectable) { <th class="select-header"><input type="checkbox" [checked]="allSelected()" (change)="toggleAll($any($event.target).checked)" [attr.aria-label]="'common.select' | t" /></th> }
           @for (col of columns; track col.key) {
             <th>{{ col.label }}</th>
           }
@@ -21,6 +22,7 @@
           @for (i of [1,2,3,4,5]; track i) {
             <tr class="skeleton-row">
               <td><div class="skeleton-cell index-cell"></div></td>
+              @if (selectable) { <td><div class="skeleton-cell index-cell"></div></td> }
               @for (col of columns; track col.key) {
                 <td><div class="skeleton-cell"></div></td>
               }
@@ -38,6 +40,7 @@
               <td class="index-cell">
                 <span class="index-badge">{{ getRowNumber(i) }}</span>
               </td>
+              @if (selectable) { <td class="select-cell"><input type="checkbox" [checked]="isSelected(row)" (change)="toggleRow(row, $any($event.target).checked)" [attr.aria-label]="'common.select' | t" /></td> }
               @for (col of columns; track col.key) {
                 <td [attr.data-label]="col.label">
                   <span class="mobile-label">{{ col.label }}</span>

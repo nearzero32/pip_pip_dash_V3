@@ -172,6 +172,12 @@ export class DriverManagementComponent implements OnInit {
     );
   }
 
+  wizardSteps(): string[] {
+    return this.formMode() === 'create' || this.formMode() === 'edit'
+      ? [this.language.t('drivers.step.account'), this.language.t('drivers.step.vehicle'), this.language.t('drivers.step.documents')]
+      : [];
+  }
+
   async save(value: Record<string, unknown>) {
     this.submitting.set(true);
     try {
@@ -260,34 +266,37 @@ export class DriverManagementComponent implements OnInit {
         label: this.language.t('drivers.phone'),
         type: 'text',
         required: true,
+        step: 0,
       },
-      { name: 'driverName', label: 'اسم السائق', type: 'text', required: mode === 'create' },
-      { name: 'fatherName', label: 'اسم الأب', type: 'text', required: mode === 'create' },
-      { name: 'motherName', label: 'اسم الأم', type: 'text', required: mode === 'create' },
-      { name: 'alternatePhone', label: 'رقم هاتف آخر', type: 'text', required: mode === 'create' },
+      { name: 'driverName', label: this.language.t('drivers.driverName'), type: 'text', required: mode === 'create', step: 0 },
+      { name: 'fatherName', label: this.language.t('drivers.fatherName'), type: 'text', required: mode === 'create', step: 0 },
+      { name: 'motherName', label: this.language.t('drivers.motherName'), type: 'text', required: mode === 'create', step: 0 },
+      { name: 'alternatePhone', label: this.language.t('drivers.alternatePhone'), type: 'text', required: mode === 'create', step: 0 },
       {
         name: 'driverPhoto',
         label: this.language.t('drivers.photo'),
         type: 'file',
         required: mode === 'create',
         width: 'full',
+        step: 1,
       },
       {
         name: 'vehicleDescription',
         label: this.language.t('drivers.vehicle'),
         type: 'textarea',
         width: 'full',
+        step: 1,
       },
-      { name: 'vehicleType', label: 'نوع الدراجة', type: 'text' },
-      { name: 'vehicleNumber', label: 'رقم الدراجة', type: 'text' },
+      { name: 'vehicleType', label: this.language.t('drivers.vehicleType'), type: 'text', step: 1 },
+      { name: 'vehicleNumber', label: this.language.t('drivers.vehicleNumber'), type: 'text', step: 1 },
     ];
     if (mode === 'create') {
       fields.push(
-        { name: 'nationalIdFront', label: 'صورة البطاقة الوطنية الأمامية', type: 'file', required: true, width: 'full' },
-        { name: 'nationalIdBack', label: 'صورة البطاقة الوطنية الخلفية', type: 'file', required: true, width: 'full' },
-        { name: 'residenceCardFront', label: 'صورة بطاقة السكن الأمامية', type: 'file', required: true, width: 'full' },
-        { name: 'residenceCardBack', label: 'صورة بطاقة السكن الخلفية', type: 'file', required: true, width: 'full' },
-        { name: 'contract', label: 'صورة العقد', type: 'file', required: true, width: 'full' },
+        { name: 'nationalIdFront', label: this.language.t('drivers.nationalIdFront'), type: 'file', required: true, width: 'full', step: 2 },
+        { name: 'nationalIdBack', label: this.language.t('drivers.nationalIdBack'), type: 'file', required: true, width: 'full', step: 2 },
+        { name: 'residenceCardFront', label: this.language.t('drivers.residenceCardFront'), type: 'file', required: true, width: 'full', step: 2 },
+        { name: 'residenceCardBack', label: this.language.t('drivers.residenceCardBack'), type: 'file', required: true, width: 'full', step: 2 },
+        { name: 'contract', label: this.language.t('drivers.contract'), type: 'file', required: true, width: 'full', step: 2 },
       );
       fields.splice(1, 0, {
         name: 'accessCode',
@@ -297,11 +306,12 @@ export class DriverManagementComponent implements OnInit {
         validators: [Validators.pattern(/^[0-9]{6,12}$/)],
         hint: this.language.t('drivers.accessCodeHint'),
         allowGeneratePassword: false,
+        step: 0,
       });
     } else {
       fields.push(
-        { name: 'nationalIdFront', label: 'استبدال البطاقة الوطنية الأمامية', type: 'file', width: 'full' }, { name: 'nationalIdBack', label: 'استبدال البطاقة الوطنية الخلفية', type: 'file', width: 'full' },
-        { name: 'residenceCardFront', label: 'استبدال بطاقة السكن الأمامية', type: 'file', width: 'full' }, { name: 'residenceCardBack', label: 'استبدال بطاقة السكن الخلفية', type: 'file', width: 'full' }, { name: 'contract', label: 'استبدال العقد', type: 'file', width: 'full' },
+        { name: 'nationalIdFront', label: this.language.t('drivers.replaceNationalIdFront'), type: 'file', width: 'full', step: 2 }, { name: 'nationalIdBack', label: this.language.t('drivers.replaceNationalIdBack'), type: 'file', width: 'full', step: 2 },
+        { name: 'residenceCardFront', label: this.language.t('drivers.replaceResidenceCardFront'), type: 'file', width: 'full', step: 2 }, { name: 'residenceCardBack', label: this.language.t('drivers.replaceResidenceCardBack'), type: 'file', width: 'full', step: 2 }, { name: 'contract', label: this.language.t('drivers.replaceContract'), type: 'file', width: 'full', step: 2 },
       );
       fields.push({
         name: 'operationalStatus',
@@ -314,6 +324,7 @@ export class DriverManagementComponent implements OnInit {
           { value: 'SUSPENDED', label: this.language.t('drivers.suspended') },
           { value: 'CLOSED', label: this.language.t('drivers.closed') },
         ],
+        step: 0,
       });
     }
     return fields;

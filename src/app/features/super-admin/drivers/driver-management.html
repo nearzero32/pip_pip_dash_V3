@@ -41,6 +41,7 @@
     [modernSelect]="true"
     [title]="formTitle()"
     [fields]="fields()"
+    [steps]="wizardSteps()"
     [initialData]="formMode() === 'edit' ? editing() : null"
     [isSubmitting]="submitting()"
     (onClose)="closeForm()"

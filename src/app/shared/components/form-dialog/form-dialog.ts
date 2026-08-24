@@ -19,6 +19,7 @@ import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { LocationPickerMapComponent, MapPoint } from '../location-picker-map/location-picker-map';
 import { CityBoundaryMapComponent } from '../city-boundary-map/city-boundary-map';
 import { SelectControlComponent, SelectControlOption } from '../select-control/select-control';
+import { InputControlComponent } from '../input-control/input-control';
 import { registerDialogOverlay } from '../dialog-layer';
 
 const FOCUSABLE =
@@ -35,7 +36,7 @@ const PASSWORD_ALPHABET = PASSWORD_CHARACTER_SETS.join('');
 @Component({
   selector: 'app-form-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, LocationPickerMapComponent, CityBoundaryMapComponent, SelectControlComponent],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, LocationPickerMapComponent, CityBoundaryMapComponent, SelectControlComponent, InputControlComponent],
   templateUrl: './form-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './form-dialog.css',
@@ -50,6 +51,7 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() steps: string[] = [];
   /** Enables the shared modern select control without changing legacy forms. */
   @Input() modernSelect = false;
+  @Input() modernInput = true;
 
   @Output() onClose = new EventEmitter<void>();
   @Output() onSubmit = new EventEmitter<any>();

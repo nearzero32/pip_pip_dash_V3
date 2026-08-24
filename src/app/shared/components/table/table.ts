@@ -26,12 +26,27 @@ export class TableComponent<T extends object = object> {
   @Input() allowPassword: boolean = false;
   @Input() showActions: boolean = true;
   @Input() rowKey: string = '_id';
+  @Input() selectable = false;
+  @Input() selectedKeys: readonly string[] = [];
 
   @Output() pageChange = new EventEmitter<number>();
   @Output() onEdit = new EventEmitter<T>();
   @Output() onDelete = new EventEmitter<T>();
   @Output() onView = new EventEmitter<T>();
   @Output() onPassword = new EventEmitter<T>();
+  @Output() selectedKeysChange = new EventEmitter<string[]>();
+
+  rowId(row: T): string { return String(this.resolveValue(row, this.rowKey) ?? ''); }
+  isSelected(row: T): boolean { return this.selectedKeys.includes(this.rowId(row)); }
+  allSelected(): boolean { return this.data.length > 0 && this.data.every((row) => this.isSelected(row)); }
+  toggleRow(row: T, selected: boolean) {
+    const id = this.rowId(row);
+    this.selectedKeysChange.emit(selected ? [...new Set([...this.selectedKeys, id])] : this.selectedKeys.filter((key) => key !== id));
+  }
+  toggleAll(selected: boolean) {
+    const visible = this.data.map((row) => this.rowId(row));
+    this.selectedKeysChange.emit(selected ? [...new Set([...this.selectedKeys, ...visible])] : this.selectedKeys.filter((key) => !visible.includes(key)));
+  }
 
   /**
    * Resolve a dot-notated key path against a row object.

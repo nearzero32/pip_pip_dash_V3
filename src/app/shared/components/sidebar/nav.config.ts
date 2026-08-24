@@ -62,6 +62,13 @@ export const NAV_ITEMS: readonly NavItem[] = [
       '<circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon>',
   },
   {
+    id: 'store-commissions',
+    labelKey: 'nav.storesPercentage',
+    audience: 'super',
+    route: '/store-commissions',
+    svgPath: '<circle cx="12" cy="12" r="10"></circle><path d="M8 14c1 1.5 2.3 2 4 2 2.2 0 4-1 4-3 0-4-8-1.5-8-5 0-2 1.8-3 4-3 1.5 0 2.8.5 3.7 1.5"></path><path d="M12 3v18"></path>',
+  },
+  {
     id: 'pricing',
     labelKey: 'nav.pricing',
     audience: 'super',
@@ -258,6 +265,13 @@ export const NAV_ITEMS: readonly NavItem[] = [
     route: '/stores',
     svgPath:
       '<path d="M3 9l2-5h14l2 5"></path><path d="M3 9v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V9"></path><path d="M10 21V12h4v9"></path>',
+  },
+  {
+    id: 'merchants-super',
+    labelKey: 'nav.merchants',
+    audience: 'super',
+    route: '/merchants',
+    svgPath: '<path d="M4 21v-9l8-5 8 5v9"></path><path d="M9 21v-5h6v5"></path><path d="M12 3v4"></path>',
   },
   {
     id: 'stores',

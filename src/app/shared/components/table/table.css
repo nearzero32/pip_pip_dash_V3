@@ -59,6 +59,8 @@
   width: 56px;
   text-align: center;
 }
+.custom-table th.select-header, .custom-table td.select-cell { width: 44px; text-align: center; padding-inline: var(--space-2); }
+.select-cell input, .select-header input { width: 17px; height: 17px; accent-color: var(--color-brand-primary); cursor: pointer; }
 
 /* ── BODY ROWS ──────────────────────────────────────────────── */
 .custom-table tbody tr {

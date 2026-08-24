@@ -15,7 +15,7 @@ export interface FormField {
   icon?: string; // SVG path
   required?: boolean;
   validators?: ValidatorFn[];
-  options?: any[]; // For select fields (supports FormOption or custom objects)
+  options?: readonly any[]; // For select fields (supports FormOption or custom objects)
   optionLabel?: string; // Property name for option label
   optionValue?: string; // Property name for option value
   formatter?: (value: any) => any; // For formatting display values

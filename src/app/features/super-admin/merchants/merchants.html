@@ -1,0 +1,63 @@
+<section class="feature-page">
+  <div class="page-toolbar">
+    <div class="page-toolbar__context">
+      <p class="hint">{{ 'merchants.hint' | t }}</p>
+    </div>
+    <div class="page-toolbar__actions">
+      <app-select-control
+        [label]="'common.city' | t"
+        [value]="cityId()"
+        [options]="cityOptions()"
+        (valueChange)="selectCity($event)"
+      ></app-select-control
+      ><app-input-control
+        type="search"
+        [placeholder]="'merchants.search' | t"
+        [value]="search()"
+        (valueChange)="setSearch($event)"
+      ></app-input-control><app-select-control
+        [label]="'merchants.status' | t"
+        [placeholder]="'merchants.allStatuses' | t"
+        [value]="status()"
+        [options]="statusOptions()"
+        (valueChange)="setStatus($event)"
+      ></app-select-control
+      ><button class="add-btn" [disabled]="!cityId()" (click)="create()">
+        {{ 'merchants.create' | t }}
+      </button>
+    </div>
+  </div>
+  <app-table
+    [data]="rows()"
+    [columns]="columns"
+    [isLoading]="loading()"
+    [allowDelete]="false"
+    [allowPassword]="true"
+    [allowView]="true"
+    rowKey="accountId"
+    (onEdit)="edit($event)"
+    (onPassword)="password($event)"
+    (onView)="transfer($event)"
+  ></app-table>
+</section>
+@if (dialog()) {
+  <app-form-dialog
+    [modernSelect]="true"
+    [title]="
+      (mode() === 'password'
+        ? 'merchants.resetPassword'
+        : mode() === 'transfer'
+          ? 'merchants.transfer'
+          : mode() === 'edit'
+            ? 'merchants.edit'
+            : 'merchants.create'
+      ) | t
+    "
+    [fields]="fields()"
+    [steps]="wizardSteps()"
+    [initialData]="editing()"
+    [isSubmitting]="saving()"
+    (onClose)="dialog.set(false)"
+    (onSubmit)="save($event)"
+  ></app-form-dialog>
+}

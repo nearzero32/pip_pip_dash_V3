@@ -1,0 +1,5 @@
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+let nextInputControlId = 0;
+@Component({ selector: 'app-input-control', standalone: true, imports: [CommonModule], templateUrl: './input-control.html', styleUrl: './input-control.css', changeDetection: ChangeDetectionStrategy.OnPush })
+export class InputControlComponent { private readonly generatedId = `input-control-${++nextInputControlId}`; @Input() id = ''; @Input() label = ''; @Input() value: string | number | null = ''; @Input() type: 'text' | 'number' | 'time' | 'search' = 'text'; @Input() placeholder = ''; @Input() disabled = false; @Input() required = false; @Input() error = ''; @Input() hint = ''; @Output() valueChange = new EventEmitter<string>(); get controlId() { return this.id || this.generatedId; } get describedBy() { return [this.hint ? `${this.controlId}-hint` : '', this.error ? `${this.controlId}-error` : ''].filter(Boolean).join(' ') || null; } change(event: Event) { this.valueChange.emit((event.target as HTMLInputElement).value); } }
