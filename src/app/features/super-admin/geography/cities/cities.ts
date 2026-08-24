@@ -14,6 +14,7 @@ import { NotificationService } from '../../../../shared/services/notification.se
 import { TranslatePipe } from '../../../../i18n/translate.pipe';
 import { apiErrorMessage } from '../../../../core/http/api-error';
 import { downloadBlob } from '../../../../core/utils/download';
+import { InputControlComponent } from '../../../../shared/components/input-control/input-control';
 
 @Component({
   selector: 'app-cities',
@@ -24,6 +25,7 @@ import { downloadBlob } from '../../../../core/utils/download';
     FormDialogComponent,
     ConfirmationDialogComponent,
     ExportButtonComponent,
+    InputControlComponent,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,6 +50,7 @@ export class CitiesComponent implements OnInit {
   confirmAction = signal<'activate' | 'suspend' | 'archive' | null>(null);
   pagination = signal<PaginationConfig | null>(null);
   page = signal(1);
+  search = signal('');
   columns: TableColumn[] = [];
   fields = signal<FormField[]>([]);
   readonly citySteps = ['City details', 'Location', 'Boundary'];
@@ -131,7 +134,7 @@ export class CitiesComponent implements OnInit {
   async load(page = 1) {
     this.isLoading.set(true);
     try {
-      const result = await this.api.listCities(page, 20);
+      const result = await this.api.listCities(page, 20, { search: this.search() });
       this.data.set(result.data);
       this.page.set(result.page);
       const pages = Math.max(1, Math.ceil(result.total / result.limit));
@@ -177,6 +180,7 @@ export class CitiesComponent implements OnInit {
   onView(row: City) {
     this.selected.set(row);
   }
+  onSearchChanged(search: string) { this.search.set(search); void this.load(1); }
   async restore(row: City) {
     try { await this.api.transitionCity(row.id, 'activate'); await this.load(this.page()); this.notify.success(this.language.t('common.success')); }
     catch (err) { this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError'))); }
@@ -237,7 +241,7 @@ export class CitiesComponent implements OnInit {
   async exportList() {
     this.exporting.set(true);
     try {
-      downloadBlob(await this.api.exportCities(), 'cities.xlsx');
+      downloadBlob(await this.api.exportCities(this.search()), 'cities.xlsx');
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {

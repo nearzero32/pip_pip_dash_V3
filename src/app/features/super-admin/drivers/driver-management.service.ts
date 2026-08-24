@@ -11,10 +11,10 @@ import {
 export class DriverManagementService {
   private api = inject(ApiService);
 
-  async list(page = 1, limit = 20, cityId?: string): Promise<ManagedDriverPage> {
+  async list(page = 1, limit = 20, cityId?: string, search?: string): Promise<ManagedDriverPage> {
     const response = await this.api.client.get<ManagedDriverPage>(
       '/api/v1/dashboard/drivers',
-      { params: { page, limit, ...(cityId ? { cityId } : {}) } },
+      { params: { page, limit, ...(cityId ? { cityId } : {}), ...(search?.trim() ? { search: search.trim() } : {}) } },
     );
     return {
       ...response.data,

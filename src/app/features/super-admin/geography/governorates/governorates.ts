@@ -13,11 +13,12 @@ import { NotificationService } from '../../../../shared/services/notification.se
 import { TranslatePipe } from '../../../../i18n/translate.pipe';
 import { apiErrorMessage } from '../../../../core/http/api-error';
 import { downloadBlob } from '../../../../core/utils/download';
+import { InputControlComponent } from '../../../../shared/components/input-control/input-control';
 
 @Component({
   selector: 'app-governorates',
   standalone: true,
-  imports: [CommonModule, TableComponent, FormDialogComponent, ExportButtonComponent, TranslatePipe],
+  imports: [CommonModule, TableComponent, FormDialogComponent, ExportButtonComponent, TranslatePipe, InputControlComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './governorates.html',
 })
@@ -34,6 +35,7 @@ export class GovernoratesComponent implements OnInit {
   editing = signal<Governorate | null>(null);
   pagination = signal<PaginationConfig | null>(null);
   page = signal(1);
+  search = signal('');
   columns: TableColumn[] = [];
   fields: FormField[] = [];
 
@@ -77,7 +79,7 @@ export class GovernoratesComponent implements OnInit {
   async load(page = 1) {
     this.isLoading.set(true);
     try {
-      const result = await this.api.listGovernorates(page, 50);
+      const result = await this.api.listGovernorates(page, 50, undefined, this.search());
       this.data.set(result.data);
       this.page.set(result.page);
       const pages = Math.max(1, Math.ceil(result.total / result.limit));
@@ -100,6 +102,7 @@ export class GovernoratesComponent implements OnInit {
     this.editing.set(row);
     this.showForm.set(true);
   }
+  onSearchChanged(search: string) { this.search.set(search); void this.load(1); }
   async restore(row: Governorate) {
     try { await this.api.updateGovernorate(row.id, { status: 'ACTIVE' }); await this.load(this.pagination()?.page ?? 1); this.notify.success(this.language.t('common.success')); }
     catch (err) { this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError'))); }
@@ -132,7 +135,7 @@ export class GovernoratesComponent implements OnInit {
   async exportList() {
     this.exporting.set(true);
     try {
-      downloadBlob(await this.api.exportGovernorates(), 'governorates.xlsx');
+      downloadBlob(await this.api.exportGovernorates(this.search()), 'governorates.xlsx');
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));
     } finally {

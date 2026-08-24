@@ -6,7 +6,7 @@
 
   <div class="filters">
     <app-select-control [label]="'nav.cities' | t" [placeholder]="'common.select' | t" [value]="cityId()" [options]="cityOptions()" (valueChange)="selectCity($event)"></app-select-control>
-    <label><span>{{ 'common.search' | t }}</span><input [disabled]="!cityId()" [ngModel]="search()" (ngModelChange)="search.set($event)" (keyup.enter)="applyFilters()" /></label>
+    <app-input-control type="search" [placeholder]="'common.search' | t" [value]="search()" [disabled]="!cityId()" (valueChange)="search.set($event)"></app-input-control>
     <app-select-control [label]="'geo.status' | t" [placeholder]="'common.select' | t" [value]="status()" [options]="statusOptions()" [disabled]="!cityId()" (valueChange)="onStatusChanged($event)"></app-select-control>
     <button type="button" class="add-btn" [disabled]="!cityId() || loading()" (click)="applyFilters()">{{ 'common.search' | t }}</button>
   </div>

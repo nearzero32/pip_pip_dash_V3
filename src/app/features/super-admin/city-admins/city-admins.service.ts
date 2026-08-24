@@ -9,9 +9,9 @@ const withId = (row: CityAdmin): CityAdmin => ({ ...row, _id: row.accountId });
 export class CityAdminsService {
   private api = inject(ApiService);
 
-  async listAdmins(): Promise<CityAdmin[]> {
+  async listAdmins(search?: string): Promise<CityAdmin[]> {
     const response = await this.api.client.get<{ data: CityAdmin[] }>(
-      '/api/v1/dashboard/admins'
+      '/api/v1/dashboard/admins', { params: search?.trim() ? { search: search.trim(), limit: 100 } : { limit: 100 } }
     );
     return response.data.data.map(withId);
   }
@@ -41,9 +41,9 @@ export class CityAdminsService {
     await this.api.client.post(`/api/v1/dashboard/admins/${adminId}/password`, { password });
   }
 
-  async exportAdmins() {
+  async exportAdmins(search?: string) {
     const response = await this.api.client.get<Blob>('/api/v1/dashboard/admins/export', {
-      responseType: 'blob',
+      params: search?.trim() ? { search: search.trim() } : {}, responseType: 'blob',
       timeout: HTTP_CONFIG.LONG_TIMEOUT,
     });
     return response.data;

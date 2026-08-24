@@ -11,6 +11,7 @@ import { FormDialogComponent } from '../../../shared/components/form-dialog/form
 import { DetailDialogComponent, DetailDialogAction, DetailSection } from '../../../shared/components/detail-dialog/detail-dialog';
 import { SelectControlComponent, type SelectControlOption } from '../../../shared/components/select-control/select-control';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button';
+import { InputControlComponent } from '../../../shared/components/input-control/input-control';
 import type { FormField } from '../../../shared/models/form-field.interface';
 import { GeographyService } from '../geography/geography.service';
 import type { City } from '../geography/geography.models';
@@ -55,7 +56,7 @@ const boundaryContains = (boundary: unknown, point: Position): boolean | null =>
 @Component({
   selector: 'app-super-admin-stores',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, FormDialogComponent, DetailDialogComponent, SelectControlComponent, ExportButtonComponent],
+  imports: [CommonModule, FormsModule, TranslatePipe, FormDialogComponent, DetailDialogComponent, SelectControlComponent, ExportButtonComponent, InputControlComponent],
   templateUrl: './stores.html',
   styleUrl: './stores.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

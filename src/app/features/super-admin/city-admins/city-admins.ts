@@ -15,13 +15,14 @@ import { NotificationService } from '../../../shared/services/notification.servi
 import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { apiErrorMessage } from '../../../core/http/api-error';
 import { downloadBlob } from '../../../core/utils/download';
+import { InputControlComponent } from '../../../shared/components/input-control/input-control';
 
 type CityAdminFormMode = 'create' | 'edit' | 'password';
 
 @Component({
   selector: 'app-city-admins',
   standalone: true,
-  imports: [CommonModule, TableComponent, FormDialogComponent, ExportButtonComponent, TranslatePipe],
+  imports: [CommonModule, TableComponent, FormDialogComponent, ExportButtonComponent, TranslatePipe, InputControlComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './city-admins.html',
 })
@@ -41,6 +42,7 @@ export class CityAdminsComponent implements OnInit {
   editing = signal<CityAdmin | null>(null);
   columns: TableColumn[] = [];
   fields = signal<FormField[]>([]);
+  search = signal('');
 
   private cities: City[] = [];
   private citiesPromise: Promise<void> | null = null;
@@ -148,7 +150,7 @@ export class CityAdminsComponent implements OnInit {
     this.isLoading.set(true);
     try {
       const [admins] = await Promise.all([
-        this.staff.listAdmins(),
+        this.staff.listAdmins(this.search()),
         this.ensureCitiesLoaded().catch(() => undefined),
       ]);
       this.data.set(
@@ -198,6 +200,7 @@ export class CityAdminsComponent implements OnInit {
       // Non-blocking error handled in fetchCities
     }
   }
+  onSearchChanged(search: string) { this.search.set(search); void this.load(); }
   async restore(row: CityAdmin) {
     try { await this.staff.updateAdmin(row.accountId, { status: 'ACTIVE' }); await this.load(); this.notify.success(this.language.t('common.success')); }
     catch (err) { this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError'))); }
@@ -262,7 +265,7 @@ export class CityAdminsComponent implements OnInit {
   async exportList() {
     this.exporting.set(true);
     try {
-      const blob = await this.staff.exportAdmins();
+      const blob = await this.staff.exportAdmins(this.search());
       downloadBlob(blob, 'city-admins.xlsx');
     } catch (err) {
       this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError')));

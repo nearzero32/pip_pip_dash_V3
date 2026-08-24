@@ -4,6 +4,7 @@
       <p class="hint">{{ 'geo.cityHint' | t }}</p>
     </div>
     <div class="page-toolbar__actions">
+      <app-input-control type="search" [placeholder]="'common.search' | t" [value]="search()" (valueChange)="onSearchChanged($event)"></app-input-control>
       <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
       <button class="add-btn" type="button" [disabled]="isLoadingGovernorates()" (click)="openCreate()">
         {{ 'geo.addCity' | t }}

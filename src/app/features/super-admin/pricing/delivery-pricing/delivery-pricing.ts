@@ -24,6 +24,7 @@ import { TranslatePipe } from '../../../../i18n/translate.pipe';
 import { apiErrorMessage } from '../../../../core/http/api-error';
 import { PaginationConfig } from '../../../../shared/models/pagination.interface';
 import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button';
+import { InputControlComponent } from '../../../../shared/components/input-control/input-control';
 
 
 @Component({
@@ -38,6 +39,7 @@ import { ExportButtonComponent } from '../../../../shared/components/export-butt
     ConfirmationDialogComponent,
     TranslatePipe,
     ExportButtonComponent,
+    InputControlComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './delivery-pricing.html',

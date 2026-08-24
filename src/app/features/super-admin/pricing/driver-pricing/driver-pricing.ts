@@ -12,12 +12,13 @@ import { apiErrorMessage, getApiErrorStatus, isApiErrorCode } from '../../../../
 import { DriverPricingFormComponent, DriverPricingFormValue } from './driver-pricing-form';
 import { SelectControlComponent, type SelectControlOption } from '../../../../shared/components/select-control/select-control';
 import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button';
+import { InputControlComponent } from '../../../../shared/components/input-control/input-control';
 
 
 @Component({
   selector: 'app-driver-pricing',
   standalone: true,
-  imports: [CommonModule, FormsModule, DriverPricingFormComponent, TranslatePipe, SelectControlComponent, ExportButtonComponent],
+  imports: [CommonModule, FormsModule, DriverPricingFormComponent, TranslatePipe, SelectControlComponent, ExportButtonComponent, InputControlComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './driver-pricing.html',
   styleUrl: './driver-pricing.css',
@@ -30,6 +31,7 @@ export class DriverPricingComponent implements OnInit {
 
   cities = signal<City[]>([]);
   cityId = signal('');
+  search = signal('');
   current = signal<DriverPricing | null>(null);
   missing = signal(false);
   loading = signal(true);
@@ -64,7 +66,10 @@ export class DriverPricingComponent implements OnInit {
   }
 
   cityOptions(): readonly SelectControlOption[] {
-    return this.cities().map((city) => ({ value: city.id, label: this.language.lang() === 'ar' ? city.nameAr : city.nameEn }));
+    const term = this.search().trim().toLocaleLowerCase();
+    return this.cities()
+      .filter((city) => !term || city.nameAr.toLocaleLowerCase().includes(term) || city.nameEn.toLocaleLowerCase().includes(term))
+      .map((city) => ({ value: city.id, label: this.language.lang() === 'ar' ? city.nameAr : city.nameEn }));
   }
 
   async load() {

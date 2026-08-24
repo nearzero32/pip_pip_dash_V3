@@ -4,17 +4,7 @@
       <p class="hint">{{ 'pricing.deliveryHint' | t }}</p>
     </div>
     <div class="page-toolbar__actions">
-      <label class="filter-field">
-        <span class="filter-field__label">{{ 'pricing.search' | t }}</span>
-        <input
-          class="city-picker"
-          type="search"
-          [value]="search()"
-          (input)="onSearchInput($any($event.target).value)"
-          [placeholder]="'pricing.searchPlaceholder' | t"
-          [attr.aria-label]="'pricing.search' | t"
-        />
-      </label>
+      <app-input-control class="filter-field" type="search" [placeholder]="'pricing.searchPlaceholder' | t" [value]="search()" (valueChange)="onSearchInput($event)"></app-input-control>
       <app-select-control class="filter-field" [label]="'geo.status' | t" [placeholder]="'pricing.allStatuses' | t" [value]="statusFilter()" [options]="statusOptions()" (valueChange)="onStatusChange($event)"></app-select-control>
       <app-select-control class="filter-field" [label]="'common.city' | t" [value]="cityId()" [options]="cityOptions()" (valueChange)="onCityChange($event)"></app-select-control>
       <app-export-button [endpoint]="'/api/v1/dashboard/cities/' + cityId() + '/delivery-pricing/versions/export'" filename="delivery-pricing.xlsx" [params]="{ search: search(), status: statusFilter() }" [disabled]="!cityId()"></app-export-button>

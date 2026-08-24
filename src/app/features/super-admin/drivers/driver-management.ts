@@ -22,13 +22,14 @@ import {
 } from './driver-management.models';
 import { DriverManagementService } from './driver-management.service';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button';
+import { InputControlComponent } from '../../../shared/components/input-control/input-control';
 
 type DriverFormMode = 'create' | 'edit' | 'accessCode';
 
 @Component({
   selector: 'app-super-admin-driver-management',
   standalone: true,
-  imports: [CommonModule, TableComponent, FormDialogComponent, DetailDialogComponent, SelectControlComponent, TranslatePipe, ExportButtonComponent],
+  imports: [CommonModule, TableComponent, FormDialogComponent, DetailDialogComponent, SelectControlComponent, TranslatePipe, ExportButtonComponent, InputControlComponent],
   templateUrl: './driver-management.html',
   styleUrl: './driver-management.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,6 +50,7 @@ export class DriverManagementComponent implements OnInit {
   fields = signal<FormField[]>([]);
   pagination = signal<PaginationConfig | null>(null);
   selectedCityId = signal('');
+  search = signal('');
   detailDriver = signal<ManagedDriver | null>(null);
   detailDocuments = signal<Array<{ label: string; url: string }>>([]);
   detailDocumentsLoading = signal(false);
@@ -92,7 +94,7 @@ export class DriverManagementComponent implements OnInit {
     this.isLoading.set(true);
     try {
       const [result, cityPage] = await Promise.all([
-        this.drivers.list(page, this.limit, this.selectedCityId() || undefined),
+        this.drivers.list(page, this.limit, this.selectedCityId() || undefined, this.search()),
         this.cities().length ? Promise.resolve(null) : this.geography.listCities(1, 100),
       ]);
       if (cityPage) this.cities.set(cityPage.data);
@@ -150,6 +152,10 @@ export class DriverManagementComponent implements OnInit {
   onCityChanged(cityId: string) {
     this.selectedCityId.set(cityId);
     this.load(1);
+  }
+  onSearchChanged(search: string) {
+    this.search.set(search);
+    void this.load(1);
   }
 
   cityOptions(): readonly SelectControlOption[] {

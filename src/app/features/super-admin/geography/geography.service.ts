@@ -12,10 +12,10 @@ const withId = <T extends { id: string }>(row: T): T & { _id: string } => ({
 export class GeographyService {
   private api = inject(ApiService);
 
-  async listGovernorates(page = 1, limit = 50, status?: string): Promise<Paginated<Governorate>> {
+  async listGovernorates(page = 1, limit = 50, status?: string, search?: string): Promise<Paginated<Governorate>> {
     const response = await this.api.client.get<Paginated<Governorate>>(
       '/api/v1/dashboard/governorates',
-      { params: { page, limit, ...(status ? { status } : {}) } }
+      { params: { page, limit, ...(status ? { status } : {}), ...(search?.trim() ? { search: search.trim() } : {}) } }
     );
     return {
       ...response.data,
@@ -34,21 +34,22 @@ export class GeographyService {
     return withId(response.data);
   }
 
-  async exportGovernorates() {
+  async exportGovernorates(search?: string) {
     const response = await this.api.client.get<Blob>('/api/v1/dashboard/governorates/export', {
-      responseType: 'blob',
+      params: search?.trim() ? { search: search.trim() } : {}, responseType: 'blob',
       timeout: HTTP_CONFIG.LONG_TIMEOUT,
     });
     return response.data;
   }
 
-  async listCities(page = 1, limit = 20, extras?: { governorateId?: string; status?: string }) {
+  async listCities(page = 1, limit = 20, extras?: { governorateId?: string; status?: string; search?: string }) {
     const response = await this.api.client.get<Paginated<City>>('/api/v1/dashboard/cities', {
       params: {
         page,
         limit,
         ...(extras?.governorateId ? { governorateId: extras.governorateId } : {}),
         ...(extras?.status ? { status: extras.status } : {}),
+        ...(extras?.search?.trim() ? { search: extras.search.trim() } : {}),
       },
     });
     return {
@@ -94,9 +95,9 @@ export class GeographyService {
     return withId(response.data);
   }
 
-  async exportCities() {
+  async exportCities(search?: string) {
     const response = await this.api.client.get<Blob>('/api/v1/dashboard/cities/export', {
-      responseType: 'blob',
+      params: search?.trim() ? { search: search.trim() } : {}, responseType: 'blob',
       timeout: HTTP_CONFIG.LONG_TIMEOUT,
     });
     return response.data;
