@@ -6,6 +6,7 @@ import { apiErrorMessage } from '../../../core/http/api-error';
 import { LanguageService } from '../../../i18n/language.service';
 import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { FormDialogComponent } from '../../../shared/components/form-dialog/form-dialog';
+import { DetailDialogComponent, DetailSection } from '../../../shared/components/detail-dialog/detail-dialog';
 import { TableComponent } from '../../../shared/components/table/table';
 import { SelectControlComponent, SelectControlOption } from '../../../shared/components/select-control/select-control';
 import { FormField } from '../../../shared/models/form-field.interface';
@@ -26,7 +27,7 @@ type DriverFormMode = 'create' | 'edit' | 'accessCode';
 @Component({
   selector: 'app-super-admin-driver-management',
   standalone: true,
-  imports: [CommonModule, TableComponent, FormDialogComponent, SelectControlComponent, TranslatePipe],
+  imports: [CommonModule, TableComponent, FormDialogComponent, DetailDialogComponent, SelectControlComponent, TranslatePipe],
   templateUrl: './driver-management.html',
   styleUrl: './driver-management.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,8 +48,9 @@ export class DriverManagementComponent implements OnInit {
   fields = signal<FormField[]>([]);
   pagination = signal<PaginationConfig | null>(null);
   selectedCityId = signal('');
-  documentsOpen = signal(false);
-  documentLinks = signal<Array<{ label: string; url: string }>>([]);
+  detailDriver = signal<ManagedDriver | null>(null);
+  detailDocuments = signal<Array<{ label: string; url: string }>>([]);
+  detailDocumentsLoading = signal(false);
   columns: TableColumn[] = [];
 
   private readonly limit = 20;
@@ -148,13 +150,22 @@ export class DriverManagementComponent implements OnInit {
     this.fields.set(this.buildFields('accessCode'));
     this.showForm.set(true);
   }
-  async openDocuments(driver: ManagedDriver) {
-    if (!driver.cityId) return;
+  async openDetails(driver: ManagedDriver) {
+    this.detailDriver.set(driver); this.detailDocuments.set([]); this.detailDocumentsLoading.set(true);
+    if (!driver.cityId) { this.detailDocumentsLoading.set(false); return; }
     try {
       const docs = await this.drivers.documents(driver.accountId);
-      this.documentLinks.set(await Promise.all(docs.map(async (doc) => ({ label: `${doc.documentType} — ${doc.side}`, url: await this.media.getDownloadUrl(doc.assetId, driver.cityId!) }))));
-      this.documentsOpen.set(true);
-    } catch (error) { this.notify.error(apiErrorMessage(error, this.language.t('common.unexpectedError'))); }
+      this.detailDocuments.set(await Promise.all(docs.map(async (doc) => ({ label: `${doc.documentType} — ${doc.side}`, url: await this.media.getDownloadUrl(doc.assetId, driver.cityId!) }))));
+    } catch (error) { this.notify.error(apiErrorMessage(error, this.language.t('common.unexpectedError'))); } finally { this.detailDocumentsLoading.set(false); }
+  }
+  detailSections(): DetailSection[] {
+    const driver = this.detailDriver();
+    if (!driver) return [];
+    return [
+      { title: this.language.t('details.driver'), items: [{ label: this.language.t('drivers.phone'), value: driver.phone }, { label: this.language.t('drivers.alternatePhone'), value: driver.alternatePhone }, { label: this.language.t('common.city'), value: this.cityName(driver.cityId) }, { label: this.language.t('drivers.operationalStatus'), value: driver.operationalStatus }] },
+      { title: this.language.t('details.identityVehicle'), items: [{ label: this.language.t('drivers.driverName'), value: driver.driverName }, { label: this.language.t('drivers.fatherName'), value: driver.fatherName }, { label: this.language.t('drivers.motherName'), value: driver.motherName }, { label: this.language.t('drivers.vehicleType'), value: driver.vehicleType }, { label: this.language.t('drivers.vehicleNumber'), value: driver.vehicleNumber }, { label: this.language.t('drivers.vehicle'), value: driver.vehicleDescription }] },
+      { title: this.language.t('details.documents'), items: this.detailDocuments().length ? this.detailDocuments().map((document) => ({ label: document.label, value: this.language.t('common.view'), url: document.url })) : [{ label: this.detailDocumentsLoading() ? this.language.t('common.loading') : this.language.t('common.noData'), value: this.detailDocumentsLoading() ? this.language.t('common.loading') : '—' }] },
+    ];
   }
 
   closeForm() {
@@ -194,11 +205,11 @@ export class DriverManagementComponent implements OnInit {
         const documentFiles = [['nationalIdFront', 'nationalIdFrontAssetId'], ['nationalIdBack', 'nationalIdBackAssetId'], ['residenceCardFront', 'residenceCardFrontAssetId'], ['residenceCardBack', 'residenceCardBackAssetId'], ['contract', 'contractAssetId']] as const;
         const documentAssets = await Promise.all(documentFiles.map(async ([field, key]) => value[field] instanceof File ? [key, (await this.media.uploadImage(value[field] as File, 'DRIVER_DOCUMENT', this.selectedCityId())).id] as const : null));
         await this.drivers.update(current.accountId, {
-          phone: String(value['phone']),
+          phone: this.normalizePhone(value['phone']),
           operationalStatus: value['operationalStatus'] as DriverOperationalStatus,
           ...(driverPhotoAssetId ? { driverPhotoAssetId } : {}),
           vehicleDescription: String(value['vehicleDescription'] ?? '') || null,
-          driverName: String(value['driverName']), fatherName: String(value['fatherName']), motherName: String(value['motherName']), alternatePhone: String(value['alternatePhone']),
+          driverName: String(value['driverName']), fatherName: String(value['fatherName']), motherName: String(value['motherName']), alternatePhone: this.normalizePhone(value['alternatePhone']),
           vehicleType: String(value['vehicleType'] ?? '') || null, vehicleNumber: String(value['vehicleNumber'] ?? '') || null,
           ...Object.fromEntries(documentAssets.flatMap((asset) => asset ? [asset] : [])),
         });
@@ -211,11 +222,11 @@ export class DriverManagementComponent implements OnInit {
         ).id;
         const documents = await Promise.all(documentFields.map((field) => this.media.uploadImage(value[field] as File, 'DRIVER_DOCUMENT', this.selectedCityId())));
         await this.drivers.create({
-          phone: String(value['phone']),
+          phone: this.normalizePhone(value['phone']),
           accessCode: String(value['accessCode']),
           cityId: this.selectedCityId(),
           driverPhotoAssetId,
-          driverName: String(value['driverName']), fatherName: String(value['fatherName']), motherName: String(value['motherName']), alternatePhone: String(value['alternatePhone']),
+          driverName: String(value['driverName']), fatherName: String(value['fatherName']), motherName: String(value['motherName']), alternatePhone: this.normalizePhone(value['alternatePhone']),
           nationalIdFrontAssetId: documents[0]!.id, nationalIdBackAssetId: documents[1]!.id,
           residenceCardFrontAssetId: documents[2]!.id, residenceCardBackAssetId: documents[3]!.id, contractAssetId: documents[4]!.id,
           ...(value['vehicleType'] ? { vehicleType: String(value['vehicleType']) } : {}),
@@ -242,6 +253,11 @@ export class DriverManagementComponent implements OnInit {
     return this.language.lang() === 'ar'
       ? city.nameAr || city.nameEn
       : city.nameEn || city.nameAr;
+  }
+
+  private normalizePhone(value: unknown): string {
+    const compact = String(value ?? '').replace(/[\s()-]/g, '');
+    return /^0\d{9,10}$/.test(compact) ? `+964${compact.slice(1)}` : compact;
   }
 
   private buildFields(mode: DriverFormMode): FormField[] {

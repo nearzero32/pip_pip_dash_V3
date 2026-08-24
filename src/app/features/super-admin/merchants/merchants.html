@@ -37,7 +37,7 @@
     rowKey="accountId"
     (onEdit)="edit($event)"
     (onPassword)="password($event)"
-    (onView)="transfer($event)"
+    (onView)="openDetails($event)"
   ></app-table>
 </section>
 @if (dialog()) {
@@ -61,3 +61,4 @@
     (onSubmit)="save($event)"
   ></app-form-dialog>
 }
+@if (detailMerchant(); as merchant) { <app-detail-dialog [title]="merchant.displayName || merchant.phone" [subtitle]="merchant.phone" [sections]="detailSections()" (close)="detailMerchant.set(null)"></app-detail-dialog> }

@@ -30,11 +30,11 @@
     rowKey="accountId"
     (pageChange)="load($event)"
     (onEdit)="openEdit($event)"
-    (onView)="openDocuments($event)"
+    (onView)="openDetails($event)"
     (onPassword)="openAccessCode($event)"
   ></app-table>
 </section>
-@if (documentsOpen()) { <div class="modal-overlay" (click)="documentsOpen.set(false)"><section class="modal-content" (click)="$event.stopPropagation()"><header class="modal-header"><h2>وثائق السائق</h2><button type="button" (click)="documentsOpen.set(false)">×</button></header><div class="modal-body"><div class="form-grid">@for (document of documentLinks(); track document.url) { <a [href]="document.url" target="_blank" rel="noopener" class="add-btn">{{ document.label }}</a> }</div></div></section></div> }
+@if (detailDriver(); as driver) { <app-detail-dialog [title]="driver.driverName || driver.phone" [subtitle]="driver.phone" [sections]="detailSections()" (close)="detailDriver.set(null)"></app-detail-dialog> }
 
 @if (showForm()) {
   <app-form-dialog

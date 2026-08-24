@@ -8,6 +8,7 @@ import { LanguageService } from '../../../i18n/language.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { MediaApiService } from '../../../core/media/media-api.service';
 import { FormDialogComponent } from '../../../shared/components/form-dialog/form-dialog';
+import { DetailDialogComponent, DetailDialogAction, DetailSection } from '../../../shared/components/detail-dialog/detail-dialog';
 import { SelectControlComponent, type SelectControlOption } from '../../../shared/components/select-control/select-control';
 import type { FormField } from '../../../shared/models/form-field.interface';
 import { GeographyService } from '../geography/geography.service';
@@ -50,7 +51,7 @@ const boundaryContains = (boundary: unknown, point: Position): boolean | null =>
 @Component({
   selector: 'app-super-admin-stores',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, FormDialogComponent, SelectControlComponent],
+  imports: [CommonModule, FormsModule, TranslatePipe, FormDialogComponent, DetailDialogComponent, SelectControlComponent],
   templateUrl: './stores.html',
   styleUrl: './stores.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -88,6 +89,7 @@ export class SuperAdminStoresComponent {
   readonly displayOrder = signal(1); readonly mainCategoryId = signal(''); readonly subcategoryIds = signal<string[]>([]); readonly zoneIds = signal<string[]>([]);
   readonly logoFile = signal<File | null>(null); readonly formError = signal('');
   readonly fields = signal<FormField[]>([]);
+  readonly detailStore = signal<Store | null>(null);
   readonly formInitialData = signal<Record<string, unknown>>({});
   readonly pageSize = 25;
   readonly hasPrevious = computed(() => this.page() > 1);
@@ -147,6 +149,25 @@ export class SuperAdminStoresComponent {
     void this.loadSubcategories(store.mainCategory.id);
     this.formInitialData.set({ nameAr: this.nameAr(), nameEn: this.nameEn(), addressAr: this.addressAr(), addressEn: this.addressEn(), phone: store.phone, latitude: store.location.latitude, longitude: store.location.longitude, displayOrder: store.displayOrder, mainCategoryId: store.mainCategory.id, subcategoryIds: store.subcategoryIds, zoneIds: store.zoneIds, ...Object.fromEntries(store.workingHours.flatMap((period) => [[`${period.dayOfWeek}_open`, period.opensAt], [`${period.dayOfWeek}_close`, period.closesAt]])) });
     this.fields.set(this.buildFields(false)); this.createOpen.set(true);
+  }
+  openDetails(store: Store) { this.detailStore.set(store); }
+  readonly detailActions = computed<readonly DetailDialogAction[]>(() => {
+    const store = this.detailStore();
+    return store && store.status !== 'ARCHIVED' ? [{ id: 'edit', label: this.language.t('common.edit') }] : [];
+  });
+  onDetailAction(action: string) {
+    const store = this.detailStore();
+    if (action !== 'edit' || !store) return;
+    this.detailStore.set(null);
+    this.openEdit(store);
+  }
+  detailSections(): DetailSection[] {
+    const store = this.detailStore();
+    if (!store) return [];
+    return [
+      { title: this.language.t('details.store'), items: [{ label: this.language.t('stores.phone'), value: store.phone }, { label: this.language.t('stores.address'), value: store.address }, { label: this.language.t('geo.status'), value: store.status }, { label: this.language.t('catalog.displayOrder'), value: store.displayOrder }] },
+      { title: this.language.t('details.categoryCoverage'), items: [{ label: this.language.t('stores.mainCategory'), value: this.categoryLabel(store.mainCategory) }, { label: this.language.t('stores.subcategories'), value: store.subcategoryIds.length }, { label: this.language.t('nav.zones'), value: store.zoneIds.length }, { label: this.language.t('geo.latitude'), value: store.location.latitude }, { label: this.language.t('geo.longitude'), value: store.location.longitude }] },
+    ];
   }
 
   async selectMainCategory(mainCategoryId: string) {

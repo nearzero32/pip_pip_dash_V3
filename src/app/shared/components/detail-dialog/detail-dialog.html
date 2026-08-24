@@ -1,0 +1,19 @@
+<div class="detail-dialog__overlay" role="dialog" aria-modal="true" [attr.aria-label]="title" (click)="close.emit()">
+  <section class="detail-dialog" (click)="$event.stopPropagation()">
+    <header class="detail-dialog__header">
+      <div class="detail-dialog__identity">
+        @if (imageUrl) { <img [src]="imageUrl" [alt]="title" class="detail-dialog__image" /> }
+        <div><h2>{{ title }}</h2>@if (subtitle) { <p>{{ subtitle }}</p> }</div>
+      </div>
+      <button class="detail-dialog__close" type="button" (click)="close.emit()" [attr.aria-label]="'common.close' | t">×</button>
+    </header>
+    <div class="detail-dialog__body">
+      @for (section of sections; track section.title) {
+        <section class="detail-dialog__section"><h3>{{ section.title }}</h3><dl>
+          @for (item of section.items; track item.label) { <div><dt>{{ item.label }}</dt><dd>@if (item.url) { <a [href]="item.url" target="_blank" rel="noopener">{{ item.value ?? ('common.view' | t) }}</a> } @else { {{ item.value ?? '—' }} }</dd></div> }
+        </dl></section>
+      }
+    </div>
+    @if (actions.length) { <footer class="detail-dialog__footer">@for (item of actions; track item.id) { <button type="button" class="detail-dialog__action" [class.detail-dialog__action--neutral]="item.tone === 'neutral'" [disabled]="item.disabled" (click)="action.emit(item.id)">{{ item.label }}</button> }</footer> }
+  </section>
+</div>

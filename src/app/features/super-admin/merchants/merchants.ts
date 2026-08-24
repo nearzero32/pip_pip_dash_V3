@@ -12,6 +12,7 @@ import {
   SelectControlOption,
 } from '../../../shared/components/select-control/select-control';
 import { InputControlComponent } from '../../../shared/components/input-control/input-control';
+import { DetailDialogComponent, DetailSection } from '../../../shared/components/detail-dialog/detail-dialog';
 import { FormField } from '../../../shared/models/form-field.interface';
 import { TableColumn } from '../../../shared/models/table-column.interface';
 import { GeographyService } from '../geography/geography.service';
@@ -38,6 +39,7 @@ type Store = { id: string; name: string };
     FormDialogComponent,
     SelectControlComponent,
     InputControlComponent,
+    DetailDialogComponent,
   ],
   templateUrl: './merchants.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,6 +57,7 @@ export class SuperMerchantsComponent implements OnInit {
   readonly dialog = signal(false);
   readonly editing = signal<Merchant | null>(null);
   readonly saving = signal(false);
+  readonly detailMerchant = signal<Merchant | null>(null);
   readonly mode = signal<'create' | 'edit' | 'password' | 'transfer'>('create');
   readonly search = signal('');
   readonly status = signal('');
@@ -191,6 +194,15 @@ export class SuperMerchantsComponent implements OnInit {
     this.mode.set('transfer');
     this.editing.set(row);
     this.dialog.set(true);
+  }
+  openDetails(row: Merchant) { this.detailMerchant.set(row); }
+  detailSections(): DetailSection[] {
+    const merchant = this.detailMerchant();
+    if (!merchant) return [];
+    return [
+      { title: this.lang.t('details.merchant'), items: [{ label: this.lang.t('merchants.phone'), value: merchant.phone }, { label: this.lang.t('merchants.displayName'), value: merchant.displayName }, { label: this.lang.t('merchants.status'), value: merchant.status }] },
+      { title: this.lang.t('details.store'), items: [{ label: this.lang.t('merchants.store'), value: merchant.storeName }, { label: this.lang.t('common.city'), value: this.cities().find((city) => city.id === merchant.cityId)?.nameAr ?? merchant.cityId }, { label: this.lang.t('merchants.createdAt'), value: merchant.createdAt }] },
+    ];
   }
   async save(v: Record<string, unknown>) {
     if (!this.cityId()) return;
