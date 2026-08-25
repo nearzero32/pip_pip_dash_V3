@@ -13,12 +13,13 @@ import { DriverPricingFormComponent, DriverPricingFormValue } from './driver-pri
 import { SelectControlComponent, type SelectControlOption } from '../../../../shared/components/select-control/select-control';
 import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button';
 import { InputControlComponent } from '../../../../shared/components/input-control/input-control';
+import { PageStatItem, PageStatsComponent } from '../../../../shared/components/page-stats/page-stats';
 
 
 @Component({
   selector: 'app-driver-pricing',
   standalone: true,
-  imports: [CommonModule, FormsModule, DriverPricingFormComponent, TranslatePipe, SelectControlComponent, ExportButtonComponent, InputControlComponent],
+  imports: [CommonModule, FormsModule, DriverPricingFormComponent, TranslatePipe, SelectControlComponent, ExportButtonComponent, InputControlComponent, PageStatsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './driver-pricing.html',
   styleUrl: './driver-pricing.css',
@@ -70,6 +71,17 @@ export class DriverPricingComponent implements OnInit {
     return this.cities()
       .filter((city) => !term || city.nameAr.toLocaleLowerCase().includes(term) || city.nameEn.toLocaleLowerCase().includes(term))
       .map((city) => ({ value: city.id, label: this.language.lang() === 'ar' ? city.nameAr : city.nameEn }));
+  }
+
+  pricingStats(): PageStatItem[] {
+    const current = this.current();
+    const city = this.cities().find((item) => item.id === this.cityId());
+    return [
+      { label: this.language.t('common.city'), value: city ? (this.language.lang() === 'ar' ? city.nameAr : city.nameEn) : '—', tone: 'total' },
+      { label: this.language.t('pricing.version'), value: current?.version ?? '—', tone: 'success' },
+      { label: this.language.t('pricing.driverBase'), value: current?.pricingBase ?? '—', tone: 'warning' },
+      { label: this.language.t('pricing.stagesHeading'), value: current?.pricingStages.length ?? 0 },
+    ];
   }
 
   async load() {

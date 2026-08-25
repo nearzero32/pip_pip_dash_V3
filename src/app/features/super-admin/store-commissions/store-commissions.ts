@@ -16,11 +16,13 @@ import { GeographyService } from '../geography/geography.service';
 import { CommissionHistoryItem, StoreCommission, StoreCommissionStatus } from './store-commissions.models';
 import { SuperStoreCommissionsService } from './store-commissions.service';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button';
+import { DetailDialogComponent, DetailSection } from '../../../shared/components/detail-dialog/detail-dialog';
+import { PageStatsComponent } from '../../../shared/components/page-stats/page-stats';
 
-@Component({ selector: 'app-super-store-commissions', standalone: true, imports: [CommonModule, TranslatePipe, TableComponent, FormDialogComponent, SelectControlComponent, InputControlComponent, ExportButtonComponent], templateUrl: './store-commissions.html', styleUrl: './store-commissions.css', changeDetection: ChangeDetectionStrategy.OnPush })
+@Component({ selector: 'app-super-store-commissions', standalone: true, imports: [CommonModule, TranslatePipe, TableComponent, FormDialogComponent, SelectControlComponent, InputControlComponent, ExportButtonComponent, DetailDialogComponent, PageStatsComponent], templateUrl: './store-commissions.html', styleUrl: './store-commissions.css', changeDetection: ChangeDetectionStrategy.OnPush })
 export class SuperStoreCommissionsComponent implements OnInit {
   private service = inject(SuperStoreCommissionsService); private geo = inject(GeographyService); private lang = inject(LanguageService); private notify = inject(NotificationService);
-  readonly cities = signal<City[]>([]); readonly cityId = signal(''); readonly rows = signal<StoreCommission[]>([]); readonly loading = signal(false); readonly search = signal(''); readonly status = signal<'' | StoreCommissionStatus>(''); readonly pagination = signal<PaginationConfig | null>(null); readonly selected = signal<StoreCommission | null>(null); readonly selectedStoreIds = signal<string[]>([]); readonly history = signal<CommissionHistoryItem[]>([]); readonly historyLoading = signal(false); readonly editorOpen = signal(false); readonly bulkEditorOpen = signal(false); readonly submitting = signal(false);
+  readonly cities = signal<City[]>([]); readonly cityId = signal(''); readonly rows = signal<StoreCommission[]>([]); readonly loading = signal(false); readonly search = signal(''); readonly status = signal<'' | StoreCommissionStatus>('ACTIVE'); readonly pagination = signal<PaginationConfig | null>(null); readonly selected = signal<StoreCommission | null>(null); readonly editing = signal<StoreCommission | null>(null); readonly selectedStoreIds = signal<string[]>([]); readonly history = signal<CommissionHistoryItem[]>([]); readonly historyLoading = signal(false); readonly editorOpen = signal(false); readonly bulkEditorOpen = signal(false); readonly submitting = signal(false);
   private page = 1;
   readonly columns: TableColumn[] = [ { key: 'storeName', label: this.lang.t('commission.store') }, { key: 'platformCommissionRate', label: this.lang.t('commission.rate') }, { key: 'status', label: this.lang.t('commission.status'), type: 'badge' }, { key: 'lastCommissionChangedAt', label: this.lang.t('commission.lastChange'), type: 'date' }, { key: 'lastChangedByEmail', label: this.lang.t('commission.changedBy') } ];
   readonly historyColumns: TableColumn[] = [ { key: 'previousRate', label: this.lang.t('commission.previousRate') }, { key: 'newRate', label: this.lang.t('commission.newRate') }, { key: 'reason', label: this.lang.t('commission.reason') }, { key: 'changedByEmail', label: this.lang.t('commission.changedBy') }, { key: 'changedAt', label: this.lang.t('commission.changedAt'), type: 'date' } ];
@@ -31,8 +33,32 @@ export class SuperStoreCommissionsComponent implements OnInit {
   setSearch(value: string) { this.search.set(value); void this.load(1); }
   setStatus(value: string) { this.status.set(value as '' | StoreCommissionStatus); void this.load(1); }
   async openDetails(row: StoreCommission) { this.selected.set(row); this.historyLoading.set(true); try { this.history.set((await this.service.history(this.cityId(), row.storeId)).data); } catch (e) { this.notify.error(apiErrorMessage(e, this.lang.t('common.unexpectedError'))); } finally { this.historyLoading.set(false); } }
+  detailSections(): DetailSection[] {
+    const row = this.selected();
+    if (!row) return [];
+    const city = this.cities().find((item) => item.id === row.cityId);
+    return [
+      { title: this.lang.t('details.store'), items: [
+        { label: this.lang.t('commission.store'), value: row.storeName },
+        { label: this.lang.t('common.city'), value: city ? (this.lang.lang() === 'ar' ? city.nameAr : city.nameEn) : row.cityId },
+        { label: this.lang.t('commission.status'), value: this.lang.t(`status.${row.status}`) },
+        { label: this.lang.t('commission.rate'), value: `${row.platformCommissionRate}%` },
+      ] },
+      { title: this.lang.t('commission.lastChange'), items: [
+        { label: this.lang.t('commission.lastChange'), value: this.formatDate(row.lastCommissionChangedAt) },
+        { label: this.lang.t('commission.changedBy'), value: row.lastChangedByEmail },
+      ] },
+    ];
+  }
+  openEditor(row: StoreCommission) { if (row.status === 'ARCHIVED') return; this.editing.set(row); this.editorOpen.set(true); }
+  closeEditor() { this.editorOpen.set(false); this.editing.set(null); }
+  closeDetails() { this.selected.set(null); this.history.set([]); }
+  private formatDate(value: string | null): string | null {
+    if (!value) return null;
+    return new Intl.DateTimeFormat(this.lang.lang() === 'ar' ? 'ar-IQ' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+  }
   fields(): FormField[] { return [{ name: 'platformCommissionRate', label: this.lang.t('commission.rateInput'), type: 'number', required: true }, { name: 'reason', label: this.lang.t('commission.reason'), type: 'textarea', required: true, width: 'full' }, { name: 'note', label: this.lang.t('commission.note'), type: 'textarea', width: 'full' }]; }
-  async save(value: Record<string, unknown>) { const row = this.selected(); const rate = Number(value['platformCommissionRate']); if (!row || !Number.isInteger(rate) || rate < 0 || rate > 100) return; this.submitting.set(true); try { const updated = await this.service.update(this.cityId(), row.storeId, { platformCommissionRate: rate, reason: String(value['reason']).trim(), ...(String(value['note'] ?? '').trim() ? { note: String(value['note']).trim() } : {}) }); this.selected.set(updated); this.editorOpen.set(false); await this.load(this.page); await this.openDetails(updated); this.notify.success(this.lang.t('common.success')); } catch (e) { this.notify.error(apiErrorMessage(e, this.lang.t('common.unexpectedError'))); } finally { this.submitting.set(false); } }
+  async save(value: Record<string, unknown>) { const row = this.editing(); const rate = Number(value['platformCommissionRate']); if (!row || !Number.isInteger(rate) || rate < 0 || rate > 100) return; this.submitting.set(true); try { await this.service.update(this.cityId(), row.storeId, { platformCommissionRate: rate, reason: String(value['reason']).trim(), ...(String(value['note'] ?? '').trim() ? { note: String(value['note']).trim() } : {}) }); this.closeEditor(); await this.load(this.page); this.notify.success(this.lang.t('common.success')); } catch (e) { this.notify.error(apiErrorMessage(e, this.lang.t('common.unexpectedError'))); } finally { this.submitting.set(false); } }
   async saveBulk(value: Record<string, unknown>) { const rate = Number(value['platformCommissionRate']); const ids = this.selectedStoreIds(); if (!ids.length || !Number.isInteger(rate) || rate < 0 || rate > 100) return; this.submitting.set(true); try { await Promise.all(ids.map((storeId) => this.service.update(this.cityId(), storeId, { platformCommissionRate: rate, reason: String(value['reason']).trim(), ...(String(value['note'] ?? '').trim() ? { note: String(value['note']).trim() } : {}) }))); this.bulkEditorOpen.set(false); this.selectedStoreIds.set([]); await this.load(this.page); this.notify.success(this.lang.t('common.success')); } catch (e) { this.notify.error(apiErrorMessage(e, this.lang.t('common.unexpectedError'))); } finally { this.submitting.set(false); } }
   async restore(row: StoreCommission) { try { await this.service.restore(this.cityId(), row.storeId); await this.load(this.page); this.notify.success(this.lang.t('common.success')); } catch (e) { this.notify.error(apiErrorMessage(e, this.lang.t('common.unexpectedError'))); } }
   private async loadCities() { try { const cities = (await this.geo.listCities(1, 100)).data.filter((c) => c.status !== 'ARCHIVED'); this.cities.set(cities); if (cities[0]) this.selectCity(cities[0].id); } catch (e) { this.notify.error(apiErrorMessage(e, this.lang.t('common.unexpectedError'))); } }

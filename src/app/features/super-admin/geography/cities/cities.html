@@ -1,6 +1,7 @@
-<section class="feature-page">
+<section class="feature-page super-admin-page">
   <div class="page-toolbar">
     <div class="page-toolbar__context">
+      <h1>{{ 'nav.cities' | t }}</h1>
       <p class="hint">{{ 'geo.cityHint' | t }}</p>
     </div>
     <div class="page-toolbar__actions">
@@ -11,6 +12,8 @@
       </button>
     </div>
   </div>
+
+  <app-page-stats [data]="data()" [total]="pagination()?.total ?? data().length"></app-page-stats>
 
   <app-table
     [data]="data()"

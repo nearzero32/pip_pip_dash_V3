@@ -16,13 +16,14 @@ import { TranslatePipe } from '../../../i18n/translate.pipe';
 import { apiErrorMessage } from '../../../core/http/api-error';
 import { downloadBlob } from '../../../core/utils/download';
 import { InputControlComponent } from '../../../shared/components/input-control/input-control';
+import { PageStatsComponent } from '../../../shared/components/page-stats/page-stats';
 
 type CityAdminFormMode = 'create' | 'edit' | 'password';
 
 @Component({
   selector: 'app-city-admins',
   standalone: true,
-  imports: [CommonModule, TableComponent, FormDialogComponent, ExportButtonComponent, TranslatePipe, InputControlComponent],
+  imports: [CommonModule, TableComponent, FormDialogComponent, ExportButtonComponent, TranslatePipe, InputControlComponent, PageStatsComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './city-admins.html',
 })

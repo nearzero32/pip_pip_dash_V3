@@ -1,6 +1,7 @@
-<section class="feature-page">
+<section class="feature-page super-admin-page">
   <div class="page-toolbar">
     <div class="page-toolbar__context">
+      <h1>{{ 'nav.merchants' | t }}</h1>
       <p class="hint">{{ 'merchants.hint' | t }}</p>
     </div>
     <div class="page-toolbar__actions">
@@ -27,6 +28,7 @@
       </button>
     </div>
   </div>
+  <app-page-stats [data]="rows()"></app-page-stats>
   <app-table
     [data]="rows()"
     [columns]="columns"

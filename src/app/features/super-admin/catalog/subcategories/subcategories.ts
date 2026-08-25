@@ -15,6 +15,7 @@ import type { TableColumn } from '../../../../shared/models/table-column.interfa
 import type { FormField } from '../../../../shared/models/form-field.interface';
 import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button';
 import { InputControlComponent } from '../../../../shared/components/input-control/input-control';
+import { PageStatsComponent } from '../../../../shared/components/page-stats/page-stats';
 
 type Translation = { locale: 'ar' | 'en'; name: string };
 type MainCategory = { id: string; name: string; translations: Translation[]; status: string };
@@ -23,7 +24,7 @@ type Page<T> = { data: T[]; page: number; limit: number; total: number };
 
 @Component({
   selector: 'app-super-admin-subcategories', standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, TableComponent, FormDialogComponent, SelectControlComponent, ExportButtonComponent, InputControlComponent],
+  imports: [CommonModule, FormsModule, TranslatePipe, TableComponent, FormDialogComponent, SelectControlComponent, ExportButtonComponent, InputControlComponent, PageStatsComponent],
   templateUrl: './subcategories.html', styleUrl: './subcategories.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -34,7 +35,7 @@ export class SuperAdminSubcategoriesComponent {
   private notify = inject(NotificationService);
   readonly cities = signal<City[]>([]); readonly mains = signal<MainCategory[]>([]); readonly rows = signal<Subcategory[]>([]);
   readonly cityId = signal(''); readonly mainId = signal(''); readonly search = signal(''); readonly editing = signal<Subcategory | null>(null); readonly open = signal(false); readonly loading = signal(false); readonly saving = signal(false);
-  readonly nameAr = signal(''); readonly nameEn = signal(''); readonly status = signal<'ACTIVE' | 'INACTIVE'>('ACTIVE'); readonly statusFilter = signal(''); readonly displayOrder = signal(1);
+  readonly nameAr = signal(''); readonly nameEn = signal(''); readonly status = signal<'ACTIVE' | 'INACTIVE'>('ACTIVE'); readonly statusFilter = signal('ACTIVE'); readonly displayOrder = signal(1);
   readonly columns: TableColumn[] = [
     { key: 'name', label: this.language.t('geo.nameAr') },
     { key: 'displayOrder', label: this.language.t('catalog.displayOrder') },
@@ -58,7 +59,7 @@ export class SuperAdminSubcategoriesComponent {
   async save(value: Record<string, unknown>) { const nameAr = String(value['nameAr'] ?? '').trim(), nameEn = String(value['nameEn'] ?? '').trim(); if (!this.mainId() || !nameAr || !nameEn) return; this.saving.set(true); const body = { mainCategoryId: this.mainId(), translations: [{ locale: 'ar', name: nameAr }, { locale: 'en', name: nameEn }], status: value['status'], displayOrder: Number(value['displayOrder']) }; try { const row = this.editing(); if (row) await this.api.patch(`/api/v1/super-admin/subcategories/${row.id}`, body, { params: { cityId: this.cityId() } }); else await this.api.post('/api/v1/super-admin/subcategories', { cityId: this.cityId(), ...body }); this.open.set(false); await this.loadRows(); this.notify.success(this.language.t('common.success')); } catch (err) { this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError'))); } finally { this.saving.set(false); } }
   async restore(row: Subcategory) { try { await this.api.patch(`/api/v1/super-admin/subcategories/${row.id}`, { status: 'ACTIVE' }, { params: { cityId: this.cityId() } }); await this.loadRows(); this.notify.success(this.language.t('common.success')); } catch (err) { this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError'))); } }
   private buildFields(): FormField[] { return [{ name: 'nameAr', label: this.language.t('geo.nameAr'), type: 'text', required: true, step: 0 }, { name: 'nameEn', label: this.language.t('geo.nameEn'), type: 'text', required: true, step: 0 }, { name: 'status', label: this.language.t('geo.status'), type: 'select', required: true, options: [{ value: 'ACTIVE', label: this.language.t('status.ACTIVE') }, { value: 'INACTIVE', label: this.language.t('status.INACTIVE') }], step: 1 }, { name: 'displayOrder', label: this.language.t('catalog.displayOrder'), type: 'number', required: true, step: 1 }]; }
-  private async loadCities() { try { this.cities.set((await this.geography.listCities(1, 100)).data.filter((city) => city.status !== 'ARCHIVED')); } catch (err) { this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError'))); } }
-  private async loadMains() { this.loading.set(true); try { this.mains.set((await this.api.get<Page<MainCategory>>('/api/v1/dashboard/main-categories', { params: { cityId: this.cityId(), page: 1, limit: 100 } })).data.data); } finally { this.loading.set(false); } }
-  private async loadRows() { this.loading.set(true); try { this.rows.set((await this.api.get<Page<Subcategory>>('/api/v1/super-admin/subcategories', { params: { cityId: this.cityId(), mainCategoryId: this.mainId(), search: this.search().trim(), status: this.statusFilter(), page: 1, limit: 100 } })).data.data); } catch (err) { this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError'))); } finally { this.loading.set(false); } }
+  private async loadCities() { try { const cities = (await this.geography.listCities(1, 100)).data.filter((city) => city.status !== 'ARCHIVED'); this.cities.set(cities); if (cities[0]) await this.selectCity(cities[0].id); } catch (err) { this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError'))); } }
+  private async loadMains() { this.loading.set(true); try { const mains = (await this.api.get<Page<MainCategory>>('/api/v1/dashboard/main-categories', { params: { cityId: this.cityId(), page: 1, limit: 100, status: 'ACTIVE' } })).data.data; this.mains.set(mains); if (mains[0]) await this.selectMain(mains[0].id); } finally { this.loading.set(false); } }
+  private async loadRows() { this.loading.set(true); try { const search = this.search().trim(); const status = this.statusFilter(); this.rows.set((await this.api.get<Page<Subcategory>>('/api/v1/super-admin/subcategories', { params: { cityId: this.cityId(), mainCategoryId: this.mainId(), page: 1, limit: 100, ...(search ? { search } : {}), ...(status ? { status } : {}) } })).data.data); } catch (err) { this.notify.error(apiErrorMessage(err, this.language.t('common.unexpectedError'))); } finally { this.loading.set(false); } }
 }

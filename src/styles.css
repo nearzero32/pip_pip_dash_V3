@@ -81,6 +81,37 @@
   flex-wrap: wrap;
 }
 
+/* Super Admin pages share the visual language introduced by the Stores page. */
+.super-admin-page { max-width: 1440px; margin-inline: auto; }
+.super-admin-page > .page-toolbar {
+  align-items: center;
+  padding: var(--space-6);
+  border-color: color-mix(in srgb, var(--brand-purple) 12%, transparent);
+  border-radius: var(--radius-xl);
+  background: radial-gradient(circle at 92% 20%, rgba(252, 203, 48, 0.18), transparent 12rem), linear-gradient(135deg, var(--brand-purple), #453176);
+  box-shadow: var(--shadow-lg);
+}
+.super-admin-page > .page-toolbar::after { display: none; }
+.super-admin-page > .page-toolbar .hint { color: rgba(255, 255, 255, 0.76); }
+.super-admin-page > .page-toolbar h1 { margin: 0 0 var(--space-2); color: #fff; font-size: clamp(1.4rem, 2.6vw, 2rem); }
+.super-admin-page > .page-toolbar .page-toolbar__actions { padding: var(--space-3); border: 1px solid rgba(255, 255, 255, .12); border-radius: var(--radius-lg); background: rgba(255, 255, 255, .08); backdrop-filter: blur(8px); }
+.super-admin-page > .page-toolbar .select-control__label,
+.super-admin-page > .page-toolbar .input-control__label,
+.super-admin-page > .page-toolbar .filter-field__label { color: rgba(255, 255, 255, .82); }
+.super-admin-page > .page-toolbar .page-toolbar__context::before {
+  content: 'SUPER ADMIN';
+  display: inline-flex;
+  margin-bottom: var(--space-2);
+  padding: 4px var(--space-3);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--brand-yellow);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: .04em;
+}
+
 .filter-field {
   display: flex;
   flex-direction: column;

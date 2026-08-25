@@ -25,6 +25,7 @@ import { apiErrorMessage } from '../../../../core/http/api-error';
 import { PaginationConfig } from '../../../../shared/models/pagination.interface';
 import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button';
 import { InputControlComponent } from '../../../../shared/components/input-control/input-control';
+import { PageStatsComponent } from '../../../../shared/components/page-stats/page-stats';
 
 
 @Component({
@@ -40,6 +41,7 @@ import { InputControlComponent } from '../../../../shared/components/input-contr
     TranslatePipe,
     ExportButtonComponent,
     InputControlComponent,
+    PageStatsComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './delivery-pricing.html',
@@ -55,7 +57,7 @@ export class DeliveryPricingComponent implements OnInit, OnDestroy {
   data = signal<(DeliveryPricingVersion & { _id: string })[]>([]);
   pagination = signal<PaginationConfig | null>(null);
   search = signal('');
-  statusFilter = signal<'' | DeliveryPricingVersion['status']>('');
+  statusFilter = signal<'' | DeliveryPricingVersion['status']>('ACTIVE');
   page = signal(1);
   isLoading = signal(true);
   showForm = signal(false);

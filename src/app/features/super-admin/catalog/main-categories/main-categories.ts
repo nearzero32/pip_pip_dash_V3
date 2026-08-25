@@ -16,14 +16,15 @@ import { NotificationService } from '../../../../shared/services/notification.se
 import { GeographyService } from '../../geography/geography.service';
 import { City } from '../../geography/geography.models';
 import { ExportButtonComponent } from '../../../../shared/components/export-button/export-button';
+import { PageStatsComponent } from '../../../../shared/components/page-stats/page-stats';
 
 type Category = { id: string; name: string; translations: { locale: string; name: string }[]; status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED'; displayOrder: number; image?: { url: string | null } };
 type Page = { data: Category[]; page: number; limit: number; total: number };
 
-@Component({ selector: 'app-super-main-categories', standalone: true, imports: [CommonModule, TranslatePipe, TableComponent, FormDialogComponent, ConfirmationDialogComponent, SelectControlComponent, InputControlComponent, ExportButtonComponent], templateUrl: './main-categories.html', changeDetection: ChangeDetectionStrategy.OnPush })
+@Component({ selector: 'app-super-main-categories', standalone: true, imports: [CommonModule, TranslatePipe, TableComponent, FormDialogComponent, ConfirmationDialogComponent, SelectControlComponent, InputControlComponent, ExportButtonComponent, PageStatsComponent], templateUrl: './main-categories.html', changeDetection: ChangeDetectionStrategy.OnPush })
 export class SuperAdminMainCategoriesComponent implements OnInit {
   private api = inject(ApiService).client; private geography = inject(GeographyService); private media = inject(MediaApiService); private lang = inject(LanguageService); private notify = inject(NotificationService);
-  readonly cities = signal<City[]>([]); readonly cityId = signal(''); readonly rows = signal<Category[]>([]); readonly loading = signal(false); readonly dialog = signal(false); readonly editing = signal<Category | null>(null); readonly saving = signal(false); readonly search = signal(''); readonly status = signal(''); readonly archiveTarget = signal<Category | null>(null);
+  readonly cities = signal<City[]>([]); readonly cityId = signal(''); readonly rows = signal<Category[]>([]); readonly loading = signal(false); readonly dialog = signal(false); readonly editing = signal<Category | null>(null); readonly saving = signal(false); readonly search = signal(''); readonly status = signal('ACTIVE'); readonly archiveTarget = signal<Category | null>(null);
   readonly columns: TableColumn[] = [{ key: 'image.url', label: this.lang.t('catalog.image'), type: 'image' }, { key: 'name', label: this.lang.t('catalog.name') }, { key: 'status', label: this.lang.t('geo.status'), type: 'badge' }, { key: 'displayOrder', label: this.lang.t('catalog.displayOrder') }];
   ngOnInit() { void this.loadCities(); }
   cityOptions(): readonly SelectControlOption[] { return this.cities().map((c) => ({ value: c.id, label: `${c.nameEn} / ${c.nameAr}` })); }
@@ -39,6 +40,6 @@ export class SuperAdminMainCategoriesComponent implements OnInit {
   async archive(row: Category) { if (!this.cityId()) return; this.saving.set(true); try { await this.api.delete(`/api/v1/dashboard/main-categories/${row.id}`, { params: { cityId: this.cityId() } }); await this.load(); this.notify.success(this.lang.t('common.success')); } catch (e) { this.notify.error(apiErrorMessage(e, this.lang.t('common.unexpectedError'))); } finally { this.saving.set(false); } }
   async restore(row: Category) { try { await this.api.patch(`/api/v1/dashboard/main-categories/${row.id}`, { status: 'ACTIVE' }, { params: { cityId: this.cityId() } }); await this.load(); this.notify.success(this.lang.t('common.success')); } catch (e) { this.notify.error(apiErrorMessage(e, this.lang.t('common.unexpectedError'))); } }
   async confirmArchive() { const row = this.archiveTarget(); if (!row) return; this.archiveTarget.set(null); await this.archive(row); }
-  private async loadCities() { try { const page = await this.geography.listCities(1, 100); this.cities.set(page.data.filter((c) => c.status !== 'ARCHIVED')); } catch (e) { this.notify.error(apiErrorMessage(e, this.lang.t('common.unexpectedError'))); } }
+  private async loadCities() { try { const cities = (await this.geography.listCities(1, 100)).data.filter((c) => c.status !== 'ARCHIVED'); this.cities.set(cities); if (cities[0]) this.selectCity(cities[0].id); } catch (e) { this.notify.error(apiErrorMessage(e, this.lang.t('common.unexpectedError'))); } }
   private async load() { if (!this.cityId()) return; this.loading.set(true); try { const response = await this.api.get<Page>('/api/v1/dashboard/main-categories', { params: { cityId: this.cityId(), page: 1, limit: 100, ...(this.search().trim() ? { search: this.search().trim() } : {}), ...(this.status() ? { status: this.status() } : {}) } }); this.rows.set(response.data.data); } catch (e) { this.notify.error(apiErrorMessage(e, this.lang.t('common.unexpectedError'))); } finally { this.loading.set(false); } }
 }

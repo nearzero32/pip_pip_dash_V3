@@ -26,6 +26,7 @@ export class SelectControlComponent {
   @Input() id = '';
   @Input() label = '';
   @Input() placeholder = '';
+  @Input() allowEmpty = false;
   @Input() value = '';
   @Input() options: readonly SelectControlOption[] = [];
   @Input() disabled = false;

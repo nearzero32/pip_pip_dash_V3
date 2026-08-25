@@ -1,6 +1,7 @@
-<section class="feature-page">
+<section class="feature-page super-admin-page">
   <div class="page-toolbar">
     <div class="page-toolbar__context">
+      <h1>{{ 'nav.driverPricing' | t }}</h1>
       <p class="hint">{{ 'pricing.driverHint' | t }}</p>
     </div>
     <div class="page-toolbar__actions">
@@ -10,6 +11,8 @@
       <button class="add-btn" type="button" (click)="openForm()">{{ 'pricing.savePricing' | t }}</button>
     </div>
   </div>
+
+  <app-page-stats [items]="pricingStats()"></app-page-stats>
 
   @if (loading()) {
     <div class="pricing-summary pricing-skeleton" aria-busy="true" aria-live="polite">

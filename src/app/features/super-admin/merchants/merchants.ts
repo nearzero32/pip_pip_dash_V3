@@ -15,6 +15,7 @@ import { InputControlComponent } from '../../../shared/components/input-control/
 import { DetailDialogComponent, DetailSection } from '../../../shared/components/detail-dialog/detail-dialog';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button';
 import { FormField } from '../../../shared/models/form-field.interface';
+import { PageStatsComponent } from '../../../shared/components/page-stats/page-stats';
 import { TableColumn } from '../../../shared/models/table-column.interface';
 import { GeographyService } from '../geography/geography.service';
 import { City } from '../geography/geography.models';
@@ -42,6 +43,7 @@ type Store = { id: string; name: string };
     InputControlComponent,
     DetailDialogComponent,
     ExportButtonComponent,
+    PageStatsComponent,
   ],
   templateUrl: './merchants.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,7 +64,7 @@ export class SuperMerchantsComponent implements OnInit {
   readonly detailMerchant = signal<Merchant | null>(null);
   readonly mode = signal<'create' | 'edit' | 'password' | 'transfer'>('create');
   readonly search = signal('');
-  readonly status = signal('');
+  readonly status = signal('ACTIVE');
   readonly columns: TableColumn[] = [
     { key: 'displayName', label: this.lang.t('merchants.name') },
     { key: 'phone', label: this.lang.t('merchants.phone') },
@@ -220,6 +222,8 @@ export class SuperMerchantsComponent implements OnInit {
           storeId: String(v['storeId']),
           displayName: String(v['displayName'] ?? '') || null,
           status: v['status'],
+          // Native selects emit strings; the API contract requires a real Boolean.
+          isAgencyAffiliate: v['isAgencyAffiliate'] === true || v['isAgencyAffiliate'] === 'true',
         });
       else if (row && this.mode() === 'edit')
         await this.api.patch(`/api/v1/dashboard/merchants/${row.accountId}`, {

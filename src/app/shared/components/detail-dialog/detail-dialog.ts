@@ -11,6 +11,8 @@ export class DetailDialogComponent {
   @Input() title = '';
   @Input() subtitle = '';
   @Input() imageUrl: string | null = null;
+  @Input() wide = false;
+  @Input() headerIcon = '';
   @Input() sections: readonly DetailSection[] = [];
   @Input() actions: readonly DetailDialogAction[] = [];
   @Output() close = new EventEmitter<void>();

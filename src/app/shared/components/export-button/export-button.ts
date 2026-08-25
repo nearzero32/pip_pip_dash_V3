@@ -42,7 +42,10 @@ export class ExportButtonComponent {
     if (this.endpoint) {
       this.downloading.set(true);
       try {
-        const response = await this.api.get<Blob>(this.endpoint, { params: this.params, responseType: 'blob' });
+        const params = Object.fromEntries(
+          Object.entries(this.params).filter(([, value]) => value !== '' && value !== null && value !== undefined),
+        );
+        const response = await this.api.get<Blob>(this.endpoint, { params, responseType: 'blob' });
         downloadBlob(response.data, this.filename);
       } catch (error) {
         this.notify.error(apiErrorMessage(error, this.language.t('common.unexpectedError')));

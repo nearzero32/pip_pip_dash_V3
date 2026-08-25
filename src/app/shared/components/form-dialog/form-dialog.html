@@ -81,7 +81,7 @@
                 }
 
                 @if (modernInput && (field.type === 'text' || field.type === 'number' || field.type === 'time')) {
-                  <app-input-control [id]="field.name" [type]="field.type" [value]="form.get(field.name)?.value ?? ''" [placeholder]="field.placeholder || (field.type === 'number' ? '0' : '')" [disabled]="isSubmitting" [required]="field.required ?? false" [error]="isInvalid(field) ? getErrorMessage(field.name) : ''" (valueChange)="onFieldValueChange(field.name, $event)"></app-input-control>
+                  <app-input-control [id]="field.name" [type]="field.type" [formControlName]="field.name" [placeholder]="field.placeholder || (field.type === 'number' ? '0' : '')" [required]="field.required ?? false" [error]="isInvalid(field) ? getErrorMessage(field.name) : ''" (valueChange)="onFieldValueChange(field.name, $event)"></app-input-control>
                 }
                 @if (!modernInput && (field.type === 'text' || field.type === 'number' || field.type === 'time')) {
                   <input
@@ -202,6 +202,7 @@
                   @if (modernSelect) {
                     <app-select-control
                       [id]="field.name"
+                      [allowEmpty]="true"
                       [value]="form.get(field.name)?.value ?? ''"
                       [placeholder]="field.placeholder || ('common.select' | t)"
                       [options]="selectOptions(field)"

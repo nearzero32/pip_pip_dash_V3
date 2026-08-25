@@ -1,0 +1,8 @@
+<section class="page-stats" [attr.aria-label]="'Statistics'">
+  @for (item of displayItems(); track item.label) {
+    <article class="page-stat" [class]="'page-stat page-stat--' + (item.tone || 'total')">
+      <span>{{ item.label }}</span>
+      <strong>{{ item.value }}</strong>
+    </article>
+  }
+</section>

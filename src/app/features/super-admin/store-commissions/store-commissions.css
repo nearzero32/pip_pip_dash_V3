@@ -1,2 +1,52 @@
-.commission-modal { max-width: 900px; }
-.commission-rate { font-size: 2rem; font-weight: 800; color: var(--primary, #4f46e5); margin: 0 0 1rem; }
+.commission-history {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-brand-primary) 14%, var(--color-border-subtle));
+  border-radius: 20px;
+  background: var(--color-surface-card);
+  box-shadow: 0 12px 34px color-mix(in srgb, #111827 7%, transparent);
+}
+
+.commission-history__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-brand-primary) 8%, white), color-mix(in srgb, #ff6b2c 7%, white));
+}
+
+.commission-history__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 13px;
+  color: white;
+  background: linear-gradient(135deg, var(--color-brand-primary), #ff6b2c);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--color-brand-primary) 24%, transparent);
+}
+
+.commission-history__icon svg { width: 22px; height: 22px; }
+.commission-history__icon path { stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.commission-history__header > div { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.commission-history h3 { margin: 0; color: var(--color-text-strong); font-size: var(--font-size-md); }
+.commission-history__header span:last-child {
+  min-width: 27px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--color-brand-primary);
+  background: color-mix(in srgb, var(--color-brand-primary) 10%, white);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+}
+
+.commission-history app-table { display: block; padding: 4px 12px 14px; }
+
+@media (max-width: 600px) {
+  .commission-history { border-radius: 16px; }
+  .commission-history__header { padding: 14px; }
+  .commission-history app-table { padding-inline: 4px; }
+}

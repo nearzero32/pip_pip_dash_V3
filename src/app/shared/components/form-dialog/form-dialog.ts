@@ -290,16 +290,29 @@ export class FormDialogComponent implements OnInit, AfterViewInit, OnDestroy {
 
   isLastStep(): boolean { return this.activeStep() >= this.steps.length - 1; }
   activeCopyActions(): readonly FormCopyAction[] { return this.copyActions.filter((action) => action.step === this.activeStep()); }
+  private syncVisibleInput(fieldName: string, value: unknown) {
+    const inputs = (this.host.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>('input[id]');
+    const input = Array.from(inputs).find((item) => item.id === fieldName);
+    if (input) input.value = String(value ?? '');
+  }
   applyCopyAction(action: FormCopyAction) {
     const values = action.sourceFields.map((fieldName) => this.form.get(fieldName)?.value ?? '');
+    const copiedValues: Record<string, unknown> = {};
     action.targetGroups.forEach((targetFields) => targetFields.forEach((fieldName, index) => {
-      const control = this.form.get(fieldName);
-      control?.setValue(values[index] ?? '');
-      control?.markAsDirty();
-      control?.markAsTouched();
+      if (this.form.contains(fieldName)) copiedValues[fieldName] = values[index] ?? '';
     }));
+    this.form.patchValue(copiedValues);
+    Object.keys(copiedValues).forEach((fieldName) => {
+      this.form.get(fieldName)?.markAsDirty();
+      this.form.get(fieldName)?.markAsTouched();
+      this.syncVisibleInput(fieldName, copiedValues[fieldName]);
+    });
     this.form.updateValueAndValidity();
-    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+    queueMicrotask(() => {
+      Object.entries(copiedValues).forEach(([fieldName, value]) => this.syncVisibleInput(fieldName, value));
+      this.cdr.markForCheck();
+    });
   }
   nextStep() {
     const current = this.fields.filter((field) => field.type !== 'map' && field.step === this.activeStep());

@@ -153,6 +153,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     'nav.pricing': 'Pricing',
     'nav.deliveryPricing': 'Delivery pricing',
     'nav.driverPricing': 'Driver pricing',
+    'stats.total': 'Total records',
+    'stats.nonActive': 'Needs attention',
 
     'common.add': 'Add',
     'common.save': 'Save',
@@ -1350,6 +1352,8 @@ export const translations: Record<Lang, Record<string, string>> = {
     'nav.pricing': 'التسعير',
     'nav.deliveryPricing': 'تسعير التوصيل',
     'nav.driverPricing': 'تسعير السائق',
+    'stats.total': 'إجمالي السجلات',
+    'stats.nonActive': 'بحاجة إلى متابعة',
 
     'common.add': 'إضافة',
     'common.save': 'حفظ',

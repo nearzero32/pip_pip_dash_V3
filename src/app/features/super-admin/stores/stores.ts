@@ -81,7 +81,7 @@ export class SuperAdminStoresComponent {
   readonly page = signal(1);
   readonly total = signal(0);
   readonly search = signal('');
-  readonly status = signal<'' | StoreStatus>('');
+  readonly status = signal<'' | StoreStatus>('ACTIVE');
   readonly createOpen = signal(false);
   readonly editing = signal<Store | null>(null);
   readonly saving = signal(false);
@@ -169,18 +169,14 @@ export class SuperAdminStoresComponent {
   readonly detailActions = computed<readonly DetailDialogAction[]>(() => {
     const store = this.detailStore();
     if (!store) return [];
-    return [
-      { id: 'edit', label: this.language.t('common.edit') },
-      ...(store.status !== 'ACTIVE' ? [{ id: 'restore', label: this.language.t('common.restore'), tone: 'neutral' as const }] : []),
-    ];
+    return store.status !== 'ACTIVE'
+      ? [{ id: 'restore', label: this.language.t('common.restore'), tone: 'neutral' as const }]
+      : [];
   });
   async onDetailAction(action: string) {
     const store = this.detailStore();
     if (!store) return;
     if (action === 'restore') { await this.setStatus(store, 'ACTIVE'); this.detailStore.set(null); return; }
-    if (action !== 'edit') return;
-    this.detailStore.set(null);
-    this.openEdit(store);
   }
   detailSections(): DetailSection[] {
     const store = this.detailStore();
@@ -285,7 +281,7 @@ export class SuperAdminStoresComponent {
   }
 
   private async loadCities() {
-    try { this.cities.set((await this.geography.listCities(1, 100)).data.filter((city) => city.status !== 'ARCHIVED')); }
+    try { const cities = (await this.geography.listCities(1, 100)).data.filter((city) => city.status !== 'ARCHIVED'); this.cities.set(cities); if (cities[0]) await this.selectCity(cities[0].id); }
     catch (error) { this.notify.error(apiErrorMessage(error, this.language.t('common.unexpectedError'))); }
   }
 

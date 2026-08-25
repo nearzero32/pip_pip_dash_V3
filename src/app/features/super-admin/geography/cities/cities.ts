@@ -15,6 +15,7 @@ import { TranslatePipe } from '../../../../i18n/translate.pipe';
 import { apiErrorMessage } from '../../../../core/http/api-error';
 import { downloadBlob } from '../../../../core/utils/download';
 import { InputControlComponent } from '../../../../shared/components/input-control/input-control';
+import { PageStatsComponent } from '../../../../shared/components/page-stats/page-stats';
 
 @Component({
   selector: 'app-cities',
@@ -26,6 +27,7 @@ import { InputControlComponent } from '../../../../shared/components/input-contr
     ConfirmationDialogComponent,
     ExportButtonComponent,
     InputControlComponent,
+    PageStatsComponent,
     TranslatePipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

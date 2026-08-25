@@ -1,6 +1,7 @@
-<section class="feature-page">
+<section class="feature-page super-admin-page">
   <div class="page-toolbar">
     <div class="page-toolbar__context">
+      <h1>{{ 'nav.governorates' | t }}</h1>
       <p class="hint">{{ 'geo.govHint' | t }}</p>
     </div>
     <div class="page-toolbar__actions">
@@ -8,6 +9,8 @@
       <app-export-button [isLoading]="exporting()" (action)="exportList()"></app-export-button>
     </div>
   </div>
+
+  <app-page-stats [data]="data()" [total]="pagination()?.total ?? data().length"></app-page-stats>
 
   <app-table
     [data]="data()"

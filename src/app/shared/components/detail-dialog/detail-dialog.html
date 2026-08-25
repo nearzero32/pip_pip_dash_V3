@@ -1,8 +1,21 @@
 <div class="detail-dialog__overlay" role="dialog" aria-modal="true" [attr.aria-label]="title" (click)="close.emit()">
-  <section class="detail-dialog" (click)="$event.stopPropagation()">
+  <section class="detail-dialog" [class.detail-dialog--wide]="wide" (click)="$event.stopPropagation()">
     <header class="detail-dialog__header">
       <div class="detail-dialog__identity">
-        @if (imageUrl) { <img [src]="imageUrl" [alt]="title" class="detail-dialog__image" /> }
+        @if (imageUrl) {
+          <img [src]="imageUrl" [alt]="title" class="detail-dialog__image" />
+        } @else {
+          <span class="detail-dialog__identity-icon" aria-hidden="true">
+            @if (headerIcon) {
+              {{ headerIcon }}
+            } @else {
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M8 7h8M8 12h8M8 17h5" />
+                <rect x="4" y="3" width="16" height="18" rx="4" />
+              </svg>
+            }
+          </span>
+        }
         <div><h2>{{ title }}</h2>@if (subtitle) { <p>{{ subtitle }}</p> }</div>
       </div>
       <button class="detail-dialog__close" type="button" (click)="close.emit()" [attr.aria-label]="'common.close' | t">×</button>
@@ -13,6 +26,7 @@
           @for (item of section.items; track item.label) { <div><dt>{{ item.label }}</dt><dd>@if (item.url) { <a [href]="item.url" target="_blank" rel="noopener">{{ item.value ?? ('common.view' | t) }}</a> } @else { {{ item.value ?? '—' }} }</dd></div> }
         </dl></section>
       }
+      <ng-content></ng-content>
     </div>
     @if (actions.length) { <footer class="detail-dialog__footer">@for (item of actions; track item.id) { <button type="button" class="detail-dialog__action" [class.detail-dialog__action--neutral]="item.tone === 'neutral'" [disabled]="item.disabled" (click)="action.emit(item.id)">{{ item.label }}</button> }</footer> }
   </section>

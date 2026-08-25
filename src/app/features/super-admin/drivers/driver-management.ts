@@ -23,13 +23,14 @@ import {
 import { DriverManagementService } from './driver-management.service';
 import { ExportButtonComponent } from '../../../shared/components/export-button/export-button';
 import { InputControlComponent } from '../../../shared/components/input-control/input-control';
+import { PageStatsComponent } from '../../../shared/components/page-stats/page-stats';
 
 type DriverFormMode = 'create' | 'edit' | 'accessCode';
 
 @Component({
   selector: 'app-super-admin-driver-management',
   standalone: true,
-  imports: [CommonModule, TableComponent, FormDialogComponent, DetailDialogComponent, SelectControlComponent, TranslatePipe, ExportButtonComponent, InputControlComponent],
+  imports: [CommonModule, TableComponent, FormDialogComponent, DetailDialogComponent, SelectControlComponent, TranslatePipe, ExportButtonComponent, InputControlComponent, PageStatsComponent],
   templateUrl: './driver-management.html',
   styleUrl: './driver-management.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -93,11 +94,13 @@ export class DriverManagementComponent implements OnInit {
   async load(page = this.page) {
     this.isLoading.set(true);
     try {
-      const [result, cityPage] = await Promise.all([
-        this.drivers.list(page, this.limit, this.selectedCityId() || undefined, this.search()),
-        this.cities().length ? Promise.resolve(null) : this.geography.listCities(1, 100),
-      ]);
-      if (cityPage) this.cities.set(cityPage.data);
+      if (!this.cities().length) {
+        const cityPage = await this.geography.listCities(1, 100);
+        const cities = cityPage.data.filter((city) => city.status !== 'ARCHIVED');
+        this.cities.set(cities);
+        if (!this.selectedCityId() && cities[0]) this.selectedCityId.set(cities[0].id);
+      }
+      const result = await this.drivers.list(page, this.limit, this.selectedCityId() || undefined, this.search());
       this.page = result.page;
       this.data.set(await Promise.all(result.data.map((driver) => this.tableDriver(driver))));
       const pages = Math.max(1, Math.ceil(result.total / result.limit));
