@@ -1,15 +1,20 @@
 /* =============================================================
-   TABLE COMPONENT — Visual Foundation
-   Uses PIP PIP design tokens. No hardcoded brand colors.
+   TABLE COMPONENT — Modern & Beautiful Design
+   Uses PIP PIP design tokens with enhanced visuals
    ============================================================= */
 
 /* ── CONTAINER ──────────────────────────────────────────────── */
 .table-container {
-  background: var(--color-surface-card);
-  border-radius: var(--radius-lg);
+  background: var(--gradient-surface-card);
+  border-radius: var(--radius-xl);
   border: 1px solid var(--color-border-default);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
+  transition: box-shadow var(--duration-normal) var(--ease-default);
+}
+
+.table-container:hover {
+  box-shadow: var(--shadow-xl);
 }
 
 .table-wrapper {
@@ -41,12 +46,13 @@
 }
 
 .custom-table th {
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-4) var(--space-5);
   text-align: start;
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-bold);
   color: var(--color-brand-secondary);
   text-transform: uppercase;
+  letter-spacing: 0.03em;
   white-space: nowrap;
 }
 
@@ -65,11 +71,12 @@
 /* ── BODY ROWS ──────────────────────────────────────────────── */
 .custom-table tbody tr {
   border-bottom: 1px solid var(--color-border-subtle);
-  transition: background var(--duration-fast) var(--ease-default);
+  transition: all var(--duration-normal) var(--ease-default);
 }
 
 .custom-table tbody tr:hover {
-  background: color-mix(in srgb, var(--brand-orange-soft) 52%, white);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--brand-orange-soft) 45%, white), transparent);
+  transform: scale(1.002);
 }
 
 .custom-table tbody tr:last-child {
@@ -78,7 +85,7 @@
 
 /* ── CELLS ──────────────────────────────────────────────────── */
 .custom-table td {
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-4) var(--space-5);
   font-size: var(--font-size-md);
   color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
@@ -105,24 +112,23 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: var(--brand-orange-soft);
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(135deg, var(--brand-orange-soft), color-mix(in srgb, var(--brand-orange) 6%, white));
   color: var(--color-brand-primary);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   border: 1px solid var(--brand-orange-tint);
-  transition:
-    background var(--duration-normal) var(--ease-default),
-    color var(--duration-normal) var(--ease-default),
-    transform var(--duration-fast) var(--ease-default);
+  transition: all var(--duration-normal) var(--ease-default);
 }
 
 .custom-table tbody tr:hover .index-badge {
-  background: var(--color-brand-primary);
+  background: var(--gradient-brand-primary);
   color: var(--color-text-on-brand);
-  border-color: var(--color-brand-primary);
+  border-color: transparent;
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px -4px rgba(254, 81, 4, 0.4);
 }
 
 /* ── ACTION BUTTONS ─────────────────────────────────────────── */
@@ -166,52 +172,52 @@
 /* Edit */
 .edit-bg svg { fill: var(--color-text-secondary); }
 .edit-bg:hover:not(:disabled) {
-  background: var(--color-text-strong);
-  border-color: var(--color-text-strong);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  background: var(--gradient-brand-primary);
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px -6px rgba(254, 81, 4, 0.35);
 }
-.edit-bg:hover svg { fill: var(--color-text-on-brand); }
+.edit-bg:hover svg { fill: #fff; }
 
 /* Delete */
 .delete-bg svg { fill: var(--color-danger); }
 .delete-bg:hover:not(:disabled) {
-  background: var(--color-danger);
-  border-color: var(--color-danger);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px var(--color-danger-soft);
+  background: linear-gradient(135deg, var(--color-danger), #C5221F);
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px -6px rgba(220, 38, 38, 0.35);
 }
-.delete-bg:hover svg { fill: var(--color-text-on-brand); }
+.delete-bg:hover svg { fill: #fff; }
 
 /* View */
 .view-bg {
-  background: var(--color-info-soft);
+  background: linear-gradient(135deg, var(--color-info-soft), color-mix(in srgb, var(--color-info) 6%, white));
   border-color: color-mix(in srgb, var(--color-info) 18%, transparent);
   color: var(--color-info);
 }
 .view-bg svg { stroke: var(--color-info); }
 .view-bg:hover:not(:disabled) {
-  background: var(--color-info);
-  border-color: var(--color-info);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  background: linear-gradient(135deg, var(--color-info), #1D4ED8);
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px -6px rgba(37, 99, 235, 0.35);
 }
-.view-bg:hover svg { stroke: var(--color-text-on-brand); }
+.view-bg:hover svg { stroke: #fff; }
 
 /* Password */
 .password-bg {
-  background: var(--brand-purple-soft);
+  background: linear-gradient(135deg, var(--brand-purple-soft), color-mix(in srgb, var(--brand-purple) 6%, white));
   border-color: color-mix(in srgb, var(--brand-purple) 18%, transparent);
   color: var(--color-brand-secondary);
 }
 .password-bg svg { stroke: var(--color-brand-secondary); }
 .password-bg:hover:not(:disabled) {
-  background: var(--color-brand-secondary);
-  border-color: var(--color-brand-secondary);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
+  background: linear-gradient(135deg, var(--brand-purple), var(--brand-purple-light));
+  border-color: transparent;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px -6px rgba(51, 33, 95, 0.35);
 }
-.password-bg:hover svg { stroke: var(--color-text-on-brand); }
+.password-bg:hover svg { stroke: #fff; }
 
 /* ── BADGES ─────────────────────────────────────────────────── */
 /* Badge styles are defined in global styles.css as shared utilities */
@@ -263,7 +269,7 @@
   padding: var(--space-4) var(--space-5);
   gap: var(--space-2);
   border-top: 1px solid var(--color-border-subtle);
-  background: var(--color-surface-page);
+  background: linear-gradient(180deg, var(--color-surface-page), var(--color-surface-card));
   flex-wrap: wrap;
 }
 
@@ -276,29 +282,29 @@
   padding: 0 var(--space-2);
   border: 1.5px solid var(--color-border-default);
   background: var(--color-surface-card);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   color: var(--color-text-secondary);
   font-family: var(--font-family-base);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
-  transition:
-    background var(--duration-normal) var(--ease-default),
-    border-color var(--duration-normal) var(--ease-default),
-    color var(--duration-normal) var(--ease-default);
+  transition: all var(--duration-normal) var(--ease-default);
 }
 
 .page-btn:hover:not(:disabled) {
-  background: var(--brand-orange-soft);
-  border-color: var(--color-brand-primary);
-  color: var(--color-brand-primary);
+  background: var(--gradient-brand-primary);
+  border-color: transparent;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -6px rgba(254, 81, 4, 0.35);
 }
 
 .page-btn.active {
-  background: var(--color-brand-primary);
+  background: var(--gradient-brand-primary);
   color: var(--color-text-on-brand);
-  border-color: var(--color-brand-primary);
+  border-color: transparent;
   font-weight: var(--font-weight-semibold);
+  box-shadow: 0 4px 12px -6px rgba(254, 81, 4, 0.35);
 }
 
 .page-btn:disabled {

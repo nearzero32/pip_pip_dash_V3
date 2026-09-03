@@ -32,7 +32,7 @@
 }
 
 @keyframes pageEnter {
-  from { opacity: 0; transform: translateY(5px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -45,10 +45,18 @@
   padding: var(--space-5);
   background: linear-gradient(135deg, var(--color-surface-card), color-mix(in srgb, var(--brand-purple-soft) 44%, white));
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
   position: relative;
   overflow: hidden;
+}
+
+.page-toolbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(254, 81, 4, 0.03) 0%, rgba(252, 203, 48, 0.03) 100%);
+  pointer-events: none;
 }
 
 .page-toolbar::after {
@@ -56,8 +64,9 @@
   position: absolute;
   inset-block: 0;
   inset-inline-start: 0;
-  width: 4px;
+  width: 5px;
   background: linear-gradient(180deg, var(--brand-orange), var(--brand-yellow));
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 
 .page-toolbar__context {
@@ -196,14 +205,14 @@
 
 /* ── BUTTONS ────────────────────────────────────────────────── */
 
-/* Primary — key action (PIP PIP orange) */
+/* Primary — key action (PIP PIP orange) with modern gradient */
 .add-btn {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   height: var(--control-height-md);
   padding: 0 var(--space-5);
-  background: var(--color-brand-primary);
+  background: var(--gradient-brand-primary);
   color: var(--color-text-on-brand);
   border: none;
   border-radius: var(--radius-md);
@@ -212,22 +221,20 @@
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition:
-    background var(--duration-normal) var(--ease-default),
-    box-shadow var(--duration-normal) var(--ease-default),
-    transform var(--duration-fast) var(--ease-default);
+    transform var(--duration-fast) var(--ease-default),
+    box-shadow var(--duration-normal) var(--ease-default);
   white-space: nowrap;
+  box-shadow: 0 4px 14px -6px rgba(254, 81, 4, 0.4);
 }
 
 .add-btn:hover:not(:disabled) {
-  background: var(--color-brand-primary-hover);
-  box-shadow: 0 10px 22px -12px rgba(254, 81, 4, 0.8);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(254, 81, 4, 0.5);
 }
 
 .add-btn:active:not(:disabled) {
-  background: var(--color-brand-primary-active);
   transform: translateY(0);
-  box-shadow: none;
+  box-shadow: 0 2px 8px -4px rgba(254, 81, 4, 0.3);
 }
 
 .add-btn:disabled {
@@ -240,7 +247,7 @@
   box-shadow: var(--focus-ring);
 }
 
-/* Secondary / Ghost — non-primary actions */
+/* Secondary / Ghost — non-primary actions with modern styling */
 .ghost-btn {
   display: inline-flex;
   align-items: center;
@@ -256,21 +263,21 @@
   font-weight: var(--font-weight-medium);
   cursor: pointer;
   transition:
-    background var(--duration-normal) var(--ease-default),
-    border-color var(--duration-normal) var(--ease-default),
-    transform var(--duration-fast) var(--ease-default);
+    all var(--duration-normal) var(--ease-default);
   white-space: nowrap;
 }
 
 .ghost-btn:hover:not(:disabled) {
   background: var(--color-surface-subtle);
-  border-color: var(--color-border-strong);
-  color: var(--color-text-strong);
+  border-color: var(--color-brand-primary);
+  color: var(--color-brand-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .ghost-btn:active:not(:disabled) {
-  background: var(--color-surface-hover);
   transform: translateY(0);
+  box-shadow: none;
 }
 
 .ghost-btn:disabled {
@@ -353,18 +360,17 @@
 
 .dash-card {
   display: block;
-  background: var(--color-surface-card);
+  background: var(--gradient-surface-card);
   border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   padding: var(--space-5);
   text-decoration: none;
   color: inherit;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   position: relative;
   overflow: hidden;
   transition:
-    box-shadow var(--duration-normal) var(--ease-default),
-    transform var(--duration-normal) var(--ease-default);
+    all var(--duration-normal) var(--ease-default);
 }
 
 .dash-card::before {
@@ -372,18 +378,31 @@
   position: absolute;
   inset-block: 0;
   inset-inline-start: 0;
-  width: 3px;
+  width: 4px;
   background: linear-gradient(180deg, var(--brand-orange), var(--brand-yellow));
   opacity: 0;
   transition: opacity var(--duration-normal) var(--ease-default);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.dash-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(254, 81, 4, 0.03) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-default);
+  pointer-events: none;
 }
 
 .dash-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--brand-orange) 20%, var(--color-border-subtle));
 }
 
 .dash-card:hover::before { opacity: 1; }
+.dash-card:hover::after { opacity: 1; }
 
 @media (max-width: 640px) {
   .page-toolbar { padding: var(--space-4); }
@@ -407,37 +426,45 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px var(--space-3);
+  gap: var(--space-1);
+  padding: 4px var(--space-3);
   border-radius: var(--radius-pill);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   white-space: nowrap;
+  letter-spacing: 0.02em;
+  transition: all var(--duration-fast) var(--ease-default);
 }
 
 .badge-success {
-  background: var(--color-success-soft);
+  background: linear-gradient(135deg, var(--color-success-soft), color-mix(in srgb, var(--color-success) 8%, white));
   color: var(--color-success-text);
+  border: 1px solid color-mix(in srgb, var(--color-success) 15%, white);
 }
 
 .badge-warning {
-  background: var(--color-warning-soft);
+  background: linear-gradient(135deg, var(--color-warning-soft), color-mix(in srgb, var(--color-warning) 8%, white));
   color: var(--color-warning-text);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 15%, white);
 }
 
 .badge-danger {
-  background: var(--color-danger-soft);
+  background: linear-gradient(135deg, var(--color-danger-soft), color-mix(in srgb, var(--color-danger) 8%, white));
   color: var(--color-danger-text);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 15%, white);
 }
 
 .badge-info {
-  background: var(--color-info-soft);
+  background: linear-gradient(135deg, var(--color-info-soft), color-mix(in srgb, var(--color-info) 8%, white));
   color: var(--color-info-text);
+  border: 1px solid color-mix(in srgb, var(--color-info) 15%, white);
 }
 
 .badge-default {
-  background: var(--color-neutral-soft);
+  background: linear-gradient(135deg, var(--color-neutral-soft), color-mix(in srgb, var(--color-neutral) 6%, white));
   color: var(--color-neutral);
+  border: 1px solid color-mix(in srgb, var(--color-neutral) 12%, white);
 }
 
 /* ── DETAIL DRAWER (shared by cities / drivers) ─────────────── */
