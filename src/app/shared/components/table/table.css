@@ -1,20 +1,28 @@
 /* =============================================================
-   TABLE COMPONENT — Modern & Beautiful Design
-   Uses PIP PIP design tokens with enhanced visuals
+   TABLE COMPONENT — Ultra Modern & Beautiful Design
+   Enhanced with glassmorphism, gradients, and smooth interactions
    ============================================================= */
 
 /* ── CONTAINER ──────────────────────────────────────────────── */
 .table-container {
-  background: var(--gradient-surface-card);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--color-border-default);
-  box-shadow: var(--shadow-lg);
+  background: linear-gradient(180deg, 
+    color-mix(in srgb, var(--color-surface-card) 92%, white),
+    var(--color-surface-card));
+  border-radius: var(--radius-2xl);
+  border: 1px solid color-mix(in srgb, var(--color-border-default) 70%, transparent);
+  box-shadow: 
+    0 4px 24px -8px rgba(0, 0, 0, 0.08),
+    0 1px 3px -1px rgba(0, 0, 0, 0.04);
   overflow: hidden;
-  transition: box-shadow var(--duration-normal) var(--ease-default);
+  transition: all var(--duration-normal) var(--ease-out);
+  backdrop-filter: blur(8px);
 }
 
 .table-container:hover {
-  box-shadow: var(--shadow-xl);
+  box-shadow: 
+    0 8px 32px -12px rgba(0, 0, 0, 0.12),
+    0 2px 8px -4px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
 }
 
 .table-wrapper {
@@ -23,14 +31,26 @@
 }
 
 /* ── SCROLLBAR ──────────────────────────────────────────────── */
-.table-wrapper::-webkit-scrollbar { height: 4px; }
-.table-wrapper::-webkit-scrollbar-track { background: var(--color-surface-subtle); }
-.table-wrapper::-webkit-scrollbar-thumb {
-  background: var(--color-border-strong);
+.table-wrapper::-webkit-scrollbar { 
+  height: 6px; 
+  width: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-track { 
+  background: var(--color-surface-subtle);
   border-radius: var(--radius-pill);
 }
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, 
+    color-mix(in srgb, var(--brand-orange) 35%, var(--color-border-strong)),
+    color-mix(in srgb, var(--brand-orange) 25%, var(--color-border-strong)));
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--color-surface-subtle);
+}
+
 .table-wrapper::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-secondary);
+  background: linear-gradient(180deg, var(--brand-orange), color-mix(in srgb, var(--brand-orange) 70%, black));
 }
 
 /* ── TABLE ──────────────────────────────────────────────────── */
@@ -41,19 +61,51 @@
 
 /* ── HEADER ─────────────────────────────────────────────────── */
 .custom-table thead {
-  background: linear-gradient(180deg, #FAF9FC, var(--color-surface-subtle));
-  border-bottom: 1.5px solid var(--color-border-default);
+  background: linear-gradient(180deg, 
+    color-mix(in srgb, var(--brand-purple-soft) 25%, white),
+    color-mix(in srgb, var(--brand-orange-soft) 15%, var(--color-surface-subtle)));
+  border-bottom: 2px solid color-mix(in srgb, var(--brand-orange) 20%, var(--color-border-default));
+  position: relative;
+}
+
+.custom-table thead::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, 
+    transparent,
+    color-mix(in srgb, var(--brand-orange) 8%, transparent),
+    transparent);
+  pointer-events: none;
 }
 
 .custom-table th {
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-5) var(--space-5);
   text-align: start;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   color: var(--color-brand-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.06em;
   white-space: nowrap;
+  position: relative;
+}
+
+.custom-table th::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 1px;
+  background: linear-gradient(180deg, 
+    transparent,
+    color-mix(in srgb, var(--color-border-default) 60%, transparent),
+    transparent);
+}
+
+.custom-table th:last-child::after {
+  display: none;
 }
 
 .custom-table th.actions-header {
@@ -65,18 +117,61 @@
   width: 56px;
   text-align: center;
 }
-.custom-table th.select-header, .custom-table td.select-cell { width: 44px; text-align: center; padding-inline: var(--space-2); }
-.select-cell input, .select-header input { width: 17px; height: 17px; accent-color: var(--color-brand-primary); cursor: pointer; }
+
+.custom-table th.select-header, 
+.custom-table td.select-cell { 
+  width: 44px; 
+  text-align: center; 
+  padding-inline: var(--space-2); 
+}
+
+.select-cell input, 
+.select-header input { 
+  width: 18px; 
+  height: 18px; 
+  accent-color: var(--color-brand-primary); 
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
+.select-cell input:hover,
+.select-header input:hover {
+  transform: scale(1.1);
+}
 
 /* ── BODY ROWS ──────────────────────────────────────────────── */
 .custom-table tbody tr {
-  border-bottom: 1px solid var(--color-border-subtle);
-  transition: all var(--duration-normal) var(--ease-default);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border-subtle) 60%, transparent);
+  transition: all var(--duration-normal) var(--ease-out);
+  position: relative;
+}
+
+.custom-table tbody tr::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--brand-orange), var(--brand-purple));
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-default);
 }
 
 .custom-table tbody tr:hover {
-  background: linear-gradient(90deg, color-mix(in srgb, var(--brand-orange-soft) 45%, white), transparent);
-  transform: scale(1.002);
+  background: linear-gradient(90deg, 
+    color-mix(in srgb, var(--brand-orange-soft) 35%, white),
+    color-mix(in srgb, var(--brand-orange-soft) 15%, transparent) 30%,
+    transparent);
+  transform: scale(1.005);
+  box-shadow: 
+    0 2px 12px -4px rgba(254, 81, 4, 0.08),
+    0 1px 4px -2px rgba(0, 0, 0, 0.04);
+}
+
+.custom-table tbody tr:hover::before {
+  opacity: 1;
 }
 
 .custom-table tbody tr:last-child {
@@ -90,15 +185,24 @@
   color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
   vertical-align: middle;
+  transition: all var(--duration-fast) var(--ease-default);
 }
 
 .table-thumb {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   object-fit: cover;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-border-default);
   display: block;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.1);
+  transition: all var(--duration-normal) var(--ease-default);
+}
+
+.custom-table tbody tr:hover .table-thumb {
+  transform: scale(1.08);
+  border-color: color-mix(in srgb, var(--brand-orange) 30%, var(--color-border-default));
+  box-shadow: 0 4px 12px -4px rgba(254, 81, 4, 0.2);
 }
 
 .custom-table td.index-cell {
@@ -112,23 +216,28 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  background: linear-gradient(135deg, var(--brand-orange-soft), color-mix(in srgb, var(--brand-orange) 6%, white));
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--brand-orange-soft) 60%, white),
+    color-mix(in srgb, var(--brand-orange) 8%, white));
   color: var(--color-brand-primary);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-xs);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-  border: 1px solid var(--brand-orange-tint);
-  transition: all var(--duration-normal) var(--ease-default);
+  border: 1.5px solid var(--brand-orange-tint);
+  transition: all var(--duration-normal) var(--ease-out);
+  box-shadow: 0 2px 8px -4px rgba(254, 81, 4, 0.2);
 }
 
 .custom-table tbody tr:hover .index-badge {
-  background: var(--gradient-brand-primary);
-  color: var(--color-text-on-brand);
+  background: linear-gradient(135deg, var(--brand-orange), color-mix(in srgb, var(--brand-orange) 85%, black));
+  color: white;
   border-color: transparent;
-  transform: scale(1.08);
-  box-shadow: 0 4px 12px -4px rgba(254, 81, 4, 0.4);
+  transform: scale(1.15) rotate(-5deg);
+  box-shadow: 
+    0 4px 16px -6px rgba(254, 81, 4, 0.5),
+    0 0 0 4px color-mix(in srgb, var(--brand-orange) 15%, transparent);
 }
 
 /* ── ACTION BUTTONS ─────────────────────────────────────────── */
@@ -142,21 +251,24 @@
 }
 
 .circle-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-lg);
   border: 1.5px solid var(--color-border-default);
-  background: var(--color-surface-card);
+  background: linear-gradient(180deg, var(--color-surface-card), color-mix(in srgb, var(--color-surface-subtle) 30%, var(--color-surface-card)));
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition:
-    background var(--duration-normal) var(--ease-default),
-    border-color var(--duration-normal) var(--ease-default),
-    transform var(--duration-fast) var(--ease-default),
-    box-shadow var(--duration-normal) var(--ease-default);
+  transition: all var(--duration-normal) var(--ease-out);
   color: var(--color-text-secondary);
+  box-shadow: 0 1px 3px -1px rgba(0, 0, 0, 0.08);
+}
+
+.circle-btn svg {
+  width: 18px;
+  height: 18px;
+  transition: all var(--duration-fast) var(--ease-default);
 }
 
 .circle-btn:disabled {
@@ -170,54 +282,100 @@
 }
 
 /* Edit */
-.edit-bg svg { fill: var(--color-text-secondary); }
-.edit-bg:hover:not(:disabled) {
-  background: var(--gradient-brand-primary);
-  border-color: transparent;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px -6px rgba(254, 81, 4, 0.35);
+.edit-bg svg { 
+  fill: var(--color-text-secondary);
+  transition: all var(--duration-fast) var(--ease-default);
 }
-.edit-bg:hover svg { fill: #fff; }
+
+.edit-bg:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--brand-orange), color-mix(in srgb, var(--brand-orange) 85%, black));
+  border-color: transparent;
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 
+    0 6px 20px -8px rgba(254, 81, 4, 0.4),
+    0 0 0 4px color-mix(in srgb, var(--brand-orange) 15%, transparent);
+}
+
+.edit-bg:hover svg { 
+  fill: #fff;
+  transform: scale(1.1);
+}
 
 /* Delete */
-.delete-bg svg { fill: var(--color-danger); }
+.delete-bg svg { 
+  fill: var(--color-danger);
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
 .delete-bg:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--color-danger), #C5221F);
   border-color: transparent;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px -6px rgba(220, 38, 38, 0.35);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 
+    0 6px 20px -8px rgba(220, 38, 38, 0.4),
+    0 0 0 4px color-mix(in srgb, var(--color-danger) 15%, transparent);
 }
-.delete-bg:hover svg { fill: #fff; }
+
+.delete-bg:hover svg { 
+  fill: #fff;
+  transform: scale(1.1);
+}
 
 /* View */
 .view-bg {
-  background: linear-gradient(135deg, var(--color-info-soft), color-mix(in srgb, var(--color-info) 6%, white));
-  border-color: color-mix(in srgb, var(--color-info) 18%, transparent);
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--color-info-soft) 60%, white),
+    color-mix(in srgb, var(--color-info) 8%, white));
+  border-color: color-mix(in srgb, var(--color-info) 20%, transparent);
   color: var(--color-info);
 }
-.view-bg svg { stroke: var(--color-info); }
+
+.view-bg svg { 
+  stroke: var(--color-info);
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
 .view-bg:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--color-info), #1D4ED8);
   border-color: transparent;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px -6px rgba(37, 99, 235, 0.35);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 
+    0 6px 20px -8px rgba(37, 99, 235, 0.4),
+    0 0 0 4px color-mix(in srgb, var(--color-info) 15%, transparent);
 }
-.view-bg:hover svg { stroke: #fff; }
+
+.view-bg:hover svg { 
+  stroke: #fff;
+  transform: scale(1.1);
+}
 
 /* Password */
 .password-bg {
-  background: linear-gradient(135deg, var(--brand-purple-soft), color-mix(in srgb, var(--brand-purple) 6%, white));
-  border-color: color-mix(in srgb, var(--brand-purple) 18%, transparent);
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--brand-purple-soft) 60%, white),
+    color-mix(in srgb, var(--brand-purple) 8%, white));
+  border-color: color-mix(in srgb, var(--brand-purple) 20%, transparent);
   color: var(--color-brand-secondary);
 }
-.password-bg svg { stroke: var(--color-brand-secondary); }
+
+.password-bg svg { 
+  stroke: var(--color-brand-secondary);
+  transition: all var(--duration-fast) var(--ease-default);
+}
+
 .password-bg:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--brand-purple), var(--brand-purple-light));
   border-color: transparent;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px -6px rgba(51, 33, 95, 0.35);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 
+    0 6px 20px -8px rgba(51, 33, 95, 0.4),
+    0 0 0 4px color-mix(in srgb, var(--brand-purple) 15%, transparent);
 }
-.password-bg:hover svg { stroke: #fff; }
+
+.password-bg:hover svg { 
+  stroke: #fff;
+  transform: scale(1.1);
+}
 
 /* ── BADGES ─────────────────────────────────────────────────── */
 /* Badge styles are defined in global styles.css as shared utilities */
@@ -228,15 +386,16 @@
 }
 
 .skeleton-cell {
-  height: 14px;
+  height: 16px;
   background: linear-gradient(90deg,
     var(--skeleton-base) 0%,
     var(--skeleton-highlight) 50%,
     var(--skeleton-base) 100%
   );
   background-size: 200% 100%;
-  border-radius: var(--radius-sm);
-  animation: shimmer 1.4s var(--ease-default) infinite;
+  border-radius: var(--radius-md);
+  animation: shimmer 1.4s var(--ease-out) infinite;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 @keyframes shimmer {
@@ -251,14 +410,18 @@
 /* ── EMPTY STATE ─────────────────────────────────────────────── */
 .empty-state {
   text-align: center;
-  padding: var(--space-12) var(--space-8);
+  padding: var(--space-14) var(--space-8);
   color: var(--color-text-muted);
+  background: linear-gradient(180deg, 
+    color-mix(in srgb, var(--brand-orange-soft) 10%, transparent),
+    transparent);
 }
 
 .empty-state p {
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-medium);
   margin: 0;
+  color: var(--color-text-secondary);
 }
 
 /* ── PAGINATION ─────────────────────────────────────────────── */
@@ -266,45 +429,53 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-5) var(--space-5);
   gap: var(--space-2);
-  border-top: 1px solid var(--color-border-subtle);
-  background: linear-gradient(180deg, var(--color-surface-page), var(--color-surface-card));
+  border-top: 1px solid color-mix(in srgb, var(--color-border-subtle) 60%, transparent);
+  background: linear-gradient(180deg, 
+    var(--color-surface-page),
+    color-mix(in srgb, var(--brand-orange-soft) 8%, var(--color-surface-card)));
   flex-wrap: wrap;
 }
 
 .page-btn {
-  min-width: 36px;
-  height: 36px;
+  min-width: 38px;
+  height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 var(--space-2);
+  padding: 0 var(--space-3);
   border: 1.5px solid var(--color-border-default);
-  background: var(--color-surface-card);
-  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, var(--color-surface-card), color-mix(in srgb, var(--color-surface-subtle) 30%, var(--color-surface-card)));
+  border-radius: var(--radius-lg);
   color: var(--color-text-secondary);
   font-family: var(--font-family-base);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all var(--duration-normal) var(--ease-default);
+  transition: all var(--duration-normal) var(--ease-out);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .page-btn:hover:not(:disabled) {
-  background: var(--gradient-brand-primary);
+  background: linear-gradient(135deg, var(--brand-orange), color-mix(in srgb, var(--brand-orange) 85%, black));
   border-color: transparent;
   color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px -6px rgba(254, 81, 4, 0.35);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 
+    0 6px 20px -8px rgba(254, 81, 4, 0.35),
+    0 0 0 4px color-mix(in srgb, var(--brand-orange) 15%, transparent);
 }
 
 .page-btn.active {
-  background: var(--gradient-brand-primary);
+  background: linear-gradient(135deg, var(--brand-orange), color-mix(in srgb, var(--brand-orange) 85%, black));
   color: var(--color-text-on-brand);
   border-color: transparent;
-  font-weight: var(--font-weight-semibold);
-  box-shadow: 0 4px 12px -6px rgba(254, 81, 4, 0.35);
+  font-weight: var(--font-weight-bold);
+  box-shadow: 
+    0 4px 16px -8px rgba(254, 81, 4, 0.4),
+    0 0 0 4px color-mix(in srgb, var(--brand-orange) 15%, transparent);
+  transform: scale(1.05);
 }
 
 .page-btn:disabled {
@@ -318,7 +489,7 @@
 
 .dots {
   color: var(--color-text-muted);
-  padding: 0 var(--space-1);
+  padding: 0 var(--space-2);
   font-weight: var(--font-weight-medium);
   user-select: none;
 }
@@ -334,8 +505,14 @@
 }
 
 @keyframes tableFadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { 
+    opacity: 0; 
+    transform: translateY(12px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -351,20 +528,26 @@
   .custom-table tbody tr {
     display: flex;
     flex-direction: column;
-    background: var(--color-surface-card);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border-default);
-    box-shadow: var(--shadow-xs);
-    margin-bottom: var(--space-3);
-    padding: var(--space-3);
+    background: linear-gradient(180deg, var(--color-surface-card), color-mix(in srgb, var(--color-surface-subtle) 20%, var(--color-surface-card)));
+    border-radius: var(--radius-xl);
+    border: 1.5px solid var(--color-border-default);
+    box-shadow: 0 2px 12px -4px rgba(0, 0, 0, 0.06);
+    margin-bottom: var(--space-4);
+    padding: var(--space-4);
+    transition: all var(--duration-normal) var(--ease-default);
+  }
+
+  .custom-table tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px -8px rgba(0, 0, 0, 0.1);
   }
 
   .custom-table td {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--space-2) 0;
-    border-bottom: 1px solid var(--color-border-subtle);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-border-subtle) 60%, transparent);
   }
 
   .custom-table td:last-child { border-bottom: none; }
@@ -375,6 +558,7 @@
     font-weight: var(--font-weight-semibold);
     color: var(--color-text-secondary);
     text-transform: uppercase;
+    letter-spacing: 0.03em;
   }
 
   .cell-content {
@@ -386,14 +570,14 @@
   .actions-cell {
     flex-direction: row;
     justify-content: center;
-    background: var(--color-surface-subtle);
-    border-radius: var(--radius-sm);
-    padding: var(--space-2) !important;
-    margin-top: var(--space-2);
+    background: color-mix(in srgb, var(--brand-orange-soft) 20%, var(--color-surface-subtle));
+    border-radius: var(--radius-lg);
+    padding: var(--space-3) !important;
+    margin-top: var(--space-3);
   }
 
   .circle-btn {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
   }
 }

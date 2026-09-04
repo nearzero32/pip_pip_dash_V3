@@ -1,3 +1,8 @@
+/* =============================================================
+   INPUT CONTROL — Modern & Beautiful Design
+   Enhanced with gradients, smooth transitions, and elegant states
+   ============================================================= */
+
 :host {
   display: block;
   min-width: 0;
@@ -12,6 +17,9 @@
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
 .input-control__label span,
@@ -22,46 +30,103 @@
 .input-control__native {
   width: 100%;
   min-height: var(--control-height-md);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border: 1.5px solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-card);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--color-surface-card), color-mix(in srgb, var(--color-surface-subtle) 40%, var(--color-surface-card)));
   color: var(--color-text-primary);
-  box-shadow: var(--shadow-xs);
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   font: inherit;
   font-weight: var(--font-weight-medium);
-  transition:
-    border-color var(--duration-normal) var(--ease-default),
-    box-shadow var(--duration-normal) var(--ease-default),
-    background var(--duration-normal) var(--ease-default);
+  transition: all var(--duration-normal) var(--ease-out);
+  backdrop-filter: blur(4px);
+}
+
+.input-control__native::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.7;
 }
 
 .input-control__native:hover {
-  border-color: color-mix(in srgb, var(--color-brand-primary) 55%, var(--color-border-default));
+  border-color: color-mix(in srgb, var(--color-brand-primary) 40%, var(--color-border-default));
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transform: translateY(-1px);
 }
 
 .input-control__native:focus {
   outline: 0;
   border-color: var(--color-brand-primary);
-  box-shadow: var(--focus-ring);
+  background: var(--color-surface-card);
+  box-shadow: 
+    0 4px 16px -4px rgba(254, 81, 4, 0.15),
+    0 0 0 4px color-mix(in srgb, var(--brand-orange) 12%, transparent);
+  transform: translateY(-2px);
 }
 
 .input-control--error .input-control__native {
   border-color: var(--color-danger);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-danger) 3%, white), var(--color-surface-card));
+  box-shadow: 0 2px 8px -2px rgba(220, 38, 38, 0.1);
+}
+
+.input-control--error .input-control__native:focus {
+  box-shadow: 
+    0 4px 16px -4px rgba(220, 38, 38, 0.2),
+    0 0 0 4px color-mix(in srgb, var(--color-danger) 12%, transparent);
 }
 
 .input-control--disabled .input-control__native {
-  opacity: 0.58;
+  opacity: 0.6;
   cursor: not-allowed;
-  background: var(--color-surface-muted);
+  background: linear-gradient(180deg, var(--color-surface-muted), var(--color-surface-subtle));
+  color: var(--color-text-secondary);
 }
 
 .input-control__hint,
 .input-control__error {
   margin: 0;
   font-size: var(--font-size-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
 .input-control__hint {
   color: var(--color-text-muted);
+}
+
+.input-control__error {
+  color: var(--color-danger);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Icon support */
+.input-control__wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-control__icon {
+  position: absolute;
+  inset-inline-start: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: var(--color-text-muted);
+  pointer-events: none;
+  transition: color var(--duration-fast) var(--ease-default);
+}
+
+.input-control__wrapper:has(.input-control__native:focus) .input-control__icon {
+  color: var(--color-brand-primary);
+}
+
+.input-control__wrapper:has(.input-control__native:focus) {
+  border-color: var(--color-brand-primary);
 }
