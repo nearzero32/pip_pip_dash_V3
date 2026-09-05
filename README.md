@@ -1,59 +1,143 @@
-# LamassuAccountingDashAngular
+# PIP PIP Dashboard V3
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.4.
+لوحة التحكم الإدارية لمنصة **PIP PIP**، مبنية بـ Angular وتدعم العربية والإنجليزية وتخطيطي RTL وLTR. تتصل اللوحة بـ PIP PIP API V3 لإدارة العمليات والبيانات حسب صلاحيات المستخدم.
 
-## Development server
+## التقنيات
 
-To start a local development server, run:
+- Angular 22 (Standalone Components)
+- TypeScript 6
+- Axios للاتصال بالـ API وتجديد جلسة الدخول تلقائيًا
+- Google Maps وMapLibre لواجهات الخرائط
+- CSS مخصص يدعم RTL ونظام تصميم موحّد
 
-```bash
-ng serve
-```
+## المتطلبات
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+- Node.js بإصدار متوافق مع Angular 22
+- npm 10 أو أحدث
+- تشغيل مشروع `pip_pip_api_v3` محليًا على المنفذ `3000`
+- مفتاح Google Maps للميزات التي تستخدم الخرائط والبحث عن المواقع
 
-## Code scaffolding
+## التشغيل محليًا
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+من داخل مجلد المشروع:
 
 ```bash
-ng build
+npm install
+npm start
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+ثم افتح:
 
-## Running unit tests
+```text
+http://localhost:4200
+```
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+خادم التطوير يستمع على `0.0.0.0:4200` ويعيد تحميل التطبيق تلقائيًا عند تعديل الملفات.
+
+## الإعداد
+
+إعدادات الواجهة موجودة في:
+
+```text
+src/app/core/config/environment.ts
+```
+
+أهم القيم:
+
+- `apiBaseUrl`: عنوان PIP PIP API، والقيمة المحلية الافتراضية هي `http://localhost:3000`.
+- `googleMapsApiKey`: مفتاح متصفح عام ومقيّد بنطاقات HTTP Referrer في Google Cloud.
+- `mapStyleUrl`: رابط نمط MapLibre للمكونات التي ما زالت تستخدم MapLibre.
+
+لا تضع في ملف الإعداد مفاتيح خلفية خاصة، أو JWT، أو بيانات اعتماد قواعد البيانات والتخزين. عند النشر، استبدل قيم التطوير ضمن عملية البناء بقيم البيئة المستهدفة.
+
+## تسجيل الدخول والصلاحيات
+
+صفحة تسجيل الدخول:
+
+```text
+/auth/sign-in
+```
+
+تستخدم اللوحة مسار المصادقة الخاص بالـ Dashboard في الـ API:
+
+```text
+POST /api/v1/dashboard/auth/login
+POST /api/v1/dashboard/auth/token/refresh
+POST /api/v1/dashboard/auth/logout
+```
+
+يضيف عميل HTTP رمز الوصول إلى الطلبات، ويجدد الرمز مرة واحدة عند انتهاء صلاحيته، ثم يعيد الطلب الأصلي. المسارات المحمية تتطلب جلسة صالحة، وبعض صفحات الإدارة العليا تتطلب دور `SUPER_ADMIN`.
+
+> ملاحظة أمنية: رموز الوصول والتجديد محفوظة حاليًا في `localStorage`. لذلك يجب الالتزام بسياسة CSP صارمة وتجنب أي HTML غير موثوق للحد من مخاطر XSS.
+
+## الوحدات المتاحة
+
+تشمل الصفحات المرتبطة فعليًا بالـ API حاليًا:
+
+- الصفحة الرئيسية والملخصات التشغيلية
+- الطلبات وتتبع مراحل الطلب
+- التجار والمتاجر ونسب العمولات
+- المنتجات والتصنيفات الرئيسية والفرعية
+- السائقون وإدارة بياناتهم
+- المحافظات والمدن والمناطق الجغرافية
+- تسعير التوصيل وتسعير السائقين
+- إدارة مسؤولي المدن
+- تصدير القوائم المدعومة
+
+تحتوي قائمة التنقل أيضًا على شاشات مستقبلية تظهر كمكوّن Placeholder إلى أن يتم ربطها بالـ API، مثل المحافظ، الإشعارات، الإعلانات، وبعض صفحات العملاء والسائقين.
+
+## الأوامر
 
 ```bash
-ng test
+# تشغيل خادم التطوير
+npm start
+
+# إنشاء نسخة إنتاج في dist/
+npm run build
+
+# بناء مستمر بوضع التطوير
+npm run watch
+
+# تشغيل اختبارات Angular
+npm test
 ```
 
-## Running end-to-end tests
+## بنية المشروع
 
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
+```text
+src/app/
+├── core/                 # المصادقة، HTTP، الخرائط والخدمات الأساسية
+├── features/
+│   ├── admin/            # صفحات مسؤول المدينة والعمليات
+│   ├── super-admin/      # صفحات SUPER_ADMIN
+│   └── home/             # الصفحة الرئيسية
+├── i18n/                 # الترجمات وخدمة اللغة
+├── layouts/              # هيكل لوحة التحكم
+├── pages/                # الصفحات العامة مثل تسجيل الدخول
+└── shared/               # المكونات والنماذج والخدمات المشتركة
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## اللغة والتصميم
 
-## Additional Resources
+تدعم الواجهة التبديل بين العربية والإنجليزية، ويتغير اتجاه الصفحة تلقائيًا بين RTL وLTR. اللغة الابتدائية للمستخدم الجديد هي الإنجليزية، ثم يُحفظ اختياره في `localStorage`. يجب استخدام الخصائص المنطقية في CSS مثل `margin-inline` و`padding-inline` للحفاظ على الاتجاهين.
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- دليل نظام التصميم: [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)
+- دليل المكونات القابلة لإعادة الاستخدام: [`REUSABLE_COMPONENTS_GUIDE.md`](REUSABLE_COMPONENTS_GUIDE.md)
+
+## التكامل مع الـ API
+
+قبل تشغيل اللوحة، شغّل الخدمات الخلفية من مشروع `../pip_pip_api_v3` حسب تعليمات README الخاصة به. للتطوير المحلي تكون العناوين الافتراضية:
+
+- Dashboard: `http://localhost:4200`
+- API: `http://localhost:3000`
+- OpenAPI: `http://localhost:3000/openapi`
+
+إذا تغير عنوان الـ API، حدّث `apiBaseUrl` قبل بناء الواجهة.
+
+## ملاحظات المساهمة
+
+- أعد استخدام المكونات الموجودة في `src/app/shared/components` قبل إنشاء مكوّن جديد.
+- حافظ على نماذج الطلب والاستجابة متوافقة مع عقد OpenAPI.
+- استخدم مفاتيح الترجمة بدل النصوص الثابتة داخل القوالب.
+- تحقّق من صلاحيات المسار والـ API معًا؛ حارس الواجهة لتحسين تجربة المستخدم وليس بديلًا عن صلاحيات الخادم.
+- نفّذ `npm run build` قبل إرسال التغييرات للتأكد من نجاح فحص TypeScript وبناء الإنتاج.
